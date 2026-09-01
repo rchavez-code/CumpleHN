@@ -36,6 +36,23 @@ Plataforma web para el seguimiento ciudadano de promesas políticas en Honduras.
 - Las redacciones nuevas se entregan primero en el chat para revisión. No editar los .docx directamente hasta que Roy los apruebe.
 - Roy indica paso a paso qué sección rehacer — no adelantarse a rehacer secciones sin que las pida.
 
+## Control de versiones
+
+El proyecto es un repositorio git desde el 31 de agosto de 2026, con la raíz en la carpeta completa: los documentos de tesis y `Plataforma Web/` juntos. Rama `main`, remoto privado en `https://github.com/rchavez-code/CumpleHN.git`.
+
+El `.gitignore` deja fuera `bin`, `obj`, `.vs` y `packages`, que son resultado de compilar y se regeneran solos. Eran 540 de los 759 archivos de la carpeta y 172 de los 182 MB. Los `packages.config` sí se versionan, y con ellos NuGet reconstruye `packages` al abrir la solución.
+
+**Flujo acordado con Roy:** antes de empezar una tanda de cambios el árbol debe estar limpio y confirmado, para que exista un punto de retorno. Roy revisa lo que se hizo y, si no le convence, pide restaurar.
+
+- Sin commit todavía: `git restore .` para lo modificado y `git clean -fd` para lo nuevo. **Siempre `git clean -nd` antes**, que es el simulacro y avisa qué se borraría.
+- Ya con commit: `git revert HEAD`, que deshace conservando el historial. No usar `reset --hard` sin avisarle.
+- Los cambios grandes o riesgosos van en rama aparte con `git switch -c`, nunca directo en `main`.
+- Cerrar cada sesión de trabajo con `git push`. Es el único paso que constituye respaldo fuera de OneDrive.
+
+Las rutas del proyecto llevan espacios (`Plataforma Web`, `Data Base`), así que en cualquier comando de git van entre comillas dobles.
+
+`core.autocrlf` está en `false` a propósito, para que git no reescriba los bytes de los archivos guardados en UTF-8 sin BOM. La identidad de git se configuró solo con `--local`, no en toda la máquina.
+
 ## Código de la plataforma (`Plataforma Web/`)
 
 ### Stack
@@ -83,7 +100,15 @@ Dentro del frontend:
 
 Para levantarlo hay un `.claude/launch.json` con la entrada `cumplehn-frontend` (IIS Express, puerto 5080).
 
-**Importante al verificar:** MSBuild **no** compila el marcado de los `.aspx`. Un build limpio no garantiza que las páginas funcionen. La forma confiable de comprobarlo es levantar el sitio y recorrer las rutas. (`aspnet_compiler.exe` sirve para lo mismo, pero en esta máquina Application Control de Windows bloquea los DLL que genera y falla con `0x800711C7`.)
+**Importante al verificar:** MSBuild **no** compila el marcado de los `.aspx`. Un build limpio no garantiza que las páginas funcionen. Para eso está `aspnet_compiler.exe`, que valida todo el marcado en segundos:
+
+```
+& "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\aspnet_compiler.exe" -v / -p "Plataforma Web\frontend\frontend" "$env:TEMP\verif"
+```
+
+Código de salida 0 significa que todo el marcado compila. No sustituye levantar el sitio para revisar lo visual, pero atrapa errores de marcado antes de abrir el navegador.
+
+Hasta el 31 de agosto de 2026 esta herramienta fallaba con `0x800711C7`, porque Smart App Control de Windows 11 bloqueaba los DLL recién generados. Ese día se desactivó. Si el error reaparece conviene saber que también afecta al `frontend.dll` que genera Visual Studio, y que entonces el síntoma es un 500 en todo el sitio con `FileLoadException`. Se comprueba leyendo `VerifiedAndReputablePolicyState` en `HKLM\SYSTEM\CurrentControlSet\Control\CI\Policy`, donde 0 es desactivado y 1 es aplicando.
 
 Las páginas están guardadas en UTF-8 sin BOM, así que `Web.config` necesita `<globalization fileEncoding="utf-8" ... culture="es-HN" />`. Sin eso las tildes salen corruptas.
 
