@@ -1,0 +1,732 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://tempuri.org/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://tempuri.org/">
+      <s:element name="ValidarLogin">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="usuario" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="clave" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ValidarLoginResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="ValidarLoginResult" type="tns:RespuestaLogin" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="RespuestaLogin">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="ok" type="s:boolean" />
+          <s:element minOccurs="0" maxOccurs="1" name="mensaje" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="usuario" type="tns:InfoUsuario" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="InfoUsuario">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="codigoUsuario" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="login" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="nombre" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="correo" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="rol" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="codigoCandidato" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="candidatoSlug" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="listarCampanas">
+        <s:complexType />
+      </s:element>
+      <s:element name="listarCampanasResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="listarCampanasResult" type="tns:ArrayOfCampana" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfCampana">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Campana" nillable="true" type="tns:Campana" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="Campana">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="codigoCampana" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="slug" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="nombre" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="resumen" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="descripcion" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="alcance" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="fechaInicio" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="fechaEleccion" type="s:dateTime" />
+          <s:element minOccurs="0" maxOccurs="1" name="estado" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="esActual" type="s:boolean" />
+          <s:element minOccurs="1" maxOccurs="1" name="totalCandidatos" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="totalPropuestas" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="totalPublicaciones" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="obtenerCampanaActual">
+        <s:complexType />
+      </s:element>
+      <s:element name="obtenerCampanaActualResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="obtenerCampanaActualResult" type="tns:Campana" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="obtenerCampana">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="slug" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="obtenerCampanaResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="obtenerCampanaResult" type="tns:Campana" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="listarCandidatos">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="campanaSlug" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="listarCandidatosResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="listarCandidatosResult" type="tns:ArrayOfCandidato" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfCandidato">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Candidato" nillable="true" type="tns:Candidato" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="Candidato">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="codigoCandidato" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="slug" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="codigoCampana" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="campanaSlug" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="campanaNombre" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="nombres" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="apellidos" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="partido" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="partidoSiglas" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="cargo" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="nivelGobierno" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="departamento" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="municipio" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="fotoUrl" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="titular" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="biografia" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="informacionProfesional" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="descripcionCandidatura" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="correoPublico" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="telefono" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="sitioWeb" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="facebook" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="x" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="instagram" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="verificacion" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="totalPropuestas" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="totalPublicaciones" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="obtenerCandidato">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="slug" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="obtenerCandidatoResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="obtenerCandidatoResult" type="tns:Candidato" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="listarPropuestasDeCandidato">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="candidatoSlug" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="listarPropuestasDeCandidatoResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="listarPropuestasDeCandidatoResult" type="tns:ArrayOfPropuesta" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfPropuesta">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Propuesta" nillable="true" type="tns:Propuesta" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="Propuesta">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="codigoPropuesta" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="codigoCandidato" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="candidatoSlug" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="candidatoNombre" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="campanaSlug" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="nombre" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="descripcion" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="problema" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="objetivo" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="beneficiarios" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="categoria" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="ubicacion" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="periodoEjecucion" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="estado" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="imagenUrl" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="informacionAdicional" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="verificacion" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="fechaRegistro" type="s:dateTime" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="listarPropuestasDeCampana">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="campanaSlug" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="listarPropuestasDeCampanaResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="listarPropuestasDeCampanaResult" type="tns:ArrayOfPropuesta" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="obtenerPropuesta">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="codigoPropuesta" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="obtenerPropuestaResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="obtenerPropuestaResult" type="tns:Propuesta" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="listarFeed">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="campanaSlug" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="listarFeedResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="listarFeedResult" type="tns:ArrayOfPublicacion" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfPublicacion">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Publicacion" nillable="true" type="tns:Publicacion" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="Publicacion">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="codigoPublicacion" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="campanaSlug" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="codigoCandidato" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="candidatoSlug" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="candidatoNombre" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="candidatoCargo" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="candidatoFotoUrl" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="fecha" type="s:dateTime" />
+          <s:element minOccurs="0" maxOccurs="1" name="texto" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="imagenUrl" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="categoria" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="codigoPropuesta" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="propuestaNombre" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="verificacion" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="apoyos" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="comentarios" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="listarPublicacionesDeCandidato">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="candidatoSlug" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="listarPublicacionesDeCandidatoResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="listarPublicacionesDeCandidatoResult" type="tns:ArrayOfPublicacion" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="listarCategorias">
+        <s:complexType />
+      </s:element>
+      <s:element name="listarCategoriasResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="listarCategoriasResult" type="tns:ArrayOfCatalogo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfCatalogo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Catalogo" nillable="true" type="tns:Catalogo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="Catalogo">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="codigo" type="s:int" />
+          <s:element minOccurs="0" maxOccurs="1" name="nombre" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="detalle" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="listarCargos">
+        <s:complexType />
+      </s:element>
+      <s:element name="listarCargosResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="listarCargosResult" type="tns:ArrayOfCatalogo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="listarDepartamentos">
+        <s:complexType />
+      </s:element>
+      <s:element name="listarDepartamentosResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="listarDepartamentosResult" type="tns:ArrayOfCatalogo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="ValidarLoginSoapIn">
+    <wsdl:part name="parameters" element="tns:ValidarLogin" />
+  </wsdl:message>
+  <wsdl:message name="ValidarLoginSoapOut">
+    <wsdl:part name="parameters" element="tns:ValidarLoginResponse" />
+  </wsdl:message>
+  <wsdl:message name="listarCampanasSoapIn">
+    <wsdl:part name="parameters" element="tns:listarCampanas" />
+  </wsdl:message>
+  <wsdl:message name="listarCampanasSoapOut">
+    <wsdl:part name="parameters" element="tns:listarCampanasResponse" />
+  </wsdl:message>
+  <wsdl:message name="obtenerCampanaActualSoapIn">
+    <wsdl:part name="parameters" element="tns:obtenerCampanaActual" />
+  </wsdl:message>
+  <wsdl:message name="obtenerCampanaActualSoapOut">
+    <wsdl:part name="parameters" element="tns:obtenerCampanaActualResponse" />
+  </wsdl:message>
+  <wsdl:message name="obtenerCampanaSoapIn">
+    <wsdl:part name="parameters" element="tns:obtenerCampana" />
+  </wsdl:message>
+  <wsdl:message name="obtenerCampanaSoapOut">
+    <wsdl:part name="parameters" element="tns:obtenerCampanaResponse" />
+  </wsdl:message>
+  <wsdl:message name="listarCandidatosSoapIn">
+    <wsdl:part name="parameters" element="tns:listarCandidatos" />
+  </wsdl:message>
+  <wsdl:message name="listarCandidatosSoapOut">
+    <wsdl:part name="parameters" element="tns:listarCandidatosResponse" />
+  </wsdl:message>
+  <wsdl:message name="obtenerCandidatoSoapIn">
+    <wsdl:part name="parameters" element="tns:obtenerCandidato" />
+  </wsdl:message>
+  <wsdl:message name="obtenerCandidatoSoapOut">
+    <wsdl:part name="parameters" element="tns:obtenerCandidatoResponse" />
+  </wsdl:message>
+  <wsdl:message name="listarPropuestasDeCandidatoSoapIn">
+    <wsdl:part name="parameters" element="tns:listarPropuestasDeCandidato" />
+  </wsdl:message>
+  <wsdl:message name="listarPropuestasDeCandidatoSoapOut">
+    <wsdl:part name="parameters" element="tns:listarPropuestasDeCandidatoResponse" />
+  </wsdl:message>
+  <wsdl:message name="listarPropuestasDeCampanaSoapIn">
+    <wsdl:part name="parameters" element="tns:listarPropuestasDeCampana" />
+  </wsdl:message>
+  <wsdl:message name="listarPropuestasDeCampanaSoapOut">
+    <wsdl:part name="parameters" element="tns:listarPropuestasDeCampanaResponse" />
+  </wsdl:message>
+  <wsdl:message name="obtenerPropuestaSoapIn">
+    <wsdl:part name="parameters" element="tns:obtenerPropuesta" />
+  </wsdl:message>
+  <wsdl:message name="obtenerPropuestaSoapOut">
+    <wsdl:part name="parameters" element="tns:obtenerPropuestaResponse" />
+  </wsdl:message>
+  <wsdl:message name="listarFeedSoapIn">
+    <wsdl:part name="parameters" element="tns:listarFeed" />
+  </wsdl:message>
+  <wsdl:message name="listarFeedSoapOut">
+    <wsdl:part name="parameters" element="tns:listarFeedResponse" />
+  </wsdl:message>
+  <wsdl:message name="listarPublicacionesDeCandidatoSoapIn">
+    <wsdl:part name="parameters" element="tns:listarPublicacionesDeCandidato" />
+  </wsdl:message>
+  <wsdl:message name="listarPublicacionesDeCandidatoSoapOut">
+    <wsdl:part name="parameters" element="tns:listarPublicacionesDeCandidatoResponse" />
+  </wsdl:message>
+  <wsdl:message name="listarCategoriasSoapIn">
+    <wsdl:part name="parameters" element="tns:listarCategorias" />
+  </wsdl:message>
+  <wsdl:message name="listarCategoriasSoapOut">
+    <wsdl:part name="parameters" element="tns:listarCategoriasResponse" />
+  </wsdl:message>
+  <wsdl:message name="listarCargosSoapIn">
+    <wsdl:part name="parameters" element="tns:listarCargos" />
+  </wsdl:message>
+  <wsdl:message name="listarCargosSoapOut">
+    <wsdl:part name="parameters" element="tns:listarCargosResponse" />
+  </wsdl:message>
+  <wsdl:message name="listarDepartamentosSoapIn">
+    <wsdl:part name="parameters" element="tns:listarDepartamentos" />
+  </wsdl:message>
+  <wsdl:message name="listarDepartamentosSoapOut">
+    <wsdl:part name="parameters" element="tns:listarDepartamentosResponse" />
+  </wsdl:message>
+  <wsdl:portType name="WebServiceGlobalSoap">
+    <wsdl:operation name="ValidarLogin">
+      <wsdl:input message="tns:ValidarLoginSoapIn" />
+      <wsdl:output message="tns:ValidarLoginSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="listarCampanas">
+      <wsdl:input message="tns:listarCampanasSoapIn" />
+      <wsdl:output message="tns:listarCampanasSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="obtenerCampanaActual">
+      <wsdl:input message="tns:obtenerCampanaActualSoapIn" />
+      <wsdl:output message="tns:obtenerCampanaActualSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="obtenerCampana">
+      <wsdl:input message="tns:obtenerCampanaSoapIn" />
+      <wsdl:output message="tns:obtenerCampanaSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="listarCandidatos">
+      <wsdl:input message="tns:listarCandidatosSoapIn" />
+      <wsdl:output message="tns:listarCandidatosSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="obtenerCandidato">
+      <wsdl:input message="tns:obtenerCandidatoSoapIn" />
+      <wsdl:output message="tns:obtenerCandidatoSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="listarPropuestasDeCandidato">
+      <wsdl:input message="tns:listarPropuestasDeCandidatoSoapIn" />
+      <wsdl:output message="tns:listarPropuestasDeCandidatoSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="listarPropuestasDeCampana">
+      <wsdl:input message="tns:listarPropuestasDeCampanaSoapIn" />
+      <wsdl:output message="tns:listarPropuestasDeCampanaSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="obtenerPropuesta">
+      <wsdl:input message="tns:obtenerPropuestaSoapIn" />
+      <wsdl:output message="tns:obtenerPropuestaSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="listarFeed">
+      <wsdl:input message="tns:listarFeedSoapIn" />
+      <wsdl:output message="tns:listarFeedSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="listarPublicacionesDeCandidato">
+      <wsdl:input message="tns:listarPublicacionesDeCandidatoSoapIn" />
+      <wsdl:output message="tns:listarPublicacionesDeCandidatoSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="listarCategorias">
+      <wsdl:input message="tns:listarCategoriasSoapIn" />
+      <wsdl:output message="tns:listarCategoriasSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="listarCargos">
+      <wsdl:input message="tns:listarCargosSoapIn" />
+      <wsdl:output message="tns:listarCargosSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="listarDepartamentos">
+      <wsdl:input message="tns:listarDepartamentosSoapIn" />
+      <wsdl:output message="tns:listarDepartamentosSoapOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="WebServiceGlobalSoap" type="tns:WebServiceGlobalSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="ValidarLogin">
+      <soap:operation soapAction="http://tempuri.org/ValidarLogin" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarCampanas">
+      <soap:operation soapAction="http://tempuri.org/listarCampanas" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="obtenerCampanaActual">
+      <soap:operation soapAction="http://tempuri.org/obtenerCampanaActual" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="obtenerCampana">
+      <soap:operation soapAction="http://tempuri.org/obtenerCampana" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarCandidatos">
+      <soap:operation soapAction="http://tempuri.org/listarCandidatos" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="obtenerCandidato">
+      <soap:operation soapAction="http://tempuri.org/obtenerCandidato" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarPropuestasDeCandidato">
+      <soap:operation soapAction="http://tempuri.org/listarPropuestasDeCandidato" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarPropuestasDeCampana">
+      <soap:operation soapAction="http://tempuri.org/listarPropuestasDeCampana" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="obtenerPropuesta">
+      <soap:operation soapAction="http://tempuri.org/obtenerPropuesta" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarFeed">
+      <soap:operation soapAction="http://tempuri.org/listarFeed" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarPublicacionesDeCandidato">
+      <soap:operation soapAction="http://tempuri.org/listarPublicacionesDeCandidato" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarCategorias">
+      <soap:operation soapAction="http://tempuri.org/listarCategorias" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarCargos">
+      <soap:operation soapAction="http://tempuri.org/listarCargos" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarDepartamentos">
+      <soap:operation soapAction="http://tempuri.org/listarDepartamentos" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="WebServiceGlobalSoap12" type="tns:WebServiceGlobalSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="ValidarLogin">
+      <soap12:operation soapAction="http://tempuri.org/ValidarLogin" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarCampanas">
+      <soap12:operation soapAction="http://tempuri.org/listarCampanas" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="obtenerCampanaActual">
+      <soap12:operation soapAction="http://tempuri.org/obtenerCampanaActual" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="obtenerCampana">
+      <soap12:operation soapAction="http://tempuri.org/obtenerCampana" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarCandidatos">
+      <soap12:operation soapAction="http://tempuri.org/listarCandidatos" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="obtenerCandidato">
+      <soap12:operation soapAction="http://tempuri.org/obtenerCandidato" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarPropuestasDeCandidato">
+      <soap12:operation soapAction="http://tempuri.org/listarPropuestasDeCandidato" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarPropuestasDeCampana">
+      <soap12:operation soapAction="http://tempuri.org/listarPropuestasDeCampana" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="obtenerPropuesta">
+      <soap12:operation soapAction="http://tempuri.org/obtenerPropuesta" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarFeed">
+      <soap12:operation soapAction="http://tempuri.org/listarFeed" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarPublicacionesDeCandidato">
+      <soap12:operation soapAction="http://tempuri.org/listarPublicacionesDeCandidato" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarCategorias">
+      <soap12:operation soapAction="http://tempuri.org/listarCategorias" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarCargos">
+      <soap12:operation soapAction="http://tempuri.org/listarCargos" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="listarDepartamentos">
+      <soap12:operation soapAction="http://tempuri.org/listarDepartamentos" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="WebServiceGlobal">
+    <wsdl:port name="WebServiceGlobalSoap" binding="tns:WebServiceGlobalSoap">
+      <soap:address location="http://localhost:51720/WebServiceGlobal.asmx" />
+    </wsdl:port>
+    <wsdl:port name="WebServiceGlobalSoap12" binding="tns:WebServiceGlobalSoap12">
+      <soap12:address location="http://localhost:51720/WebServiceGlobal.asmx" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

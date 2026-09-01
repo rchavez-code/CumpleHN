@@ -1,0 +1,136 @@
+<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.master.cs" Inherits="frontend.SiteMaster" %>
+
+<!DOCTYPE html>
+
+<html lang="es">
+<head runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%: Page.Title %> · CumpleHN</title>
+    <meta name="description" content="CumpleHN organiza las propuestas y el cumplimiento de los candidatos políticos en Honduras para que cada persona decida con evidencia." />
+
+    <webopt:bundlereference runat="server" path="~/Content/css" />
+    <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server" />
+</head>
+<body>
+    <form runat="server">
+
+        <div class="gc-topline"></div>
+
+        <header class="gc-header">
+            <div class="container gc-header__in">
+
+                <a class="gc-brand" href="<%= ResolveUrl("~/") %>">
+                    <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <g fill="none" stroke-width="2.3" stroke-linecap="round">
+                            <path d="M3.6 19.4C3.6 13 6.8 7.7 12 4.4" stroke="#c3372c" />
+                            <path d="M8.2 20c.4-5 2.7-9.3 6.6-12" stroke="#d3901f" />
+                            <path d="M12.9 20.4c.6-3.9 2.5-7.1 5.4-9.3" stroke="#2c7a58" />
+                            <path d="M17.7 20.7c.5-2.4 1.5-4.4 3-5.8" stroke="#17708a" />
+                        </g>
+                    </svg>
+                    <span>Cumple<span class="gc-brand__hn">HN</span></span>
+                </a>
+
+                <button type="button" class="gc-burger" id="gcBurger" aria-label="Abrir menú" aria-expanded="false" aria-controls="gcNav">
+                    <span></span>
+                </button>
+
+                <ul class="gc-nav" id="gcNav">
+                    <li><a class="<%= ClaseNav("Default") %>" href="<%= ResolveUrl("~/") %>">Inicio</a></li>
+                    <li><a class="<%= ClaseNav("Campanas", "Campana") %>" href="<%= ResolveUrl("~/Campanas") %>">Campañas</a></li>
+                    <li><a class="<%= ClaseNav("Candidatos", "Candidato") %>" href="<%= ResolveUrl("~/Candidatos") %>">Candidatos</a></li>
+                    <li><a class="<%= ClaseNav("Partidos", "Partido") %>" href="<%= ResolveUrl("~/Partidos") %>">Partidos</a></li>
+                    <li><a class="<%= ClaseNav("Propuestas", "Propuesta") %>" href="<%= ResolveUrl("~/Propuestas") %>">Propuestas</a></li>
+                    <li><a class="<%= ClaseNav("Analitica") %>" href="<%= ResolveUrl("~/Analitica") %>">Analítica</a></li>
+                </ul>
+
+                <div class="gc-header__actions">
+                    <asp:PlaceHolder ID="phAnonimo" runat="server">
+                        <a class="gc-btn gc-btn--ghost gc-btn--sm" href="<%= ResolveUrl("~/Acceso") %>">Acceder</a>
+                        <a class="gc-btn gc-btn--sm" href="<%= ResolveUrl("~/Registro?tipo=candidato") %>">Registrarse</a>
+                    </asp:PlaceHolder>
+
+                    <asp:PlaceHolder ID="phSesion" runat="server" Visible="false">
+                        <span class="gc-avatar gc-avatar--sm" title="<%: NombreUsuario %>" aria-hidden="true"><%: InicialesUsuario %></span>
+                        <asp:PlaceHolder ID="phPanel" runat="server" Visible="false">
+                            <a class="gc-btn gc-btn--ghost gc-btn--sm" href="<%= ResolveUrl("~/Panel/") %>">Mi panel</a>
+                        </asp:PlaceHolder>
+                        <a class="gc-btn gc-btn--quiet gc-btn--sm" href="<%= ResolveUrl("~/Acceso?salir=1") %>">Salir</a>
+                    </asp:PlaceHolder>
+                </div>
+
+            </div>
+        </header>
+
+        <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+
+        <footer class="gc-footer">
+            <div class="container">
+                <div class="row">
+
+                    <div class="col-lg-4 col-md-12 gc-mb">
+                        <a class="gc-brand" href="<%= ResolveUrl("~/") %>">
+                            <span>Cumple<span class="gc-brand__hn">HN</span></span>
+                        </a>
+                        <p class="gc-muted gc-small" style="margin-top: 10px; max-width: 38ch;">
+                            Seguimiento ciudadano de propuestas y compromisos políticos en Honduras.
+                            La plataforma organiza la evidencia disponible. El juicio es de cada persona.
+                        </p>
+                    </div>
+
+                    <div class="col-lg-2 col-md-4 col-6 gc-mb">
+                        <h4>Explorar</h4>
+                        <ul>
+                            <li><a href="<%= ResolveUrl("~/Campanas") %>">Campañas electorales</a></li>
+                            <li><a href="<%= ResolveUrl("~/Candidatos") %>">Candidatos</a></li>
+                            <li><a href="<%= ResolveUrl("~/Propuestas") %>">Propuestas y proyectos</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="col-lg-2 col-md-4 col-6 gc-mb">
+                        <h4>Candidatos</h4>
+                        <ul>
+                            <li><a href="<%= ResolveUrl("~/Registro?tipo=candidato") %>">Registrar candidatura</a></li>
+                            <li><a href="<%= ResolveUrl("~/Acceso") %>">Acceder al panel</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="col-lg-4 col-md-4 gc-mb">
+                        <h4>Sobre la plataforma</h4>
+                        <p class="gc-muted gc-small" style="margin: 0;">
+                            CumpleHN no promueve ni ataca candidatos ni partidos políticos. El contenido de cada
+                            perfil es declarado por la propia candidatura y se identifica como tal hasta que
+                            exista una fuente verificable que lo respalde.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="gc-footer__bar">
+                    <span>&copy; <%: DateTime.Now.Year %> CumpleHN</span>
+                    <span></span>
+                </div>
+            </div>
+        </footer>
+
+    </form>
+
+    <script>
+        (function () {
+            var b = document.getElementById('gcBurger'),
+                n = document.getElementById('gcNav');
+
+            if (!b || !n) return;
+
+            b.addEventListener('click', function () {
+                var abierto = n.classList.toggle('is-open');
+                b.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+                b.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
+            });
+        })();
+    </script>
+</body>
+</html>

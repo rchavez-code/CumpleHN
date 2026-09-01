@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Project xmlns="http://schemas.microsoft.com/project">
+  <SaveVersion>14</SaveVersion>
+  <Name>Cronograma_Fase1_CumpleHN.xml</Name>
+  <Title>Cronograma Fase 1 - Proyecto CumpleHN</Title>
+  <Author>Roy Chavez</Author>
+  <ScheduleFromStart>1</ScheduleFromStart>
+  <StartDate>2026-05-01T08:00:00</StartDate>
+  <FinishDate>2026-06-30T17:00:00</FinishDate>
+  <CalendarUID>1</CalendarUID>
+  <DefaultStartTime>08:00:00</DefaultStartTime>
+  <DefaultFinishTime>17:00:00</DefaultFinishTime>
+  <MinutesPerDay>480</MinutesPerDay>
+  <MinutesPerWeek>2400</MinutesPerWeek>
+  <DaysPerMonth>20</DaysPerMonth>
+  <WeekStartDay>1</WeekStartDay>
+  <Calendars>
+    <Calendar>
+      <UID>1</UID>
+      <Name>Standard</Name>
+      <IsBaseCalendar>1</IsBaseCalendar>
+      <BaseCalendarUID>-1</BaseCalendarUID>
+      <WeekDays>
+        <WeekDay><DayType>1</DayType><DayWorking>0</DayWorking></WeekDay>
+        <WeekDay><DayType>2</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>08:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay>
+        <WeekDay><DayType>3</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>08:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay>
+        <WeekDay><DayType>4</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>08:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay>
+        <WeekDay><DayType>5</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>08:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay>
+        <WeekDay><DayType>6</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>08:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay>
+        <WeekDay><DayType>7</DayType><DayWorking>0</DayWorking></WeekDay>
+      </WeekDays>
+    </Calendar>
+  </Calendars>
+  <Tasks>
+    <Task>
+      <UID>0</UID><ID>0</ID><Name>Fase 1 - Investigacion y documentacion</Name>
+      <Active>1</Active><Manual>0</Manual><OutlineLevel>0</OutlineLevel>
+      <Summary>1</Summary><Start>2026-05-01T08:00:00</Start><Finish>2026-06-30T17:00:00</Finish>
+    </Task>
+    <Task>
+      <UID>1</UID><ID>1</ID><Name>Planteamiento del problema y antecedentes</Name>
+      <Active>1</Active><Manual>1</Manual><OutlineLevel>1</OutlineLevel>
+      <Milestone>0</Milestone><Start>2026-05-01T08:00:00</Start><Finish>2026-05-15T17:00:00</Finish>
+      <Duration>PT88H0M0S</Duration><DurationFormat>7</DurationFormat>
+    </Task>
+    <Task>
+      <UID>2</UID><ID>2</ID><Name>Objetivos y justificacion</Name>
+      <Active>1</Active><Manual>1</Manual><OutlineLevel>1</OutlineLevel>
+      <Milestone>0</Milestone><Start>2026-05-11T08:00:00</Start><Finish>2026-05-15T17:00:00</Finish>
+      <Duration>PT40H0M0S</Duration><DurationFormat>7</DurationFormat>
+    </Task>
+    <Task>
+      <UID>3</UID><ID>3</ID><Name>Marco teorico</Name>
+      <Active>1</Active><Manual>1</Manual><OutlineLevel>1</OutlineLevel>
+      <Milestone>0</Milestone><Start>2026-05-11T08:00:00</Start><Finish>2026-05-29T17:00:00</Finish>
+      <Duration>PT120H0M0S</Duration><DurationFormat>7</DurationFormat>
+    </Task>
+    <Task>
+      <UID>4</UID><ID>4</ID><Name>Diseno metodologico (Capitulo V)</Name>
+      <Active>1</Active><Manual>1</Manual><OutlineLevel>1</OutlineLevel>
+      <Milestone>0</Milestone><Start>2026-05-25T08:00:00</Start><Finish>2026-06-05T17:00:00</Finish>
+      <Duration>PT80H0M0S</Duration><DurationFormat>7</DurationFormat>
+    </Task>
+    <Task>
+      <UID>5</UID><ID>5</ID><Name>Elaboracion y validacion del cuestionario</Name>
+      <Active>1</Active><Manual>1</Manual><OutlineLevel>1</OutlineLevel>
+      <Milestone>0</Milestone><Start>2026-06-01T08:00:00</Start><Finish>2026-06-05T17:00:00</Finish>
+      <Duration>PT40H0M0S</Duration><DurationFormat>7</DurationFormat>
+    </Task>
+    <Task>
+      <UID>6</UID><ID>6</ID><Name>Aplicacion de la encuesta (recoleccion de datos)</Name>
+      <Active>1</Active><Manual>1</Manual><OutlineLevel>1</OutlineLevel>
+      <Milestone>0</Milestone><Start>2026-06-08T08:00:00</Start><Finish>2026-06-12T17:00:00</Finish>
+      <Duration>PT40H0M0S</Duration><DurationFormat>7</DurationFormat>
+    </Task>
+    <Task>
+      <UID>7</UID><ID>7</ID><Name>Tabulacion y analisis de resultados</Name>
+      <Active>1</Active><Manual>1</Manual><OutlineLevel>1</OutlineLevel>
+      <Milestone>0</Milestone><Start>2026-06-15T08:00:00</Start><Finish>2026-06-19T17:00:00</Finish>
+      <Duration>PT40H0M0S</Duration><DurationFormat>7</DurationFormat>
+    </Task>
+    <Task>
+      <UID>8</UID><ID>8</ID><Name>Conclusiones y recomendaciones</Name>
+      <Active>1</Active><Manual>1</Manual><OutlineLevel>1</OutlineLevel>
+      <Milestone>0</Milestone><Start>2026-06-22T08:00:00</Start><Finish>2026-06-26T17:00:00</Finish>
+      <Duration>PT40H0M0S</Duration><DurationFormat>7</DurationFormat>
+    </Task>
+    <Task>
+      <UID>9</UID><ID>9</ID><Name>Revision, correcciones y entrega del informe</Name>
+      <Active>1</Active><Manual>1</Manual><OutlineLevel>1</OutlineLevel>
+      <Milestone>0</Milestone><Start>2026-06-29T08:00:00</Start><Finish>2026-06-30T17:00:00</Finish>
+      <Duration>PT16H0M0S</Duration><DurationFormat>7</DurationFormat>
+    </Task>
+  </Tasks>
+</Project>

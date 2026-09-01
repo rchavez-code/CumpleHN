@@ -1,0 +1,24 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cumplehn-frontend",
+      "runtimeExecutable": "C:\\Program Files\\IIS Express\\iisexpress.exe",
+      "runtimeArgs": [
+        "/path:C:\\Users\\roych\\OneDrive\\Desktop\\Proyecto Graduación\\CW\\Proyecto de graduación\\Plataforma Web\\frontend\\frontend",
+        "/port:5080"
+      ],
+      "port": 5080
+    },
+    {
+      "name": "cumplehn-backend",
+      "runtimeExecutable": "C:\\Program Files\\IIS Express\\iisexpress.exe",
+      "runtimeArgs": [
+        "/config:C:\\Users\\roych\\OneDrive\\Desktop\\Proyecto Graduación\\CW\\Proyecto de graduación\\Plataforma Web\\backend\\.vs\\backend.slnx\\config\\applicationhost.config",
+        "/site:backend"
+      ],
+      "port": 44359,
+      "url": "https://localhost:44359"
+    }
+  ]
+}

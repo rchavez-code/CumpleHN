@@ -1,0 +1,38 @@
+# =============================================================
+#  CumpleHN — archivos que NO se versionan
+#
+#  Todo lo de acá se regenera solo. Son 540 de los 759 archivos
+#  de la carpeta y 172 de los 182 MB: guardarlos no aportaría
+#  nada y volvería el historial inmanejable.
+# =============================================================
+
+# --- Resultado de compilar -----------------------------------
+[Bb]in/
+[Oo]bj/
+
+# --- Visual Studio -------------------------------------------
+.vs/
+*.suo
+*.user
+*.userprefs
+
+# --- NuGet ---------------------------------------------------
+#  Se reconstruye desde los packages.config, que sí se versionan.
+packages/
+*.nupkg
+
+# --- Configuración local de Claude Code ----------------------
+#  launch.json sí se versiona: describe cómo levantar el sitio.
+#  settings.local.json es de esta máquina y no de nadie más.
+.claude/settings.local.json
+
+# --- Basura de macOS -----------------------------------------
+.DS_Store
+._*
+
+# --- Archivos de bloqueo de Office ---------------------------
+~$*
+
+# --- Registros y temporales ----------------------------------
+*.log
+*.tmp

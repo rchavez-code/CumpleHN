@@ -1,0 +1,868 @@
+/* ==========================================================================
+   CumpleHN — Tablero analítico
+   --------------------------------------------------------------------------
+   Se carga solo en Analitica.aspx, después de cumplehn.css, del que hereda
+   todos los tokens. Vive aparte porque son ~700 líneas que ninguna otra
+   página necesita descargar.
+
+   REGLAS DE LOS GRÁFICOS (las mismas que documenta el CLAUDE.md del
+   proyecto, aplicadas a mano porque no hay node para correr el validador
+   de paleta):
+
+   1. Una sola escala por gráfico. Nunca dos ejes. Para comparar el interés
+      de la encuesta (porcentaje) con las propuestas (conteo), el conteo se
+      convierte a porcentaje del total.
+
+   2. Cada valor se etiqueta de forma directa y además existe la tabla
+      equivalente en un <details>. Ningún dato depende solo del tooltip.
+
+   3. El color codifica el trabajo del dato, no la marca:
+        magnitud, una serie    -> un solo tono, turquesa
+        identidad, dos series  -> turquesa + ámbar (par frío/cálido, que es
+                                  el par que mejor sobrevive a la ceguera
+                                  al color)
+        estado                 -> verde / ámbar / gris
+        polaridad              -> verde / escarlata
+      Los pares verde/escarlata SIEMPRE llevan etiqueta. Nunca identifican
+      solo por color.
+
+   4. La cifra grande de los KPI usa la sans del cuerpo, no la serif de los
+      títulos: son datos, no titulares.
+
+   5. El valor de cada barra tiene columna propia en la cuadrícula, para que
+      una barra al máximo de la escala no empuje su etiqueta fuera de la
+      pista.
+
+   6. El azul de la bandera viste el encabezado y las pestañas. No codifica
+      ninguna serie: junto al turquesa, los dos azules no se separan bajo
+      deuteranopia.
+   ========================================================================== */
+
+/* ------------------------------------------------------ 1. Encabezado */
+
+.gc-tablero {
+    background: linear-gradient(180deg, var(--gc-azul) 0%, var(--gc-azul-d) 100%);
+    color: #fff;
+    padding: 30px 0 26px;
+}
+
+.gc-tablero h1 { color: #fff; margin-bottom: .35em; }
+
+.gc-tablero__lead {
+    color: rgba(255, 255, 255, .82);
+    font-size: 1.02rem;
+    max-width: 74ch;
+    margin: 0;
+}
+
+.gc-tablero .gc-crumbs,
+.gc-tablero .gc-crumbs a { color: rgba(255, 255, 255, .72); }
+.gc-tablero .gc-crumbs a:hover { color: #fff; }
+
+/* Franja de estado: hasta cuándo llegan los datos y de dónde salen. */
+.gc-tablero__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 20px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, .18);
+    font-size: .82rem;
+    color: rgba(255, 255, 255, .82);
+}
+
+.gc-tablero__meta strong { color: #fff; font-weight: 600; }
+
+/* Punto que indica que la cifra viene de la base y no de una copia. */
+.gc-vivo { display: inline-flex; align-items: center; gap: 7px; }
+
+.gc-vivo__p {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #7fd6a4;
+    box-shadow: 0 0 0 3px rgba(127, 214, 164, .25);
+    flex: 0 0 auto;
+}
+
+.gc-tablero .gc-btn--claro {
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .3);
+    color: #fff;
+    margin-left: auto;
+}
+
+.gc-tablero .gc-btn--claro:hover { background: rgba(255, 255, 255, .2); }
+
+/* --------------------------------------------------------- 2. Filtros */
+
+.gc-filtros {
+    background: var(--gc-surface);
+    border: 1px solid var(--gc-line);
+    border-radius: var(--gc-r);
+    box-shadow: var(--gc-sh);
+    padding: 15px 17px;
+    margin-bottom: var(--gc-gap);
+}
+
+.gc-filtros__rejilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+    gap: 12px 14px;
+    align-items: end;
+}
+
+.gc-filtros__c { min-width: 0; }
+
+.gc-filtros__c > label {
+    display: block;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--gc-muted);
+    margin-bottom: 5px;
+}
+
+.gc-filtros__c .gc-select,
+.gc-filtros__c .gc-input { width: 100%; }
+
+.gc-filtros__pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    margin-top: 14px;
+    padding-top: 13px;
+    border-top: 1px solid var(--gc-line-2);
+    font-size: .82rem;
+}
+
+.gc-filtros__pie .gc-limpiar { margin-left: auto; }
+
+/* Ficha de un filtro activo. Hace visible qué está recortando la vista. */
+.gc-ficha {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: var(--gc-r-pill);
+    background: var(--gc-azul-l);
+    border: 1px solid #d8e2f2;
+    color: var(--gc-azul-d);
+    font-size: .78rem;
+}
+
+.gc-ficha b { font-weight: 600; }
+
+/* -------------------------------------------- 3. Estados de la página */
+
+.gc-estado {
+    background: var(--gc-surface);
+    border: 1px solid var(--gc-line);
+    border-radius: var(--gc-r);
+    padding: 44px 26px;
+    text-align: center;
+    margin-bottom: var(--gc-gap);
+}
+
+.gc-estado__ico {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin-bottom: 14px;
+}
+
+.gc-estado--vacio .gc-estado__ico { background: var(--gc-line-2); color: var(--gc-muted); }
+.gc-estado--error .gc-estado__ico { background: var(--gc-escarlata-l); color: var(--gc-escarlata); }
+
+.gc-estado h3 { margin-bottom: .4em; }
+.gc-estado p { color: var(--gc-muted); max-width: 56ch; margin: 0 auto 16px; }
+
+/* Velo de carga. Se enciende al enviar el formulario de filtros, de modo
+   que la espera del postback tenga una respuesta visible. */
+.gc-cargando {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 24vh;
+    background: rgba(246, 247, 248, .74);
+    backdrop-filter: blur(1.5px);
+}
+
+body.gc-esperando .gc-cargando { display: flex; }
+
+.gc-cargando__caja {
+    background: var(--gc-surface);
+    border: 1px solid var(--gc-line);
+    border-radius: var(--gc-r);
+    box-shadow: var(--gc-sh-2);
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: .9rem;
+}
+
+.gc-spin {
+    width: 17px;
+    height: 17px;
+    border: 2px solid var(--gc-line);
+    border-top-color: var(--gc-azul);
+    border-radius: 50%;
+    animation: gc-giro .7s linear infinite;
+    flex: 0 0 auto;
+}
+
+@keyframes gc-giro { to { transform: rotate(360deg); } }
+
+/* Esqueleto: mientras el velo está encendido el contenido se atenúa en vez
+   de desaparecer, para que la página no salte de altura. */
+body.gc-esperando .gc-cuerpo { opacity: .45; pointer-events: none; }
+
+/* ------------------------------------------------------------ 4. KPIs */
+
+.gc-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
+    gap: 1px;
+    background: var(--gc-line-2);
+    border: 1px solid var(--gc-line);
+    border-radius: var(--gc-r);
+    overflow: hidden;
+    margin-bottom: var(--gc-gap);
+}
+
+.gc-kpi {
+    background: var(--gc-surface);
+    padding: 16px 18px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    border-top: 3px solid transparent;
+}
+
+.gc-kpi.gc-t--ok { border-top-color: var(--gc-verde); }
+.gc-kpi.gc-t--at { border-top-color: var(--gc-ambar); }
+.gc-kpi.gc-t--nu { border-top-color: var(--gc-line); }
+
+.gc-kpi__t {
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--gc-muted);
+}
+
+/* Regla 4: la cifra usa la sans del cuerpo, no la serif de los títulos. */
+.gc-kpi__n {
+    font-family: var(--gc-sans);
+    font-size: 1.72rem;
+    font-weight: 650;
+    line-height: 1.1;
+    letter-spacing: -.02em;
+    color: var(--gc-ink);
+    font-variant-numeric: tabular-nums;
+    margin-top: 4px;
+}
+
+.gc-kpi__c { font-size: .79rem; color: var(--gc-ink-2); }
+.gc-kpi__l { font-size: .78rem; color: var(--gc-muted); margin-top: 5px; }
+
+/* Medidor de la proporción sobre el propio total. Sustituye a la flecha de
+   «vs. período anterior» que los datos de esta etapa no sostienen. */
+.gc-kpi__m {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--gc-line-2);
+    overflow: hidden;
+    margin-top: 9px;
+}
+
+.gc-kpi__m span { display: block; height: 100%; border-radius: 2px; }
+.gc-kpi.gc-t--ok .gc-kpi__m span { background: var(--gc-verde); }
+.gc-kpi.gc-t--at .gc-kpi__m span { background: var(--gc-ambar); }
+.gc-kpi.gc-t--nu .gc-kpi__m span { background: var(--gc-turquesa); }
+
+/* ------------------------------------------------------ 5. Hallazgos */
+
+.gc-halls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
+    gap: 13px;
+}
+
+.gc-hall {
+    background: var(--gc-surface);
+    border: 1px solid var(--gc-line);
+    border-left: 3px solid var(--gc-line);
+    border-radius: var(--gc-r-sm);
+    padding: 14px 16px;
+}
+
+.gc-hall.gc-h--ok { border-left-color: var(--gc-verde); }
+.gc-hall.gc-h--at { border-left-color: var(--gc-ambar); }
+.gc-hall.gc-h--nu { border-left-color: var(--gc-turquesa); }
+
+.gc-hall__e {
+    display: inline-block;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--gc-muted);
+    margin-bottom: 6px;
+}
+
+.gc-hall__t {
+    font-family: var(--gc-sans);
+    font-size: .95rem;
+    font-weight: 650;
+    line-height: 1.35;
+    color: var(--gc-ink);
+    margin: 0 0 6px;
+}
+
+.gc-hall__x { font-size: .84rem; color: var(--gc-ink-2); line-height: 1.55; margin: 0; }
+
+/* -------------------------------------------------------- 6. Pestañas */
+
+/*  Control segmentado, no una fila de títulos.
+
+    Con solo un subrayado bajo la pestaña activa, las otras tres quedaban
+    como texto gris corrido —«HallazgosOferta programáticaParticipación»— y
+    nada indicaba que fueran opciones que se pueden cambiar. Encerrarlas en
+    una pista con fondo propio y darle a la activa una superficie elevada es
+    el patrón que se lee como interruptor sin necesidad de explicarlo.        */
+
+.gc-pest {
+    display: flex;
+    gap: 4px;
+    padding: 5px;
+    background: var(--gc-line-2);
+    border: 1px solid var(--gc-line);
+    border-radius: var(--gc-r);
+    margin-bottom: var(--gc-gap);
+    overflow-x: auto;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+}
+
+.gc-pest__b {
+    flex: 0 0 auto;
+    padding: 9px 17px;
+    border: 1px solid transparent;   /* reservado: la activa lo pinta y así no salta */
+    border-radius: var(--gc-r-sm);
+    background: transparent;
+    color: var(--gc-ink-2);
+    font-family: var(--gc-sans);
+    font-size: .87rem;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .15s ease, color .15s ease;
+}
+
+.gc-pest__b:hover {
+    background: rgba(255, 255, 255, .6);
+    color: var(--gc-ink);
+    text-decoration: none;
+}
+
+.gc-pest__b.is-activa {
+    background: var(--gc-surface);
+    border-color: var(--gc-line);
+    color: var(--gc-azul);
+    box-shadow: var(--gc-sh);
+    cursor: default;
+}
+
+/* La pestaña activa lleva además una marca de color, para que no dependa
+   solo de la elevación —que se pierde en alto contraste o al imprimir. */
+.gc-pest__b.is-activa::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gc-azul);
+    margin-right: 8px;
+    vertical-align: 1px;
+}
+
+.gc-vista[hidden] { display: none; }
+
+/* -------------------------------------------- 7. Tarjeta de gráfico */
+
+.gc-graf { margin-bottom: var(--gc-gap); }
+
+.gc-graf__preg {
+    font-size: .78rem;
+    color: var(--gc-turquesa);
+    font-weight: 600;
+    margin: 0 0 3px;
+}
+
+.gc-graf__nota {
+    font-size: .83rem;
+    color: var(--gc-muted);
+    margin: 0 0 16px;
+    max-width: 78ch;
+}
+
+/* Leyenda. Presente siempre que haya dos o más series. */
+.gc-leyenda { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-bottom: 15px; }
+
+.gc-leyenda__it {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: .8rem;
+    color: var(--gc-ink-2);
+}
+
+.gc-leyenda__m { width: 11px; height: 11px; border-radius: 3px; flex: 0 0 auto; }
+.gc-leyenda__m--a  { background: var(--gc-turquesa); }
+.gc-leyenda__m--b  { background: var(--gc-ambar); }
+.gc-leyenda__m--ok { background: var(--gc-verde); }
+.gc-leyenda__m--rev{ background: var(--gc-ambar); }
+.gc-leyenda__m--dec{ background: var(--gc-faint); }
+.gc-leyenda__m--si { background: var(--gc-verde); }
+.gc-leyenda__m--no { background: var(--gc-escarlata); }
+
+/* -------------------------------------------------- 8. Barras horizontales
+
+   Regla 5: tres columnas de cuadrícula — etiqueta, pista, valor. El valor
+   nunca comparte columna con la barra, así que una barra al 100 % de la
+   escala no lo empuja fuera.                                            */
+
+.gc-bars { display: grid; gap: 13px; }
+
+.gc-bar {
+    display: grid;
+    grid-template-columns: minmax(96px, 168px) 1fr auto;
+    align-items: center;
+    gap: 6px 14px;
+}
+
+.gc-bar__et {
+    font-size: .82rem;
+    color: var(--gc-ink-2);
+    line-height: 1.3;
+    min-width: 0;
+}
+
+.gc-bar__et small { display: block; color: var(--gc-faint); font-size: .73rem; }
+
+/* Pista con rejilla recesiva de un solo tono, cada 25 %. */
+.gc-bar__p {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+    padding: 2px 0;
+    background-image: repeating-linear-gradient(
+        to right, var(--gc-line-2) 0 1px, transparent 1px 25%);
+}
+
+.gc-bar__b {
+    height: 11px;
+    border-radius: 0 4px 4px 0;
+    min-width: 2px;
+    display: block;
+    transition: width .35s ease;
+}
+
+.gc-bar__b--a { background: var(--gc-turquesa); }
+.gc-bar__b--b { background: var(--gc-ambar); }
+.gc-bar__b--uno { background: var(--gc-turquesa); height: 13px; }
+.gc-bar__b--si { background: var(--gc-verde); }
+.gc-bar__b--no { background: var(--gc-escarlata); }
+
+.gc-bar__v {
+    font-size: .8rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--gc-ink);
+    white-space: nowrap;
+    text-align: right;
+}
+
+.gc-bar__v small { color: var(--gc-muted); }
+
+/* Barra divergente: a favor a la derecha, en contra a la izquierda, desde
+   un eje central. Ambas mitades llevan etiqueta, nunca solo color. */
+.gc-div {
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr;
+    align-items: center;
+    gap: 0;
+    min-width: 0;
+}
+
+.gc-div__i { display: flex; justify-content: flex-end; }
+.gc-div__e { background: var(--gc-line); height: 20px; }
+.gc-div__d { display: flex; justify-content: flex-start; }
+
+.gc-div__b { height: 11px; min-width: 2px; }
+.gc-div__b--no { background: var(--gc-escarlata); border-radius: 4px 0 0 4px; }
+.gc-div__b--si { background: var(--gc-verde); border-radius: 0 4px 4px 0; }
+
+/* ------------------------------------------------ 9. Barra apilada 100 % */
+
+.gc-pila {
+    display: flex;
+    height: 16px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--gc-line-2);
+    gap: 2px;             /* separación de 2 px entre rellenos */
+}
+
+.gc-pila__s { height: 100%; min-width: 0; }
+.gc-pila__s--ok  { background: var(--gc-verde); }
+.gc-pila__s--rev { background: var(--gc-ambar); }
+.gc-pila__s--dec { background: var(--gc-faint); }
+.gc-pila__s--si  { background: var(--gc-verde); }
+.gc-pila__s--no  { background: var(--gc-escarlata); }
+
+.gc-pila-fila { display: grid; gap: 7px; margin-bottom: 17px; }
+.gc-pila-fila:last-child { margin-bottom: 0; }
+
+.gc-pila-fila__c {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: .84rem;
+}
+
+.gc-pila-fila__c b { font-weight: 600; }
+.gc-pila-fila__c span { color: var(--gc-muted); font-size: .79rem; font-variant-numeric: tabular-nums; }
+
+/* -------------------------------------------- 10. Gráficos SVG (línea, dona)
+
+   El SVG se genera en el servidor. Los tooltips son elementos <title>
+   nativos: no necesitan JavaScript y los lee el lector de pantalla.      */
+
+.gc-svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+.gc-svg .gc-eje { stroke: var(--gc-line); stroke-width: 1; }
+.gc-svg .gc-malla { stroke: var(--gc-line-2); stroke-width: 1; }
+
+.gc-svg .gc-txt {
+    font-family: var(--gc-sans);
+    font-size: 10.5px;
+    fill: var(--gc-muted);
+}
+
+.gc-svg .gc-txt--v {
+    fill: var(--gc-ink);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.gc-svg .gc-linea { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.gc-svg .gc-linea--a { stroke: var(--gc-turquesa); }
+.gc-svg .gc-linea--b { stroke: var(--gc-ambar); }
+
+.gc-svg .gc-area--a { fill: var(--gc-turquesa); opacity: .10; }
+
+/* Anillo de superficie de 2 px en las marcas que se solapan. */
+.gc-svg .gc-punto { stroke: var(--gc-surface); stroke-width: 2; }
+.gc-svg .gc-punto--a { fill: var(--gc-turquesa); }
+.gc-svg .gc-punto--b { fill: var(--gc-ambar); }
+
+.gc-svg .gc-dona--si { fill: var(--gc-verde); }
+.gc-svg .gc-dona--no { fill: var(--gc-escarlata); }
+
+.gc-dona-caja { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.gc-dona-caja svg { flex: 0 0 auto; width: 156px; }
+.gc-dona-caja__l { flex: 1 1 190px; min-width: 0; display: grid; gap: 11px; }
+
+.gc-dona-caja__it { display: flex; align-items: baseline; gap: 9px; font-size: .85rem; }
+.gc-dona-caja__it b { font-variant-numeric: tabular-nums; font-weight: 650; }
+.gc-dona-caja__it .gc-leyenda__m { align-self: center; }
+
+/* ------------------------------------------ 11. Mapa esquemático de HN
+
+   Cuadrícula de fichas, una por departamento, colocadas de forma
+   aproximada a su posición en el país. No pretende ser un mapa: dibujar
+   fronteras aproximadas a mano produciría un mapa falso, y lo que el
+   indicador necesita mostrar es cuáles de los 18 tienen cobertura.
+   La intensidad es una rampa de un solo tono, que es lo que corresponde
+   a una magnitud.                                                        */
+
+.gc-mapa {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 6px;
+    max-width: 560px;
+}
+
+.gc-mapa__f {
+    border-radius: var(--gc-r-sm);
+    border: 1px solid var(--gc-line);
+    background: var(--gc-surface-2);
+    padding: 8px 7px;
+    min-height: 62px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-decoration: none;
+}
+
+.gc-mapa__n {
+    font-size: .66rem;
+    line-height: 1.2;
+    color: var(--gc-muted);
+    font-weight: 600;
+}
+
+.gc-mapa__v {
+    font-size: .92rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    color: var(--gc-faint);
+}
+
+/* Rampa secuencial de turquesa. El texto cambia a blanco donde el fondo
+   deja de tener contraste suficiente con la tinta oscura. */
+.gc-mapa__f--n1 { background: #dceaef; border-color: #c6dde4; }
+.gc-mapa__f--n2 { background: #a9cdd8; border-color: #93bfcc; }
+.gc-mapa__f--n3 { background: var(--gc-turquesa); border-color: var(--gc-turquesa); }
+
+.gc-mapa__f--n1 .gc-mapa__n, .gc-mapa__f--n1 .gc-mapa__v { color: var(--gc-ink-2); }
+.gc-mapa__f--n2 .gc-mapa__n, .gc-mapa__f--n2 .gc-mapa__v { color: var(--gc-ink); }
+.gc-mapa__f--n3 .gc-mapa__n { color: rgba(255, 255, 255, .85); }
+.gc-mapa__f--n3 .gc-mapa__v { color: #fff; }
+
+.gc-mapa__f--vacio { border-style: dashed; }
+
+/* Escala del mapa, con el valor de cada paso escrito. */
+.gc-escala { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: .76rem; color: var(--gc-muted); }
+.gc-escala__c { display: flex; gap: 2px; }
+
+.gc-escala__p {
+    width: 26px;
+    height: 11px;
+    border-radius: 2px;
+    border: 1px solid var(--gc-line);
+}
+
+.gc-escala__p--n0 { background: var(--gc-surface-2); border-style: dashed; }
+.gc-escala__p--n1 { background: #dceaef; }
+.gc-escala__p--n2 { background: #a9cdd8; }
+.gc-escala__p--n3 { background: var(--gc-turquesa); }
+
+/* -------------------------------------------------------- 12. Ranking */
+
+.gc-rank { display: grid; gap: 2px; }
+
+.gc-rank__f {
+    display: grid;
+    grid-template-columns: 26px minmax(120px, 1.4fr) repeat(3, minmax(58px, .7fr)) 1.5fr;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--gc-r-sm);
+    font-size: .84rem;
+}
+
+.gc-rank__f:nth-child(odd) { background: var(--gc-surface-2); }
+
+.gc-rank__f--head {
+    background: transparent !important;
+    font-size: .69rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--gc-muted);
+    padding-bottom: 4px;
+}
+
+.gc-rank__pos {
+    font-variant-numeric: tabular-nums;
+    color: var(--gc-faint);
+    font-weight: 650;
+    text-align: right;
+}
+
+.gc-rank__n { min-width: 0; }
+.gc-rank__n b { font-weight: 600; display: block; line-height: 1.3; }
+.gc-rank__n small { color: var(--gc-faint); font-size: .74rem; }
+
+.gc-rank__num { font-variant-numeric: tabular-nums; text-align: right; }
+
+/* ---------------------------------------------------- 13. Tabla de datos */
+
+.gc-datos { margin-top: 17px; border-top: 1px solid var(--gc-line-2); padding-top: 11px; }
+
+.gc-datos > summary {
+    cursor: pointer;
+    font-size: .8rem;
+    color: var(--gc-turquesa);
+    font-weight: 600;
+    list-style: none;
+    display: inline-block;
+}
+
+.gc-datos > summary::-webkit-details-marker { display: none; }
+.gc-datos > summary::before { content: "▸ "; }
+.gc-datos[open] > summary::before { content: "▾ "; }
+.gc-datos > summary:hover { text-decoration: underline; }
+.gc-datos .gc-table { margin-top: 11px; }
+.gc-datos .gc-table td { font-variant-numeric: tabular-nums; }
+
+/* Lectura del gráfico. Es la frase que convierte el dibujo en conclusión. */
+.gc-lectura {
+    margin: 16px 0 0;
+    padding: 11px 14px;
+    background: var(--gc-surface-2);
+    border-left: 3px solid var(--gc-turquesa);
+    border-radius: 0 var(--gc-r-sm) var(--gc-r-sm) 0;
+    font-size: .85rem;
+    color: var(--gc-ink-2);
+    line-height: 1.55;
+}
+
+/* ------------------------------------------------ 14. Asistente (maqueta) */
+
+.gc-ia {
+    border-radius: var(--gc-r);
+    overflow: hidden;
+    border: 1px solid #16303a;
+    background: var(--gc-surface);
+}
+
+.gc-ia__cabeza {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 13px 18px;
+    background: #16303a;
+}
+
+.gc-ia__cabeza h3 { color: #fff; margin: 0; font-size: 1.04rem; }
+
+.gc-ia__proto {
+    margin-left: auto;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #16303a;
+    background: var(--gc-ambar);
+    border-radius: var(--gc-r-pill);
+    padding: 3px 10px;
+}
+
+.gc-ia__cuerpo { padding: 18px; }
+.gc-ia__sug { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+
+.gc-ia__sug .gc-chip {
+    white-space: normal;
+    text-align: left;
+    max-width: 100%;
+    line-height: 1.4;
+    padding: 6px 12px;
+}
+
+.gc-msg { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 15px; }
+.gc-msg--yo { flex-direction: row-reverse; }
+
+.gc-msg__b {
+    max-width: 78%;
+    padding: 11px 15px;
+    border-radius: var(--gc-r);
+    font-size: .9rem;
+    line-height: 1.55;
+}
+
+.gc-msg--yo .gc-msg__b {
+    background: var(--gc-turquesa-l);
+    border: 1px solid #d7e8ed;
+    color: var(--gc-ink);
+}
+
+.gc-msg--ia .gc-msg__b { background: var(--gc-surface-2); border: 1px solid var(--gc-line); }
+
+.gc-msg__b p { margin: 0 0 .7em; }
+.gc-msg__b p:last-child { margin-bottom: 0; }
+
+.gc-msg__ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: .72rem;
+    font-weight: 700;
+}
+
+.gc-msg--ia .gc-msg__ico { background: #16303a; color: #fff; }
+
+.gc-msg--yo .gc-msg__ico {
+    background: var(--gc-surface-2);
+    border: 1px solid var(--gc-line);
+    color: var(--gc-ink-2);
+}
+
+/* Fuentes de la respuesta. Es el requisito que fijó la encuesta: el 77.4 %
+   condicionó su confianza a que estén visibles. */
+.gc-fuentes { margin-top: 12px; padding-top: 11px; border-top: 1px solid var(--gc-line); }
+
+.gc-fuentes__t {
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--gc-muted);
+    margin-bottom: 8px;
+}
+
+.gc-fuentes ol { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: .82rem; }
+
+/* ----------------------------------------------------- 15. Responsive
+
+   En pantalla angosta la etiqueta se sube encima de su pista, el ranking
+   deja de ser cuadrícula y el mapa baja a tres columnas. Ningún bloque
+   provoca desplazamiento horizontal de la página: las tablas anchas
+   desplazan dentro de su propio contenedor.                              */
+
+@media (max-width: 991px) {
+    .gc-rank__f { grid-template-columns: 24px minmax(110px, 1.3fr) repeat(3, minmax(48px, .6fr)); }
+    .gc-rank__f > .gc-rank__saldo { display: none; }
+}
+
+@media (max-width: 767px) {
+    .gc-tablero { padding: 24px 0 22px; }
+    .gc-tablero .gc-btn--claro { margin-left: 0; }
+
+    /* Las cuatro pestañas no caben: la pista desplaza en horizontal dentro de
+       sí misma, con las esquinas rectas para que se note que sigue. */
+    .gc-pest__b { padding: 8px 13px; font-size: .83rem; }
+    .gc-pest__b.is-activa::before { margin-right: 6px; }
+
+    .gc-bar { grid-template-columns: 1fr auto; gap: 4px 10px; }
+    .gc-bar__et { grid-column: 1 / -1; }
+
+    .gc-mapa { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .gc-msg__b { max-width: 100%; }
+
+    .gc-rank__f { grid-template-columns: 22px 1fr repeat(2, minmax(44px, auto)); font-size: .8rem; }
+    .gc-rank__f > .gc-rank__coment { display: none; }
+
+    .gc-dona-caja { gap: 16px; }
+    .gc-dona-caja svg { width: 128px; }
+}
