@@ -16,6 +16,90 @@ namespace backend.Modelos
         public string mensaje { get; set; }
     }
 
+
+    /// <summary>
+    /// Resultado de un guardado, con el código del registro afectado. En un
+    /// alta es el código recién creado, que la página necesita para encadenar
+    /// el siguiente paso — registrar una candidatura y crearle la cuenta sin
+    /// tener que volver a buscarla.
+    /// </summary>
+    public class RespuestaGuardado
+    {
+        public bool ok { get; set; }
+        public string mensaje { get; set; }
+        public int codigo { get; set; }
+    }
+
+    /// <summary>
+    /// Partido político visto desde la administración: incluye los
+    /// desactivados y cuenta sus candidaturas activas.
+    /// </summary>
+    public class PartidoAdmin
+    {
+        public int codigoPartido { get; set; }
+        public string slug { get; set; }
+        public string nombre { get; set; }
+        public string siglas { get; set; }
+        public string descripcion { get; set; }
+        public bool activo { get; set; }
+        public int candidaturas { get; set; }
+    }
+
+    /// <summary>
+    /// Campaña electoral vista desde la administración.
+    /// </summary>
+    public class CampanaAdmin
+    {
+        public int codigoCampana { get; set; }
+        public string slug { get; set; }
+        public string nombre { get; set; }
+        public string resumen { get; set; }
+        public string descripcion { get; set; }
+        public string alcance { get; set; }
+        public DateTime fechaInicio { get; set; }
+        public DateTime fechaEleccion { get; set; }
+        public string estado { get; set; }
+        public bool esActual { get; set; }
+        public int candidaturas { get; set; }
+        public int propuestas { get; set; }
+    }
+
+    /// <summary>
+    /// Candidatura vista desde la administración. El campo login queda vacío
+    /// cuando todavía no tiene cuenta de acceso: sin cuenta, la candidatura no
+    /// puede administrar su propio perfil.
+    /// </summary>
+    public class CandidatoAdmin
+    {
+        public int codigoCandidato { get; set; }
+        public string slug { get; set; }
+        public string nombres { get; set; }
+        public string apellidos { get; set; }
+        public string nombreCompleto { get; set; }
+
+        public int codigoCampana { get; set; }
+        public string campanaSlug { get; set; }
+        public string campana { get; set; }
+
+        public int codigoPartido { get; set; }
+        public string partido { get; set; }
+
+        public int codigoCargo { get; set; }
+        public string cargo { get; set; }
+
+        public int codigoDepartamento { get; set; }
+        public string departamento { get; set; }
+        public string municipio { get; set; }
+        public string titular { get; set; }
+
+        public string verificacion { get; set; }
+        public bool activo { get; set; }
+        public DateTime fechaRegistro { get; set; }
+
+        public string login { get; set; }
+        public int propuestas { get; set; }
+    }
+
     /// <summary>
     /// Una fila de la bandeja de verificación. Puede ser una candidatura, una
     /// propuesta o una publicación: los tres tipos que llevan nivel de

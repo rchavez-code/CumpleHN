@@ -69,7 +69,7 @@ Tres soluciones `.slnx` independientes:
 
 - `Plataforma Web/frontend/` → `frontend.csproj`. IIS Express en el puerto 5080.
 - `Plataforma Web/backend/` → `backend.csproj`. Vacío por ahora, ya referencia `System.Web.Services`.
-- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`, `09_administracion`.
+- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`, `09_administracion`, `10_catalogos_admin`.
 
 Los scripts están en UTF-8 **sin BOM**, así que por línea de comandos hay que pasarle la página de códigos a sqlcmd o las tildes entran corruptas:
 
@@ -247,13 +247,26 @@ La bandeja de verificación es **una sola cola** con candidaturas, propuestas y 
 
 **Cuidado con el ciclo de vida en las páginas con panel de decisión.** `Page_Load` corre **antes** que el evento del botón. Preseleccionar ahí el valor de un desplegable pisa lo que la persona acaba de elegir, y se guarda siempre el valor anterior. Pasó en `Verificacion.aspx`: el nivel se preselecciona solo cuando `!IsPostBack` o al elegir otro contenido, nunca en el postback que guarda.
 
+### Catálogos administrados
+
+Alta y edición de partidos, campañas y candidaturas, más la creación de la cuenta de acceso de una candidatura (`10_catalogos_admin.sql`). Mismas reglas del script 09: `fnEsAdministrador` en cada escritura, bitácora en cada acción, y una fila con `ok` y `mensaje` de vuelta.
+
+**Los slugs los genera `fnSlug`, y solo al dar de alta.** Un slug es la dirección pública de la ficha: regenerarlo al editar rompería todo enlace ya compartido. Además los slugs existentes no siempre coinciden con lo que la función derivaría del nombre — la campaña «Elecciones Generales 2029» tiene el slug `generales-2029` —, así que corregir un nombre mal escrito mudaría la ficha de dirección. Los tres procedimientos de guardado comprueban la unicidad del slug **solo en el alta**.
+
+**Nada se borra.** `Partidos` y `Candidatos` se desactivan con su columna `activo`, y las campañas se cierran con su `estado`. Un partido con candidaturas activas no se puede desactivar: escondería de la consulta pública a gente que sí se presentó por él. Al retirar una candidatura, **su cuenta de acceso se desactiva con ella** — una candidatura retirada que todavía puede publicar sería una puerta abierta sin ficha detrás.
+
+**`Candidatos` conserva las columnas de texto `partido` y `partidoSiglas` junto a `codigoPartido`.** Están desnormalizadas desde antes y las consultas del Web Service las leen. `spAdminGuardarCandidato` las sincroniza desde `Partidos` en la misma operación, y `spAdminGuardarPartido` las actualiza en todas sus candidaturas al renombrarse. Como esos procedimientos son los únicos que escriben, no pueden quedar en desacuerdo.
+
+Las contraseñas de las cuentas nuevas se cifran con `HASHBYTES('SHA2_256', CONVERT(VARCHAR(200), @clave))` en hexadecimal minúscula, que produce exactamente el mismo hash que `EncriptarSHA256` del backend y que el script de datos demo. Está verificado con un acceso real. La contraseña no aparece en la respuesta ni en la bitácora: quien la crea es quien la entrega.
+
+**`SET QUOTED_IDENTIFIER ON` al inicio de los scripts 09 y 10.** Un procedimiento guarda para siempre el valor que esa opción tenía al crearse, y **sqlcmd la trae apagada** (a diferencia de SSMS). Con la opción apagada, cualquier escritura sobre una tabla con índice filtrado falla con el error 1934 — `Campanas` tiene `UQ_Campanas_unicaActual`, el índice que garantiza una sola campaña destacada. Sin esa línea, los procedimientos compilan bien y fallan solo al ejecutarse.
+
 ### Pendiente
 
-Alta de usuarios desde el registro, guardado del perfil y de los proyectos (los formularios ya validan del lado del servidor pero todavía no persisten), y conectar el asistente a la API de un modelo de lenguaje.
+Alta de cuentas ciudadanas desde el registro público (las de candidatura ya se crean desde el área de administración), guardado del perfil y de los proyectos desde el panel del candidato (los formularios ya validan del lado del servidor pero todavía no persisten), y conectar el asistente a la API de un modelo de lenguaje.
 
-Las facultades del administrador se construyen por etapas, y cada una necesita las cuatro capas: procedimiento almacenado, método en el Web Service, sección en `Admin/` y registro en bitácora. Las etapas 1 (roles, áreas separadas y control de acceso) y 2 (verificación y moderación) están hechas. Faltan:
+Las facultades del administrador se construyen por etapas, y cada una necesita las cuatro capas: procedimiento almacenado, método en el Web Service, sección en `Admin/` y registro en bitácora. Las etapas 1 (roles, áreas separadas y control de acceso), 2 (verificación y moderación) y 3 (partidos, campañas, candidaturas y sus cuentas) están hechas. Falta:
 
-- **Etapa 3** — alta y edición de partidos, campañas y candidatos con su cuenta.
 - **Etapa 4** — habilitar o deshabilitar módulos de la plataforma. Necesita una tabla `Modulos`, hoy no hay dónde guardar ese estado.
 
 Mientras una sección no exista, aparece **deshabilitada** en el menú de `Admin/` en lugar de mostrar una pantalla que no guarda.

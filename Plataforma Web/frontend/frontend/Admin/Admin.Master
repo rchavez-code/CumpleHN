@@ -61,9 +61,9 @@
 
                     <div class="gc-side__lbl">Catálogos</div>
 
-                    <span class="gc-side__link is-soon" aria-disabled="true">Partidos</span>
-                    <span class="gc-side__link is-soon" aria-disabled="true">Campañas</span>
-                    <span class="gc-side__link is-soon" aria-disabled="true">Candidatos</span>
+                    <a class="gc-side__link <%= ClaseNav("Partidos") %>" href="<%= ResolveUrl("~/Admin/Partidos") %>">Partidos</a>
+                    <a class="gc-side__link <%= ClaseNav("Campanas") %>" href="<%= ResolveUrl("~/Admin/Campanas") %>">Campañas</a>
+                    <a class="gc-side__link <%= ClaseNav("Candidatos") %>" href="<%= ResolveUrl("~/Admin/Candidatos") %>">Candidaturas</a>
 
                     <div class="gc-side__lbl">Configuración</div>
 

@@ -792,6 +792,204 @@ namespace frontend.Servicios
             return lista;
         }
 
+
+        // ------------------------------------------------- Catálogos admin
+
+        public IList<PartidoAdmin> ObtenerPartidosAdmin(int codigoUsuario, bool soloActivos)
+        {
+            ws.PartidoAdmin[] datos = Ejecutar(
+                c => c.listarPartidosAdmin(codigoUsuario, soloActivos), new ws.PartidoAdmin[0]);
+
+            List<PartidoAdmin> lista = new List<PartidoAdmin>();
+            if (datos == null) return lista;
+
+            foreach (ws.PartidoAdmin d in datos)
+            {
+                lista.Add(new PartidoAdmin
+                {
+                    Codigo = d.codigoPartido,
+                    Slug = d.slug,
+                    Nombre = d.nombre,
+                    Siglas = d.siglas,
+                    Descripcion = d.descripcion,
+                    Activo = d.activo,
+                    Candidaturas = d.candidaturas
+                });
+            }
+
+            return lista;
+        }
+
+        public ResultadoGuardado GuardarPartido(
+            int codigoUsuario, int codigoPartido, string nombre, string siglas, string descripcion)
+        {
+            ws.RespuestaGuardado d = Ejecutar(
+                c => c.guardarPartido(codigoUsuario, codigoPartido, nombre, siglas, descripcion), null);
+
+            return AGuardado(d);
+        }
+
+        public Resultado CambiarEstadoPartido(
+            int codigoUsuario, int codigoPartido, bool activo, string motivo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.cambiarEstadoPartido(codigoUsuario, codigoPartido, activo, motivo), null);
+
+            return ARespuesta(d);
+        }
+
+        public IList<CampanaAdmin> ObtenerCampanasAdmin(int codigoUsuario)
+        {
+            ws.CampanaAdmin[] datos = Ejecutar(
+                c => c.listarCampanasAdmin(codigoUsuario), new ws.CampanaAdmin[0]);
+
+            List<CampanaAdmin> lista = new List<CampanaAdmin>();
+            if (datos == null) return lista;
+
+            foreach (ws.CampanaAdmin d in datos)
+            {
+                lista.Add(new CampanaAdmin
+                {
+                    Codigo = d.codigoCampana,
+                    Slug = d.slug,
+                    Nombre = d.nombre,
+                    Resumen = d.resumen,
+                    Descripcion = d.descripcion,
+                    Alcance = d.alcance,
+                    FechaInicio = d.fechaInicio,
+                    FechaEleccion = d.fechaEleccion,
+                    Estado = d.estado,
+                    EsActual = d.esActual,
+                    Candidaturas = d.candidaturas,
+                    Propuestas = d.propuestas
+                });
+            }
+
+            return lista;
+        }
+
+        public ResultadoGuardado GuardarCampana(
+            int codigoUsuario, int codigoCampana, string nombre, string resumen,
+            string descripcion, string alcance, DateTime fechaInicio, DateTime fechaEleccion,
+            string estado, bool esActual)
+        {
+            ws.RespuestaGuardado d = Ejecutar(
+                c => c.guardarCampana(codigoUsuario, codigoCampana, nombre, resumen, descripcion,
+                                      alcance, fechaInicio, fechaEleccion, estado, esActual), null);
+
+            return AGuardado(d);
+        }
+
+        public IList<CandidatoAdmin> ObtenerCandidatosAdmin(
+            int codigoUsuario, string campanaSlug, bool soloActivos)
+        {
+            ws.CandidatoAdmin[] datos = Ejecutar(
+                c => c.listarCandidatosAdmin(codigoUsuario, campanaSlug, soloActivos),
+                new ws.CandidatoAdmin[0]);
+
+            List<CandidatoAdmin> lista = new List<CandidatoAdmin>();
+            if (datos == null) return lista;
+
+            foreach (ws.CandidatoAdmin d in datos)
+            {
+                lista.Add(new CandidatoAdmin
+                {
+                    Codigo = d.codigoCandidato,
+                    Slug = d.slug,
+                    Nombres = d.nombres,
+                    Apellidos = d.apellidos,
+                    NombreCompleto = d.nombreCompleto,
+                    CodigoCampana = d.codigoCampana,
+                    CampanaSlug = d.campanaSlug,
+                    Campana = d.campana,
+                    CodigoPartido = d.codigoPartido,
+                    Partido = d.partido,
+                    CodigoCargo = d.codigoCargo,
+                    Cargo = d.cargo,
+                    CodigoDepartamento = d.codigoDepartamento,
+                    Departamento = d.departamento,
+                    Municipio = d.municipio,
+                    Titular = d.titular,
+                    Verificacion = d.verificacion,
+                    Activo = d.activo,
+                    FechaRegistro = d.fechaRegistro,
+                    Login = d.login,
+                    Propuestas = d.propuestas
+                });
+            }
+
+            return lista;
+        }
+
+        public ResultadoGuardado GuardarCandidato(
+            int codigoUsuario, int codigoCandidato, string nombres, string apellidos,
+            int codigoCampana, int codigoCargo, int codigoPartido, int codigoDepartamento,
+            string municipio, string titular)
+        {
+            ws.RespuestaGuardado d = Ejecutar(
+                c => c.guardarCandidato(codigoUsuario, codigoCandidato, nombres, apellidos,
+                                        codigoCampana, codigoCargo, codigoPartido,
+                                        codigoDepartamento, municipio, titular), null);
+
+            return AGuardado(d);
+        }
+
+        public Resultado CambiarEstadoCandidato(
+            int codigoUsuario, int codigoCandidato, bool activo, string motivo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.cambiarEstadoCandidato(codigoUsuario, codigoCandidato, activo, motivo), null);
+
+            return ARespuesta(d);
+        }
+
+        public Resultado CrearCuentaCandidato(
+            int codigoUsuario, int codigoCandidato, string login, string correo, string clave)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.crearCuentaCandidato(codigoUsuario, codigoCandidato, login, correo, clave), null);
+
+            return ARespuesta(d);
+        }
+
+        public IList<OpcionCatalogo> ObtenerCargosConCodigo()
+        {
+            return AOpciones(Ejecutar(c => c.listarCargos(), new ws.Catalogo[0]));
+        }
+
+        public IList<OpcionCatalogo> ObtenerDepartamentosConCodigo()
+        {
+            return AOpciones(Ejecutar(c => c.listarDepartamentos(), new ws.Catalogo[0]));
+        }
+
+        private static IList<OpcionCatalogo> AOpciones(ws.Catalogo[] datos)
+        {
+            List<OpcionCatalogo> lista = new List<OpcionCatalogo>();
+            if (datos == null) return lista;
+
+            foreach (ws.Catalogo d in datos)
+            {
+                lista.Add(new OpcionCatalogo { Codigo = d.codigo, Nombre = d.nombre });
+            }
+
+            return lista;
+        }
+
+        private static ResultadoGuardado AGuardado(ws.RespuestaGuardado d)
+        {
+            if (d == null)
+            {
+                return new ResultadoGuardado
+                {
+                    Ok = false,
+                    Mensaje = "No se pudo contactar al servidor. Intentá de nuevo.",
+                    Codigo = 0
+                };
+            }
+
+            return new ResultadoGuardado { Ok = d.ok, Mensaje = d.mensaje, Codigo = d.codigo };
+        }
+
         /// <summary>
         /// Convierte la respuesta del servicio, distinguiendo el rechazo de la
         /// acción (que trae su propio mensaje) de la caída del backend.

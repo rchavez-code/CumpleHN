@@ -212,6 +212,69 @@ namespace frontend.webservices
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarNivelesVerificacion", ReplyAction="*")]
         System.Threading.Tasks.Task<frontend.webservices.Catalogo[]> listarNivelesVerificacionAsync();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarPartidosAdmin", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.PartidoAdmin[] listarPartidosAdmin(int codigoUsuario, bool soloActivos);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarPartidosAdmin", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.PartidoAdmin[]> listarPartidosAdminAsync(int codigoUsuario, bool soloActivos);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarPartido", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaGuardado guardarPartido(int codigoUsuario, int codigoPartido, string nombre, string siglas, string descripcion);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarPartido", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarPartidoAsync(int codigoUsuario, int codigoPartido, string nombre, string siglas, string descripcion);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoPartido", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin cambiarEstadoPartido(int codigoUsuario, int codigoPartido, bool activo, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoPartido", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoPartidoAsync(int codigoUsuario, int codigoPartido, bool activo, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarCampanasAdmin", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.CampanaAdmin[] listarCampanasAdmin(int codigoUsuario);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarCampanasAdmin", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.CampanaAdmin[]> listarCampanasAdminAsync(int codigoUsuario);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarCampana", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaGuardado guardarCampana(int codigoUsuario, int codigoCampana, string nombre, string resumen, string descripcion, string alcance, System.DateTime fechaInicio, System.DateTime fechaEleccion, string estado, bool esActual);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarCampana", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarCampanaAsync(int codigoUsuario, int codigoCampana, string nombre, string resumen, string descripcion, string alcance, System.DateTime fechaInicio, System.DateTime fechaEleccion, string estado, bool esActual);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarCandidatosAdmin", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.CandidatoAdmin[] listarCandidatosAdmin(int codigoUsuario, string campanaSlug, bool soloActivos);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarCandidatosAdmin", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.CandidatoAdmin[]> listarCandidatosAdminAsync(int codigoUsuario, string campanaSlug, bool soloActivos);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarCandidato", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaGuardado guardarCandidato(int codigoUsuario, int codigoCandidato, string nombres, string apellidos, int codigoCampana, int codigoCargo, int codigoPartido, int codigoDepartamento, string municipio, string titular);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarCandidato", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarCandidatoAsync(int codigoUsuario, int codigoCandidato, string nombres, string apellidos, int codigoCampana, int codigoCargo, int codigoPartido, int codigoDepartamento, string municipio, string titular);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoCandidato", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin cambiarEstadoCandidato(int codigoUsuario, int codigoCandidato, bool activo, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoCandidato", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoCandidatoAsync(int codigoUsuario, int codigoCandidato, bool activo, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/crearCuentaCandidato", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin crearCuentaCandidato(int codigoUsuario, int codigoCandidato, string login, string correo, string clave);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/crearCuentaCandidato", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> crearCuentaCandidatoAsync(int codigoUsuario, int codigoCandidato, string login, string correo, string clave);
     }
     
     /// <remarks/>
@@ -390,6 +453,734 @@ namespace frontend.webservices
             set
             {
                 this.candidatoSlugField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class CandidatoAdmin
+    {
+        
+        private int codigoCandidatoField;
+        
+        private string slugField;
+        
+        private string nombresField;
+        
+        private string apellidosField;
+        
+        private string nombreCompletoField;
+        
+        private int codigoCampanaField;
+        
+        private string campanaSlugField;
+        
+        private string campanaField;
+        
+        private int codigoPartidoField;
+        
+        private string partidoField;
+        
+        private int codigoCargoField;
+        
+        private string cargoField;
+        
+        private int codigoDepartamentoField;
+        
+        private string departamentoField;
+        
+        private string municipioField;
+        
+        private string titularField;
+        
+        private string verificacionField;
+        
+        private bool activoField;
+        
+        private System.DateTime fechaRegistroField;
+        
+        private string loginField;
+        
+        private int propuestasField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoCandidato
+        {
+            get
+            {
+                return this.codigoCandidatoField;
+            }
+            set
+            {
+                this.codigoCandidatoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string slug
+        {
+            get
+            {
+                return this.slugField;
+            }
+            set
+            {
+                this.slugField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string nombres
+        {
+            get
+            {
+                return this.nombresField;
+            }
+            set
+            {
+                this.nombresField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public string apellidos
+        {
+            get
+            {
+                return this.apellidosField;
+            }
+            set
+            {
+                this.apellidosField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public string nombreCompleto
+        {
+            get
+            {
+                return this.nombreCompletoField;
+            }
+            set
+            {
+                this.nombreCompletoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        public int codigoCampana
+        {
+            get
+            {
+                return this.codigoCampanaField;
+            }
+            set
+            {
+                this.codigoCampanaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        public string campanaSlug
+        {
+            get
+            {
+                return this.campanaSlugField;
+            }
+            set
+            {
+                this.campanaSlugField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        public string campana
+        {
+            get
+            {
+                return this.campanaField;
+            }
+            set
+            {
+                this.campanaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        public int codigoPartido
+        {
+            get
+            {
+                return this.codigoPartidoField;
+            }
+            set
+            {
+                this.codigoPartidoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
+        public string partido
+        {
+            get
+            {
+                return this.partidoField;
+            }
+            set
+            {
+                this.partidoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
+        public int codigoCargo
+        {
+            get
+            {
+                return this.codigoCargoField;
+            }
+            set
+            {
+                this.codigoCargoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
+        public string cargo
+        {
+            get
+            {
+                return this.cargoField;
+            }
+            set
+            {
+                this.cargoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=12)]
+        public int codigoDepartamento
+        {
+            get
+            {
+                return this.codigoDepartamentoField;
+            }
+            set
+            {
+                this.codigoDepartamentoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=13)]
+        public string departamento
+        {
+            get
+            {
+                return this.departamentoField;
+            }
+            set
+            {
+                this.departamentoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=14)]
+        public string municipio
+        {
+            get
+            {
+                return this.municipioField;
+            }
+            set
+            {
+                this.municipioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=15)]
+        public string titular
+        {
+            get
+            {
+                return this.titularField;
+            }
+            set
+            {
+                this.titularField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=16)]
+        public string verificacion
+        {
+            get
+            {
+                return this.verificacionField;
+            }
+            set
+            {
+                this.verificacionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=17)]
+        public bool activo
+        {
+            get
+            {
+                return this.activoField;
+            }
+            set
+            {
+                this.activoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=18)]
+        public System.DateTime fechaRegistro
+        {
+            get
+            {
+                return this.fechaRegistroField;
+            }
+            set
+            {
+                this.fechaRegistroField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=19)]
+        public string login
+        {
+            get
+            {
+                return this.loginField;
+            }
+            set
+            {
+                this.loginField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=20)]
+        public int propuestas
+        {
+            get
+            {
+                return this.propuestasField;
+            }
+            set
+            {
+                this.propuestasField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class CampanaAdmin
+    {
+        
+        private int codigoCampanaField;
+        
+        private string slugField;
+        
+        private string nombreField;
+        
+        private string resumenField;
+        
+        private string descripcionField;
+        
+        private string alcanceField;
+        
+        private System.DateTime fechaInicioField;
+        
+        private System.DateTime fechaEleccionField;
+        
+        private string estadoField;
+        
+        private bool esActualField;
+        
+        private int candidaturasField;
+        
+        private int propuestasField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoCampana
+        {
+            get
+            {
+                return this.codigoCampanaField;
+            }
+            set
+            {
+                this.codigoCampanaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string slug
+        {
+            get
+            {
+                return this.slugField;
+            }
+            set
+            {
+                this.slugField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string nombre
+        {
+            get
+            {
+                return this.nombreField;
+            }
+            set
+            {
+                this.nombreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public string resumen
+        {
+            get
+            {
+                return this.resumenField;
+            }
+            set
+            {
+                this.resumenField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public string descripcion
+        {
+            get
+            {
+                return this.descripcionField;
+            }
+            set
+            {
+                this.descripcionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        public string alcance
+        {
+            get
+            {
+                return this.alcanceField;
+            }
+            set
+            {
+                this.alcanceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        public System.DateTime fechaInicio
+        {
+            get
+            {
+                return this.fechaInicioField;
+            }
+            set
+            {
+                this.fechaInicioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        public System.DateTime fechaEleccion
+        {
+            get
+            {
+                return this.fechaEleccionField;
+            }
+            set
+            {
+                this.fechaEleccionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        public string estado
+        {
+            get
+            {
+                return this.estadoField;
+            }
+            set
+            {
+                this.estadoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
+        public bool esActual
+        {
+            get
+            {
+                return this.esActualField;
+            }
+            set
+            {
+                this.esActualField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
+        public int candidaturas
+        {
+            get
+            {
+                return this.candidaturasField;
+            }
+            set
+            {
+                this.candidaturasField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
+        public int propuestas
+        {
+            get
+            {
+                return this.propuestasField;
+            }
+            set
+            {
+                this.propuestasField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class RespuestaGuardado
+    {
+        
+        private bool okField;
+        
+        private string mensajeField;
+        
+        private int codigoField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public bool ok
+        {
+            get
+            {
+                return this.okField;
+            }
+            set
+            {
+                this.okField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string mensaje
+        {
+            get
+            {
+                return this.mensajeField;
+            }
+            set
+            {
+                this.mensajeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public int codigo
+        {
+            get
+            {
+                return this.codigoField;
+            }
+            set
+            {
+                this.codigoField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class PartidoAdmin
+    {
+        
+        private int codigoPartidoField;
+        
+        private string slugField;
+        
+        private string nombreField;
+        
+        private string siglasField;
+        
+        private string descripcionField;
+        
+        private bool activoField;
+        
+        private int candidaturasField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoPartido
+        {
+            get
+            {
+                return this.codigoPartidoField;
+            }
+            set
+            {
+                this.codigoPartidoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string slug
+        {
+            get
+            {
+                return this.slugField;
+            }
+            set
+            {
+                this.slugField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string nombre
+        {
+            get
+            {
+                return this.nombreField;
+            }
+            set
+            {
+                this.nombreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public string siglas
+        {
+            get
+            {
+                return this.siglasField;
+            }
+            set
+            {
+                this.siglasField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public string descripcion
+        {
+            get
+            {
+                return this.descripcionField;
+            }
+            set
+            {
+                this.descripcionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        public bool activo
+        {
+            get
+            {
+                return this.activoField;
+            }
+            set
+            {
+                this.activoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        public int candidaturas
+        {
+            get
+            {
+                return this.candidaturasField;
+            }
+            set
+            {
+                this.candidaturasField = value;
             }
         }
     }
@@ -4742,6 +5533,96 @@ namespace frontend.webservices
         public System.Threading.Tasks.Task<frontend.webservices.Catalogo[]> listarNivelesVerificacionAsync()
         {
             return base.Channel.listarNivelesVerificacionAsync();
+        }
+        
+        public frontend.webservices.PartidoAdmin[] listarPartidosAdmin(int codigoUsuario, bool soloActivos)
+        {
+            return base.Channel.listarPartidosAdmin(codigoUsuario, soloActivos);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.PartidoAdmin[]> listarPartidosAdminAsync(int codigoUsuario, bool soloActivos)
+        {
+            return base.Channel.listarPartidosAdminAsync(codigoUsuario, soloActivos);
+        }
+        
+        public frontend.webservices.RespuestaGuardado guardarPartido(int codigoUsuario, int codigoPartido, string nombre, string siglas, string descripcion)
+        {
+            return base.Channel.guardarPartido(codigoUsuario, codigoPartido, nombre, siglas, descripcion);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarPartidoAsync(int codigoUsuario, int codigoPartido, string nombre, string siglas, string descripcion)
+        {
+            return base.Channel.guardarPartidoAsync(codigoUsuario, codigoPartido, nombre, siglas, descripcion);
+        }
+        
+        public frontend.webservices.RespuestaAdmin cambiarEstadoPartido(int codigoUsuario, int codigoPartido, bool activo, string motivo)
+        {
+            return base.Channel.cambiarEstadoPartido(codigoUsuario, codigoPartido, activo, motivo);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoPartidoAsync(int codigoUsuario, int codigoPartido, bool activo, string motivo)
+        {
+            return base.Channel.cambiarEstadoPartidoAsync(codigoUsuario, codigoPartido, activo, motivo);
+        }
+        
+        public frontend.webservices.CampanaAdmin[] listarCampanasAdmin(int codigoUsuario)
+        {
+            return base.Channel.listarCampanasAdmin(codigoUsuario);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.CampanaAdmin[]> listarCampanasAdminAsync(int codigoUsuario)
+        {
+            return base.Channel.listarCampanasAdminAsync(codigoUsuario);
+        }
+        
+        public frontend.webservices.RespuestaGuardado guardarCampana(int codigoUsuario, int codigoCampana, string nombre, string resumen, string descripcion, string alcance, System.DateTime fechaInicio, System.DateTime fechaEleccion, string estado, bool esActual)
+        {
+            return base.Channel.guardarCampana(codigoUsuario, codigoCampana, nombre, resumen, descripcion, alcance, fechaInicio, fechaEleccion, estado, esActual);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarCampanaAsync(int codigoUsuario, int codigoCampana, string nombre, string resumen, string descripcion, string alcance, System.DateTime fechaInicio, System.DateTime fechaEleccion, string estado, bool esActual)
+        {
+            return base.Channel.guardarCampanaAsync(codigoUsuario, codigoCampana, nombre, resumen, descripcion, alcance, fechaInicio, fechaEleccion, estado, esActual);
+        }
+        
+        public frontend.webservices.CandidatoAdmin[] listarCandidatosAdmin(int codigoUsuario, string campanaSlug, bool soloActivos)
+        {
+            return base.Channel.listarCandidatosAdmin(codigoUsuario, campanaSlug, soloActivos);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.CandidatoAdmin[]> listarCandidatosAdminAsync(int codigoUsuario, string campanaSlug, bool soloActivos)
+        {
+            return base.Channel.listarCandidatosAdminAsync(codigoUsuario, campanaSlug, soloActivos);
+        }
+        
+        public frontend.webservices.RespuestaGuardado guardarCandidato(int codigoUsuario, int codigoCandidato, string nombres, string apellidos, int codigoCampana, int codigoCargo, int codigoPartido, int codigoDepartamento, string municipio, string titular)
+        {
+            return base.Channel.guardarCandidato(codigoUsuario, codigoCandidato, nombres, apellidos, codigoCampana, codigoCargo, codigoPartido, codigoDepartamento, municipio, titular);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarCandidatoAsync(int codigoUsuario, int codigoCandidato, string nombres, string apellidos, int codigoCampana, int codigoCargo, int codigoPartido, int codigoDepartamento, string municipio, string titular)
+        {
+            return base.Channel.guardarCandidatoAsync(codigoUsuario, codigoCandidato, nombres, apellidos, codigoCampana, codigoCargo, codigoPartido, codigoDepartamento, municipio, titular);
+        }
+        
+        public frontend.webservices.RespuestaAdmin cambiarEstadoCandidato(int codigoUsuario, int codigoCandidato, bool activo, string motivo)
+        {
+            return base.Channel.cambiarEstadoCandidato(codigoUsuario, codigoCandidato, activo, motivo);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoCandidatoAsync(int codigoUsuario, int codigoCandidato, bool activo, string motivo)
+        {
+            return base.Channel.cambiarEstadoCandidatoAsync(codigoUsuario, codigoCandidato, activo, motivo);
+        }
+        
+        public frontend.webservices.RespuestaAdmin crearCuentaCandidato(int codigoUsuario, int codigoCandidato, string login, string correo, string clave)
+        {
+            return base.Channel.crearCuentaCandidato(codigoUsuario, codigoCandidato, login, correo, clave);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> crearCuentaCandidatoAsync(int codigoUsuario, int codigoCandidato, string login, string correo, string clave)
+        {
+            return base.Channel.crearCuentaCandidatoAsync(codigoUsuario, codigoCandidato, login, correo, clave);
         }
     }
 }

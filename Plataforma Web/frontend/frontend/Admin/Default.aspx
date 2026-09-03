@@ -72,8 +72,12 @@
                                 <td><span class="gc-chip gc-chip--cumplida">Habilitado</span></td>
                             </tr>
                             <tr>
-                                <td>Administrar partidos, campañas y candidatos</td>
-                                <td><span class="gc-chip gc-chip--declarada">Etapa 3</span></td>
+                                <td>Administrar partidos, campañas y candidaturas</td>
+                                <td><span class="gc-chip gc-chip--cumplida">Habilitado</span></td>
+                            </tr>
+                            <tr>
+                                <td>Crear cuentas de acceso de candidaturas</td>
+                                <td><span class="gc-chip gc-chip--cumplida">Habilitado</span></td>
                             </tr>
                             <tr>
                                 <td>Habilitar o deshabilitar módulos de la plataforma</td>

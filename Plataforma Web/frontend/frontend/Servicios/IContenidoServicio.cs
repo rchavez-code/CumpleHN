@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using frontend.Modelos;
 
@@ -134,6 +135,50 @@ namespace frontend.Servicios
 
         /// <summary>Bitácora de administración, de lo más reciente a lo más antiguo.</summary>
         IList<RegistroAuditoria> ObtenerAuditoria(int codigoUsuario, string accion, int limite);
+
+        // --------------------------------------------------- Catálogos admin
+
+        /* Partidos, campañas y candidaturas. Nada se borra: los partidos y las
+           candidaturas se desactivan, y las campañas se cierran con su estado.
+           Borrar un partido dejaría candidaturas huérfanas. */
+
+        IList<PartidoAdmin> ObtenerPartidosAdmin(int codigoUsuario, bool soloActivos);
+
+        /// <summary>Alta si el código es cero, edición si no.</summary>
+        ResultadoGuardado GuardarPartido(
+            int codigoUsuario, int codigoPartido, string nombre, string siglas, string descripcion);
+
+        Resultado CambiarEstadoPartido(int codigoUsuario, int codigoPartido, bool activo, string motivo);
+
+        IList<CampanaAdmin> ObtenerCampanasAdmin(int codigoUsuario);
+
+        ResultadoGuardado GuardarCampana(
+            int codigoUsuario, int codigoCampana, string nombre, string resumen,
+            string descripcion, string alcance, DateTime fechaInicio, DateTime fechaEleccion,
+            string estado, bool esActual);
+
+        IList<CandidatoAdmin> ObtenerCandidatosAdmin(
+            int codigoUsuario, string campanaSlug, bool soloActivos);
+
+        ResultadoGuardado GuardarCandidato(
+            int codigoUsuario, int codigoCandidato, string nombres, string apellidos,
+            int codigoCampana, int codigoCargo, int codigoPartido, int codigoDepartamento,
+            string municipio, string titular);
+
+        Resultado CambiarEstadoCandidato(
+            int codigoUsuario, int codigoCandidato, bool activo, string motivo);
+
+        /// <summary>
+        /// Crea la cuenta de acceso de una candidatura. Sin cuenta, la
+        /// candidatura solo existe como ficha que alguien más llenó.
+        /// </summary>
+        Resultado CrearCuentaCandidato(
+            int codigoUsuario, int codigoCandidato, string login, string correo, string clave);
+
+        /// <summary>Cargos con su código, para el formulario de candidaturas.</summary>
+        IList<OpcionCatalogo> ObtenerCargosConCodigo();
+
+        IList<OpcionCatalogo> ObtenerDepartamentosConCodigo();
 
         // ------------------------------------------------------ Catálogos
 

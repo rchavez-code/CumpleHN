@@ -27,6 +27,183 @@ namespace frontend.Modelos
         public string Nombre { get; set; }
     }
 
+
+    /// <summary>
+    /// Resultado de un guardado, con el código del registro afectado. En un
+    /// alta es el código recién creado: la página lo usa para encadenar el
+    /// siguiente paso sin volver a buscar el registro.
+    /// </summary>
+    public class ResultadoGuardado
+    {
+        public bool Ok { get; set; }
+        public string Mensaje { get; set; }
+        public int Codigo { get; set; }
+    }
+
+    /// <summary>
+    /// Partido visto desde la administración: incluye los desactivados y
+    /// cuenta sus candidaturas activas.
+    /// </summary>
+    public class PartidoAdmin
+    {
+        public int Codigo { get; set; }
+        public string Slug { get; set; }
+        public string Nombre { get; set; }
+        public string Siglas { get; set; }
+        public string Descripcion { get; set; }
+        public bool Activo { get; set; }
+        public int Candidaturas { get; set; }
+
+        public string EstadoTexto
+        {
+            get { return Activo ? "Activo" : "Desactivado"; }
+        }
+
+        public string EstadoClase
+        {
+            get { return Activo ? "gc-chip gc-chip--cumplida" : "gc-chip gc-chip--estancada"; }
+        }
+
+        public string SiglasTexto
+        {
+            get { return string.IsNullOrEmpty(Siglas) ? "—" : Siglas; }
+        }
+
+        public string Url
+        {
+            get { return "~/Partido?id=" + Slug; }
+        }
+    }
+
+    /// <summary>
+    /// Campaña vista desde la administración.
+    /// </summary>
+    public class CampanaAdmin
+    {
+        public int Codigo { get; set; }
+        public string Slug { get; set; }
+        public string Nombre { get; set; }
+        public string Resumen { get; set; }
+        public string Descripcion { get; set; }
+        public string Alcance { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaEleccion { get; set; }
+        public string Estado { get; set; }
+        public bool EsActual { get; set; }
+        public int Candidaturas { get; set; }
+        public int Propuestas { get; set; }
+
+        public string PeriodoTexto
+        {
+            get { return Vista.FechaCorta(FechaInicio) + " — " + Vista.FechaCorta(FechaEleccion); }
+        }
+
+        public string EstadoTexto
+        {
+            get
+            {
+                if (Estado == "Activa") return "En curso";
+                if (Estado == "Proxima") return "Próxima";
+                return "Cerrada";
+            }
+        }
+
+        public string EstadoClase
+        {
+            get
+            {
+                if (Estado == "Activa") return "gc-chip gc-chip--cumplida";
+                if (Estado == "Proxima") return "gc-chip gc-chip--declarada";
+                return "gc-chip gc-chip--estancada";
+            }
+        }
+
+        public string Url
+        {
+            get { return "~/Campana?id=" + Slug; }
+        }
+    }
+
+    /// <summary>
+    /// Candidatura vista desde la administración. <see cref="Login"/> queda
+    /// vacío cuando todavía no tiene cuenta de acceso, y sin cuenta no puede
+    /// administrar su propio perfil ni registrar propuestas.
+    /// </summary>
+    public class CandidatoAdmin
+    {
+        public int Codigo { get; set; }
+        public string Slug { get; set; }
+        public string Nombres { get; set; }
+        public string Apellidos { get; set; }
+        public string NombreCompleto { get; set; }
+
+        public int CodigoCampana { get; set; }
+        public string CampanaSlug { get; set; }
+        public string Campana { get; set; }
+
+        public int CodigoPartido { get; set; }
+        public string Partido { get; set; }
+
+        public int CodigoCargo { get; set; }
+        public string Cargo { get; set; }
+
+        public int CodigoDepartamento { get; set; }
+        public string Departamento { get; set; }
+        public string Municipio { get; set; }
+        public string Titular { get; set; }
+
+        public string Verificacion { get; set; }
+        public bool Activo { get; set; }
+        public DateTime FechaRegistro { get; set; }
+
+        public string Login { get; set; }
+        public int Propuestas { get; set; }
+
+        public bool TieneCuenta
+        {
+            get { return !string.IsNullOrEmpty(Login); }
+        }
+
+        /// <summary>
+        /// Partido en texto. Una candidatura independiente no es un dato
+        /// faltante: es información, y se dice con todas sus letras.
+        /// </summary>
+        public string PartidoTexto
+        {
+            get { return string.IsNullOrEmpty(Partido) ? "Independiente" : Partido; }
+        }
+
+        public string CuentaTexto
+        {
+            get { return TieneCuenta ? Login : "Sin cuenta"; }
+        }
+
+        public string CuentaClase
+        {
+            get { return TieneCuenta ? "gc-chip gc-chip--cumplida" : "gc-chip gc-chip--proceso"; }
+        }
+
+        public string EstadoTexto
+        {
+            get { return Activo ? "Activa" : "Retirada"; }
+        }
+
+        public string EstadoClase
+        {
+            get { return Activo ? "gc-chip gc-chip--cumplida" : "gc-chip gc-chip--incumplida"; }
+        }
+
+        public string VerificacionClase
+        {
+            get { return Vista.ClaseVerificacion(Vista.NivelDe(Verificacion)); }
+        }
+
+        public string Url
+        {
+            get { return "~/Candidato?id=" + Slug; }
+        }
+    }
+
     /// <summary>
     /// Una fila de la bandeja de verificación. Puede ser una candidatura, una
     /// propuesta o una publicación: los tres tipos que llevan nivel de

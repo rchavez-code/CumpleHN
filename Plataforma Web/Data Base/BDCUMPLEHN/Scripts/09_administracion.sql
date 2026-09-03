@@ -37,6 +37,16 @@
 USE BDCUMPLEHN;
 GO
 
+/* Un procedimiento guarda para siempre el valor que tenían estas dos
+   opciones cuando se creó. sqlcmd trae QUOTED_IDENTIFIER apagado, a
+   diferencia de SSMS, y con esa opción apagada cualquier escritura
+   sobre una tabla con índice filtrado falla con el error 1934 —
+   Campanas tiene uno, UQ_Campanas_unicaActual. Se fija acá para que
+   el script produzca lo mismo se ejecute desde donde se ejecute. */
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
+
 /* ============================================================
    1. Bitácora de administración
    ============================================================ */

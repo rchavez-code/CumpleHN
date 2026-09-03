@@ -290,6 +290,81 @@ namespace frontend.Servicios
             };
         }
 
+
+        // ------------------------------------------------- Catálogos admin
+
+        public IList<PartidoAdmin> ObtenerPartidosAdmin(int codigoUsuario, bool soloActivos)
+        {
+            return new List<PartidoAdmin>();
+        }
+
+        public ResultadoGuardado GuardarPartido(
+            int codigoUsuario, int codigoPartido, string nombre, string siglas, string descripcion)
+        {
+            return SinAdministracionGuardado();
+        }
+
+        public Resultado CambiarEstadoPartido(
+            int codigoUsuario, int codigoPartido, bool activo, string motivo)
+        {
+            return SinAdministracion();
+        }
+
+        public IList<CampanaAdmin> ObtenerCampanasAdmin(int codigoUsuario)
+        {
+            return new List<CampanaAdmin>();
+        }
+
+        public ResultadoGuardado GuardarCampana(
+            int codigoUsuario, int codigoCampana, string nombre, string resumen,
+            string descripcion, string alcance, DateTime fechaInicio, DateTime fechaEleccion,
+            string estado, bool esActual)
+        {
+            return SinAdministracionGuardado();
+        }
+
+        public IList<CandidatoAdmin> ObtenerCandidatosAdmin(
+            int codigoUsuario, string campanaSlug, bool soloActivos)
+        {
+            return new List<CandidatoAdmin>();
+        }
+
+        public ResultadoGuardado GuardarCandidato(
+            int codigoUsuario, int codigoCandidato, string nombres, string apellidos,
+            int codigoCampana, int codigoCargo, int codigoPartido, int codigoDepartamento,
+            string municipio, string titular)
+        {
+            return SinAdministracionGuardado();
+        }
+
+        public Resultado CambiarEstadoCandidato(
+            int codigoUsuario, int codigoCandidato, bool activo, string motivo)
+        {
+            return SinAdministracion();
+        }
+
+        public Resultado CrearCuentaCandidato(
+            int codigoUsuario, int codigoCandidato, string login, string correo, string clave)
+        {
+            return SinAdministracion();
+        }
+
+        public IList<OpcionCatalogo> ObtenerCargosConCodigo()
+        {
+            return new List<OpcionCatalogo>();
+        }
+
+        public IList<OpcionCatalogo> ObtenerDepartamentosConCodigo()
+        {
+            return new List<OpcionCatalogo>();
+        }
+
+        private static ResultadoGuardado SinAdministracionGuardado()
+        {
+            Resultado r = SinAdministracion();
+            return new ResultadoGuardado { Ok = r.Ok, Mensaje = r.Mensaje, Codigo = 0 };
+        }
+
         private static Resultado SinAdministracion()
         {
             return new Resultado
