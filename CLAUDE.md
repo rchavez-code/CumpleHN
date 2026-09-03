@@ -84,6 +84,25 @@ Dentro del frontend:
 - `Servicios/` — `IContenidoServicio` es el contrato único por el que las páginas obtienen datos. Hoy lo implementa `ContenidoDemo` (datos en memoria). **Al conectar el ASMX se cambia una sola línea en `Contenido.cs` y ninguna página se toca.**
 - `Controles/` — controles reutilizables (`CampanaCard`, `CandidatoCard`, `PropuestaCard`, `PublicacionCard`), registrados en `Web.config` para que ninguna página los declare.
 - `Panel/` — área privada del candidato, con su propia plantilla `Panel.Master`.
+- `Admin/` — área privada del administrador de la plataforma, con su propia plantilla `Admin.Master`.
+
+### Roles y control de acceso
+
+Dos roles en el catálogo `Roles`: **Administrador** y **Candidato**. Quien se registra sin candidatura queda como ciudadano y participa en las páginas públicas, sin área privada.
+
+Cada rol entra a su propia área. La correspondencia rol → área vive **solo** en `Autorizacion.InicioDe`, que usan tanto `Acceso.aspx.cs` al entrar como las páginas al rechazar a quien no corresponde. Si estuviera en los dos lados podrían discrepar.
+
+La protección **no puede** hacerse con `<authorization>` del Web.config: ese mecanismo se apoya en la autenticación de formularios de ASP.NET, y CumpleHN guarda la sesión en `Session` después de validar contra el Web Service. Se resuelve en código, en clases base de página de `Servicios/Autorizacion.cs`:
+
+- `PaginaSegura` comprueba el rol en `OnPreInit`, el primer paso del ciclo de vida, antes de que exista un solo control. Sin sesión manda a `~/Acceso` conservando el destino. Con sesión pero con otro rol devuelve a su propia área, que no es lo mismo: pedirle acceso a quien ya entró es un rodeo sin salida.
+- `PaginaPanel` exige rol Candidato y además expone `CandidatoActual` ya resuelto y **nunca nulo**. Todas las páginas de `Panel/` heredan de ella.
+- `PaginaAdmin` exige rol Administrador. Todas las páginas de `Admin/` heredan de ella.
+
+**La protección va en la clase base, no en cada página.** Antes cada página del panel repetía el mismo bloque de comprobación, así que una página nueva que olvidara copiarlo quedaba abierta — que es el fallo de control de acceso del A01 de OWASP. Con la clase base, olvidarse significa no compilar contra `CandidatoActual`.
+
+Las plantillas `Panel.Master` y `Admin.Master` **no protegen nada**: una plantilla se aplica después de que la página ya empezó su ciclo de vida. `Panel.Master` toma la candidatura de la página en lugar de volver a pedirla, para no gastar una segunda llamada al Web Service por carga.
+
+Del lado del backend, `EsAdministrador(conn, codigoUsuario)` confirma rol y cuenta activa contra la base. **Toda acción de administración tiene que pasar por ahí antes de escribir.** Lo que el frontend sabe de su sesión decide qué botones muestra, nunca qué se permite: quien llame al Web Service directamente envía el código de usuario que quiera.
 
 ### Decisiones de modelo que no se deben romper
 
@@ -212,6 +231,14 @@ El asistente de IA de `Analitica.aspx` es una **maqueta declarada como tal en pa
 
 ### Pendiente
 
-Alta de usuarios desde el registro, guardado del perfil y de los proyectos (los formularios ya validan del lado del servidor pero todavía no persisten), moderación de comentarios, registro de evidencias para poder mover los estados de cumplimiento, y conectar el asistente a la API de un modelo de lenguaje.
+Alta de usuarios desde el registro, guardado del perfil y de los proyectos (los formularios ya validan del lado del servidor pero todavía no persisten), y conectar el asistente a la API de un modelo de lenguaje.
+
+Las facultades del administrador se construyen por etapas, y cada una necesita las cuatro capas: procedimiento almacenado, método en el Web Service, sección en `Admin/` y registro en bitácora. La etapa 1 (roles, áreas separadas y control de acceso) está hecha. Faltan:
+
+- **Etapa 2** — verificación de contenido y moderación de publicaciones. Antes hay que decidir dos cosas de esquema: retirar una publicación es **baja lógica**, nunca `DELETE` (borrarla de verdad se lleva sus valoraciones y comentarios, y descuadra la analítica), y toda acción del administrador queda en una tabla `Auditoria` con quién, qué, cuándo y con qué motivo. Sin la bitácora, la plataforma que audita a otros no se puede auditar a sí misma.
+- **Etapa 3** — alta y edición de partidos, campañas y candidatos con su cuenta.
+- **Etapa 4** — habilitar o deshabilitar módulos de la plataforma. Necesita una tabla `Modulos`, hoy no hay dónde guardar ese estado.
+
+Mientras una sección no exista, aparece **deshabilitada** en el menú de `Admin/` en lugar de mostrar una pantalla que no guarda.
 
 **Deuda de seguridad conocida, para el anexo OWASP:** el `codigoUsuario` de las valoraciones y los comentarios lo envía el frontend desde su sesión, y el Web Service solo comprueba que la cuenta exista y esté activa. Quien llame al servicio directamente puede opinar en nombre de otro usuario. Se resuelve cuando el backend valide un token de sesión en lugar de confiar en el código recibido. Sigue pendiente también el salt en las contraseñas.

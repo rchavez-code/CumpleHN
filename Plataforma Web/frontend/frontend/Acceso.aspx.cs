@@ -1,5 +1,6 @@
 using System;
 using System.Web.UI;
+using frontend.Servicios;
 
 namespace frontend
 {
@@ -75,14 +76,10 @@ namespace frontend
                 return;
             }
 
-            if (string.Equals(respuesta.usuario.rol, "Candidato", StringComparison.OrdinalIgnoreCase)
-                && !string.IsNullOrEmpty(respuesta.usuario.candidatoSlug))
-            {
-                Response.Redirect("~/Panel/");
-                return;
-            }
-
-            Response.Redirect("~/");
+            // Cada rol entra a su propia área. La correspondencia vive en
+            // Autorizacion, para que el acceso y el control de las páginas no
+            // puedan discrepar.
+            Response.Redirect(Autorizacion.InicioDe(respuesta.usuario.rol));
         }
 
         /// <summary>

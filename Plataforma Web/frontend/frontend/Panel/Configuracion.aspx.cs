@@ -10,31 +10,22 @@ namespace frontend.Panel
     /// de la cuenta. Las operaciones sobre credenciales dependen del Web Service
     /// de usuarios.
     /// </summary>
-    public partial class Configuracion : Page
+    public partial class Configuracion : PaginaPanel
     {
-        private Candidato _candidato;
         private Campana _campana;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            _candidato = Contenido.Datos.ObtenerCandidatoAutenticado();
-
-            if (_candidato == null)
-            {
-                Response.Redirect("~/Acceso");
-                return;
-            }
-
-            _campana = Contenido.Datos.ObtenerCampana(_candidato.CampanaSlug);
+            _campana = Contenido.Datos.ObtenerCampana(CandidatoActual.CampanaSlug);
         }
 
         protected string CorreoAcceso
         {
             get
             {
-                return string.IsNullOrEmpty(_candidato.CorreoPublico)
+                return string.IsNullOrEmpty(CandidatoActual.CorreoPublico)
                     ? "Sin correo registrado"
-                    : _candidato.CorreoPublico;
+                    : CandidatoActual.CorreoPublico;
             }
         }
 
@@ -45,12 +36,12 @@ namespace frontend.Panel
 
         protected string VerificacionTexto
         {
-            get { return _candidato.VerificacionTexto; }
+            get { return CandidatoActual.VerificacionTexto; }
         }
 
         protected string VerificacionClase
         {
-            get { return _candidato.VerificacionClase; }
+            get { return CandidatoActual.VerificacionClase; }
         }
     }
 }

@@ -1,0 +1,101 @@
+<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Admin.master.cs" Inherits="frontend.Admin.AdminMaster" %>
+
+<!DOCTYPE html>
+
+<html lang="es">
+<head runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%: Page.Title %> · Administración CumpleHN</title>
+    <meta name="robots" content="noindex" />
+
+    <webopt:bundlereference runat="server" path="~/Content/css" />
+    <link href="<%= ResolveUrl("~/favicon.ico") %>" rel="shortcut icon" type="image/x-icon" />
+
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server" />
+</head>
+<body>
+    <form runat="server">
+
+        <div class="gc-panel">
+
+            <%-- ============================================ Barra lateral --%>
+
+            <aside class="gc-side">
+
+                <a class="gc-side__brand" href="<%= ResolveUrl("~/") %>">
+                    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <g fill="none" stroke-width="2.3" stroke-linecap="round">
+                            <path d="M3.6 19.4C3.6 13 6.8 7.7 12 4.4" stroke="#c3372c" />
+                            <path d="M8.2 20c.4-5 2.7-9.3 6.6-12" stroke="#d3901f" />
+                            <path d="M12.9 20.4c.6-3.9 2.5-7.1 5.4-9.3" stroke="#2c7a58" />
+                            <path d="M17.7 20.7c.5-2.4 1.5-4.4 3-5.8" stroke="#17708a" />
+                        </g>
+                    </svg>
+                    <span>Cumple<span class="gc-brand__hn">HN</span></span>
+                </a>
+
+                <div class="gc-side__who">
+                    <span class="gc-avatar gc-avatar--sm" aria-hidden="true"><%: Iniciales %></span>
+                    <span style="min-width: 0;">
+                        <strong><%: NombreUsuario %></strong>
+                        <span class="gc-muted gc-small">Administración</span>
+                    </span>
+                </div>
+
+                <nav aria-label="Navegación de administración">
+                    <div class="gc-side__lbl">Plataforma</div>
+
+                    <a class="gc-side__link <%= ClaseNav("Default") %>" href="<%= ResolveUrl("~/Admin/") %>">Resumen</a>
+                    <a class="gc-side__link" href="<%= ResolveUrl("~/Analitica") %>">Tablero de analítica</a>
+
+                    <%-- Las secciones de abajo se habilitan en las etapas siguientes.
+                         Se muestran deshabilitadas y no como enlaces rotos, para que el
+                         área declare su propio alcance. --%>
+
+                    <div class="gc-side__lbl">Revisión de contenido</div>
+
+                    <span class="gc-side__link is-soon" aria-disabled="true">Verificación</span>
+                    <span class="gc-side__link is-soon" aria-disabled="true">Moderación</span>
+
+                    <div class="gc-side__lbl">Catálogos</div>
+
+                    <span class="gc-side__link is-soon" aria-disabled="true">Partidos</span>
+                    <span class="gc-side__link is-soon" aria-disabled="true">Campañas</span>
+                    <span class="gc-side__link is-soon" aria-disabled="true">Candidatos</span>
+
+                    <div class="gc-side__lbl">Configuración</div>
+
+                    <span class="gc-side__link is-soon" aria-disabled="true">Módulos</span>
+                </nav>
+
+                <div class="gc-side__foot">
+                    <a class="gc-btn gc-btn--ghost gc-btn--sm gc-btn--block" href="<%= ResolveUrl("~/") %>">Ver el sitio público</a>
+                    <a class="gc-btn gc-btn--quiet gc-btn--sm gc-btn--block" style="margin-top: 7px;" href="<%= ResolveUrl("~/Acceso?salir=1") %>">Salir</a>
+                </div>
+
+            </aside>
+
+            <%-- ============================================== Área principal --%>
+
+            <div class="gc-main">
+
+                <div class="gc-topbar">
+                    <h1><%: Page.Title %></h1>
+
+                    <div style="display: flex; align-items: center; gap: 9px;">
+                        <asp:ContentPlaceHolder ID="TopActions" runat="server" />
+                    </div>
+                </div>
+
+                <div class="gc-content">
+                    <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+</body>
+</html>

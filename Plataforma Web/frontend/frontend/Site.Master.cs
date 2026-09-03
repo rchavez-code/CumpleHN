@@ -15,6 +15,7 @@ namespace frontend
             phAnonimo.Visible = !autenticado;
             phSesion.Visible = autenticado;
             phPanel.Visible = autenticado && Servicios.Sesion.EsCandidato;
+            phAdmin.Visible = autenticado && Servicios.Sesion.EsAdministrador;
         }
 
         protected string NombreUsuario

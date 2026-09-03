@@ -10,21 +10,13 @@ namespace frontend.Panel
     /// Publicaciones del candidato. En esta etapa es solo lectura: la redacción
     /// y edición llegan junto con el módulo de interacción ciudadana.
     /// </summary>
-    public partial class Publicaciones : Page
+    public partial class Publicaciones : PaginaPanel
     {
         private int _total;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            Candidato candidato = Contenido.Datos.ObtenerCandidatoAutenticado();
-
-            if (candidato == null)
-            {
-                Response.Redirect("~/Acceso");
-                return;
-            }
-
-            IList<Publicacion> publicaciones = Contenido.Datos.ObtenerPublicaciones(candidato.Slug);
+            IList<Publicacion> publicaciones = Contenido.Datos.ObtenerPublicaciones(CandidatoActual.Slug);
             _total = publicaciones.Count;
 
             phLista.Visible = _total > 0;

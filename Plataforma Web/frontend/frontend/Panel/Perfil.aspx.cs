@@ -15,20 +15,10 @@ namespace frontend.Panel
     /// validación de entrada ya está acá porque también debe existir del lado
     /// del servidor.
     /// </summary>
-    public partial class Perfil : Page
+    public partial class Perfil : PaginaPanel
     {
-        private Candidato _candidato;
-
         protected void Page_Load(object sender, EventArgs e)
         {
-            _candidato = Contenido.Datos.ObtenerCandidatoAutenticado();
-
-            if (_candidato == null)
-            {
-                Response.Redirect("~/Acceso");
-                return;
-            }
-
             if (!IsPostBack)
             {
                 CargarCatalogos();
@@ -53,23 +43,23 @@ namespace frontend.Panel
 
         private void CargarDatos()
         {
-            txtNombres.Text = _candidato.Nombres;
-            txtApellidos.Text = _candidato.Apellidos;
-            txtPartido.Text = _candidato.Partido;
-            txtMunicipio.Text = _candidato.Municipio;
-            txtTitular.Text = _candidato.Titular;
-            txtBiografia.Text = _candidato.Biografia;
-            txtProfesional.Text = _candidato.InformacionProfesional;
-            txtCandidatura.Text = _candidato.DescripcionCandidatura;
-            txtCorreo.Text = _candidato.CorreoPublico;
-            txtTelefono.Text = _candidato.Telefono;
-            txtSitio.Text = _candidato.SitioWeb;
-            txtFacebook.Text = _candidato.Facebook;
-            txtX.Text = _candidato.X;
-            txtInstagram.Text = _candidato.Instagram;
+            txtNombres.Text = CandidatoActual.Nombres;
+            txtApellidos.Text = CandidatoActual.Apellidos;
+            txtPartido.Text = CandidatoActual.Partido;
+            txtMunicipio.Text = CandidatoActual.Municipio;
+            txtTitular.Text = CandidatoActual.Titular;
+            txtBiografia.Text = CandidatoActual.Biografia;
+            txtProfesional.Text = CandidatoActual.InformacionProfesional;
+            txtCandidatura.Text = CandidatoActual.DescripcionCandidatura;
+            txtCorreo.Text = CandidatoActual.CorreoPublico;
+            txtTelefono.Text = CandidatoActual.Telefono;
+            txtSitio.Text = CandidatoActual.SitioWeb;
+            txtFacebook.Text = CandidatoActual.Facebook;
+            txtX.Text = CandidatoActual.X;
+            txtInstagram.Text = CandidatoActual.Instagram;
 
-            Seleccionar(ddlCargo, _candidato.Cargo);
-            Seleccionar(ddlDepartamento, _candidato.Departamento);
+            Seleccionar(ddlCargo, CandidatoActual.Cargo);
+            Seleccionar(ddlDepartamento, CandidatoActual.Departamento);
         }
 
         private static void Seleccionar(DropDownList lista, string valor)
@@ -121,37 +111,37 @@ namespace frontend.Panel
 
         protected int PerfilCompleto
         {
-            get { return _candidato.PerfilCompleto; }
+            get { return CandidatoActual.PerfilCompleto; }
         }
 
         protected string VerificacionTexto
         {
-            get { return _candidato.VerificacionTexto; }
+            get { return CandidatoActual.VerificacionTexto; }
         }
 
         protected string VerificacionClase
         {
-            get { return _candidato.VerificacionClase; }
+            get { return CandidatoActual.VerificacionClase; }
         }
 
         protected string Iniciales
         {
-            get { return _candidato.TieneFoto ? string.Empty : _candidato.Iniciales; }
+            get { return CandidatoActual.TieneFoto ? string.Empty : CandidatoActual.Iniciales; }
         }
 
         protected string EstiloAvatar
         {
             get
             {
-                return _candidato.TieneFoto
-                    ? Vista.EstiloAvatar(ResolveUrl(_candidato.FotoUrl))
+                return CandidatoActual.TieneFoto
+                    ? Vista.EstiloAvatar(ResolveUrl(CandidatoActual.FotoUrl))
                     : string.Empty;
             }
         }
 
         protected string UrlPerfilPublico
         {
-            get { return ResolveUrl(_candidato.Url); }
+            get { return ResolveUrl(CandidatoActual.Url); }
         }
     }
 }

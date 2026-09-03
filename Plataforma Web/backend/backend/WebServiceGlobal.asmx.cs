@@ -34,6 +34,12 @@ namespace backend
             get { return ConfigurationManager.ConnectionStrings["CnxCumpleHN"].ConnectionString; }
         }
 
+        /// <summary>
+        /// Nombre del rol de administración, tal como lo guarda el catálogo
+        /// dbo.Roles. Cambiarlo en la base obliga a cambiarlo acá.
+        /// </summary>
+        private const string RolAdministrador = "Administrador";
+
         // =============================================================
         //  Seguridad
         // =============================================================
@@ -639,6 +645,36 @@ namespace backend
 
             SqlCommand cmd = new SqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@codigo", codigoObjeto);
+            return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+        }
+
+        /// <summary>
+        /// Confirma que la cuenta existe, está activa y tiene el rol de
+        /// administrador.
+        ///
+        /// Es el punto por el que tiene que pasar toda acción de administración
+        /// antes de escribir. El frontend decide qué botones muestra a partir de
+        /// su sesión, pero esa sesión no es una credencial: quien llame a este
+        /// servicio directamente puede enviar el código de usuario que quiera.
+        /// El rol se confirma acá, contra la base, o no se confirma.
+        ///
+        /// Comprobar el rol no cierra del todo la deuda conocida del anexo
+        /// OWASP: mientras el código de usuario venga en el parámetro en lugar
+        /// de un token de sesión firmado, alguien que conozca el código del
+        /// administrador puede suplantarlo. Lo que esta comprobación garantiza
+        /// es que ninguna cuenta sin el rol pueda administrar.
+        /// </summary>
+        private static bool EsAdministrador(SqlConnection conn, int codigoUsuario)
+        {
+            if (codigoUsuario <= 0) return false;
+
+            SqlCommand cmd = new SqlCommand(
+                "SELECT COUNT(*) " +
+                "FROM dbo.Usuarios u " +
+                "INNER JOIN dbo.Roles r ON r.codigoRol = u.codigoRol " +
+                "WHERE u.codigoUsuario = @u AND u.activo = 1 AND r.nombre = @rol", conn);
+            cmd.Parameters.AddWithValue("@u", codigoUsuario);
+            cmd.Parameters.AddWithValue("@rol", RolAdministrador);
             return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
         }
 
