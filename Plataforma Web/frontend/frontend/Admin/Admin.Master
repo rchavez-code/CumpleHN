@@ -49,14 +49,15 @@
                     <a class="gc-side__link <%= ClaseNav("Default") %>" href="<%= ResolveUrl("~/Admin/") %>">Resumen</a>
                     <a class="gc-side__link" href="<%= ResolveUrl("~/Analitica") %>">Tablero de analítica</a>
 
+                    <div class="gc-side__lbl">Revisión de contenido</div>
+
+                    <a class="gc-side__link <%= ClaseNav("Verificacion") %>" href="<%= ResolveUrl("~/Admin/Verificacion") %>">Verificación</a>
+                    <a class="gc-side__link <%= ClaseNav("Moderacion") %>" href="<%= ResolveUrl("~/Admin/Moderacion") %>">Moderación</a>
+                    <a class="gc-side__link <%= ClaseNav("Bitacora") %>" href="<%= ResolveUrl("~/Admin/Bitacora") %>">Bitácora</a>
+
                     <%-- Las secciones de abajo se habilitan en las etapas siguientes.
                          Se muestran deshabilitadas y no como enlaces rotos, para que el
                          área declare su propio alcance. --%>
-
-                    <div class="gc-side__lbl">Revisión de contenido</div>
-
-                    <span class="gc-side__link is-soon" aria-disabled="true">Verificación</span>
-                    <span class="gc-side__link is-soon" aria-disabled="true">Moderación</span>
 
                     <div class="gc-side__lbl">Catálogos</div>
 

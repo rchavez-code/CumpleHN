@@ -94,6 +94,47 @@ namespace frontend.Servicios
         /// </summary>
         Analitica ObtenerAnalitica(FiltroAnalitica filtro);
 
+        // ------------------------------------------------ Administración
+
+        /* Todo lo de esta sección exige rol Administrador. El código de usuario
+           viaja como parámetro y el backend confirma el rol contra la base: lo
+           que el frontend sabe de su sesión decide qué se muestra, nunca qué se
+           permite. Cuando la cuenta no tiene el rol, las consultas devuelven
+           listas vacías y las acciones un Resultado en falso. */
+
+        /// <summary>
+        /// Cola de trabajo de la verificación, con candidaturas, propuestas y
+        /// publicaciones juntas. Con <paramref name="soloPendientes"/> deja
+        /// fuera lo ya verificado.
+        /// </summary>
+        IList<ItemVerificacion> ObtenerBandejaVerificacion(
+            int codigoUsuario, string tipoObjeto, string campanaSlug, bool soloPendientes);
+
+        /// <summary>
+        /// Asigna el nivel de verificación. El motivo es donde queda anotada la
+        /// fuente, y el backend lo exige al marcar como verificado.
+        /// </summary>
+        Resultado CambiarVerificacion(
+            int codigoUsuario, string tipoObjeto, int codigoObjeto,
+            int codigoVerificacion, string motivo);
+
+        /// <summary>
+        /// Publicaciones para moderación, incluidas las retiradas.
+        /// <paramref name="estado"/> acepta Activas, Retiradas o vacío.
+        /// </summary>
+        IList<PublicacionModerada> ObtenerPublicacionesModeracion(
+            int codigoUsuario, string campanaSlug, string estado);
+
+        /// <summary>
+        /// Retira una publicación de la consulta pública, o la restaura. Es una
+        /// baja lógica: la fila se conserva con su motivo y su responsable.
+        /// </summary>
+        Resultado ModerarPublicacion(
+            int codigoUsuario, int codigoPublicacion, bool activa, string motivo);
+
+        /// <summary>Bitácora de administración, de lo más reciente a lo más antiguo.</summary>
+        IList<RegistroAuditoria> ObtenerAuditoria(int codigoUsuario, string accion, int limite);
+
         // ------------------------------------------------------ Catálogos
 
         /// <summary>Categorías temáticas disponibles para clasificar propuestas.</summary>
@@ -103,5 +144,12 @@ namespace frontend.Servicios
         IList<string> ObtenerCargos();
 
         IList<string> ObtenerDepartamentos();
+
+        /// <summary>
+        /// Niveles de verificación con su código, que es lo que necesita el
+        /// desplegable de la bandeja. Los otros catálogos devuelven solo el
+        /// nombre porque las páginas públicas filtran por texto.
+        /// </summary>
+        IList<OpcionCatalogo> ObtenerNivelesVerificacion();
     }
 }

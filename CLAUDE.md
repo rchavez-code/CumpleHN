@@ -69,7 +69,7 @@ Tres soluciones `.slnx` independientes:
 
 - `Plataforma Web/frontend/` → `frontend.csproj`. IIS Express en el puerto 5080.
 - `Plataforma Web/backend/` → `backend.csproj`. Vacío por ahora, ya referencia `System.Web.Services`.
-- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`.
+- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`, `09_administracion`.
 
 Los scripts están en UTF-8 **sin BOM**, así que por línea de comandos hay que pasarle la página de códigos a sqlcmd o las tildes entran corruptas:
 
@@ -229,13 +229,30 @@ Reglas de los gráficos, aplicadas a mano porque no hay node para correr el vali
 
 El asistente de IA de `Analitica.aspx` es una **maqueta declarada como tal en pantalla**: las respuestas se arman con las cifras reales del tablero en pantalla y citan el procedimiento del que sale cada cifra, pero las preguntas se reconocen por palabras clave, no con un modelo de lenguaje. Cuando no reconoce una pregunta lo dice, en lugar de inventar. Al conectar el modelo se conserva la forma de la respuesta con sus fuentes, que es lo que la encuesta dejó como condición de confianza (77.4 %).
 
+### Módulo de administración
+
+Las dos facultades del rol Administrador: verificar contenido y moderar publicaciones. Mismo reparto de responsabilidades que la analítica — la base calcula y valida, el Web Service transporta, los modelos interpretan, la página dibuja.
+
+**Retirar una publicación es baja lógica, nunca `DELETE`.** `Publicaciones` lleva `activo`, `motivoBaja`, `fechaBaja` y `codigoUsuarioBaja`. Un borrado real se llevaría las valoraciones y los comentarios de la publicación, y el tablero quedaría contando totales que no cuadran con las filas que quedan. El filtro `activo = 1` va en **dos lugares y solo dos**: la vista `vwAnaliticaPublicaciones` (de ahí se propaga a valoraciones y comentarios, que se unen a ella) y la constante `SelectPublicacion` del Web Service, que comparten todas las consultas públicas. Poner el filtro en cada método sería la manera de que una consulta nueva se olvide.
+
+**Ninguna acción de administración queda sin registro.** La tabla `Auditoria` guarda quién, qué, sobre qué objeto, cuándo y con qué motivo, con el mismo par polimórfico `(codigoTipoObjeto, codigoObjeto)` de `Valoraciones` y `Comentarios`. A diferencia de aquellas, la fila se conserva aunque el objeto desaparezca: una bitácora que se borra sola no sirve como bitácora. No hay pantalla ni método para editarla o borrarla, y no debe haberlos.
+
+**El motivo es obligatorio** al marcar como verificado y en las dos direcciones de la moderación. Ahí es donde queda anotada la fuente que respalda la decisión. Lo exige el procedimiento almacenado, no la página: una validación que solo vive en el formulario se salta llamando al servicio.
+
+**El rol se comprueba dos veces**, en el Web Service (`EsAdministrador`) y dentro de cada procedimiento de escritura (`fnEsAdministrador`). No es descuido: el control de acceso no debe depender de un solo punto, y la comprobación de la base queda documentada en el Manual Técnico del capítulo IX. Está verificado que llamar al ASMX directamente con el código de un ciudadano o de un candidato no permite verificar ni moderar.
+
+Procedimientos de `09_administracion.sql`: `spAdminBandejaVerificacion`, `spAdminCambiarVerificacion`, `spAdminPublicaciones`, `spAdminModerarPublicacion` y `spAdminAuditoria`, más la función `fnEsAdministrador`. Los de escritura devuelven una fila con `ok` y `mensaje` que el Web Service transporta tal cual, para que el texto del rechazo viva en un solo lugar.
+
+La bandeja de verificación es **una sola cola** con candidaturas, propuestas y publicaciones juntas, ordenada por lo más antiguo sin verificar. Quien revisa trabaja por antigüedad, no por tipo.
+
+**Cuidado con el ciclo de vida en las páginas con panel de decisión.** `Page_Load` corre **antes** que el evento del botón. Preseleccionar ahí el valor de un desplegable pisa lo que la persona acaba de elegir, y se guarda siempre el valor anterior. Pasó en `Verificacion.aspx`: el nivel se preselecciona solo cuando `!IsPostBack` o al elegir otro contenido, nunca en el postback que guarda.
+
 ### Pendiente
 
 Alta de usuarios desde el registro, guardado del perfil y de los proyectos (los formularios ya validan del lado del servidor pero todavía no persisten), y conectar el asistente a la API de un modelo de lenguaje.
 
-Las facultades del administrador se construyen por etapas, y cada una necesita las cuatro capas: procedimiento almacenado, método en el Web Service, sección en `Admin/` y registro en bitácora. La etapa 1 (roles, áreas separadas y control de acceso) está hecha. Faltan:
+Las facultades del administrador se construyen por etapas, y cada una necesita las cuatro capas: procedimiento almacenado, método en el Web Service, sección en `Admin/` y registro en bitácora. Las etapas 1 (roles, áreas separadas y control de acceso) y 2 (verificación y moderación) están hechas. Faltan:
 
-- **Etapa 2** — verificación de contenido y moderación de publicaciones. Antes hay que decidir dos cosas de esquema: retirar una publicación es **baja lógica**, nunca `DELETE` (borrarla de verdad se lleva sus valoraciones y comentarios, y descuadra la analítica), y toda acción del administrador queda en una tabla `Auditoria` con quién, qué, cuándo y con qué motivo. Sin la bitácora, la plataforma que audita a otros no se puede auditar a sí misma.
 - **Etapa 3** — alta y edición de partidos, campañas y candidatos con su cuenta.
 - **Etapa 4** — habilitar o deshabilitar módulos de la plataforma. Necesita una tabla `Modulos`, hoy no hay dónde guardar ese estado.
 

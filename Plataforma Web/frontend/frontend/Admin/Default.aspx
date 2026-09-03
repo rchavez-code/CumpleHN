@@ -61,11 +61,15 @@
                             </tr>
                             <tr>
                                 <td>Declarar contenido como verificado</td>
-                                <td><span class="gc-chip gc-chip--proceso">Etapa 2</span></td>
+                                <td><span class="gc-chip gc-chip--cumplida">Habilitado</span></td>
                             </tr>
                             <tr>
                                 <td>Retirar publicaciones inadecuadas</td>
-                                <td><span class="gc-chip gc-chip--proceso">Etapa 2</span></td>
+                                <td><span class="gc-chip gc-chip--cumplida">Habilitado</span></td>
+                            </tr>
+                            <tr>
+                                <td>Consultar la bitácora de administración</td>
+                                <td><span class="gc-chip gc-chip--cumplida">Habilitado</span></td>
                             </tr>
                             <tr>
                                 <td>Administrar partidos, campañas y candidatos</td>
@@ -94,8 +98,8 @@
 
             <div class="gc-note gc-note--ambar">
                 <span>
-                    Ninguna acción de administración quedará sin registro. Cada verificación y cada retiro de
-                    contenido guardará quién lo hizo, cuándo y con qué motivo, para que la propia plataforma
+                    Ninguna acción de administración queda sin registro. Cada verificación y cada retiro de
+                    contenido guarda quién lo hizo, cuándo y con qué motivo, para que la propia plataforma
                     pueda ser auditada.
                 </span>
             </div>

@@ -157,7 +157,13 @@ INNER JOIN dbo.NivelesVerificacion nv    ON nv.codigoVerificacion = p.codigoVeri
 INNER JOIN dbo.vwAnaliticaCandidaturas k ON k.codigoCandidato = p.codigoCandidato;
 GO
 
-/* =================================== 3. Publicaciones */
+/* =================================== 3. Publicaciones
+
+   Excluye las publicaciones retiradas por moderación
+   (activo = 0). El filtro va acá y no en cada procedimiento
+   porque las vistas de valoraciones y de comentarios se unen a
+   esta: lo que se retira de acá desaparece del tablero entero,
+   con sus votos y sus comentarios, en un solo lugar. */
 
 IF OBJECT_ID('dbo.vwAnaliticaPublicaciones') IS NOT NULL
     DROP VIEW dbo.vwAnaliticaPublicaciones;
@@ -186,7 +192,8 @@ FROM dbo.Publicaciones b
 INNER JOIN dbo.Campanas ca               ON ca.codigoCampana = b.codigoCampana
 INNER JOIN dbo.NivelesVerificacion nv    ON nv.codigoVerificacion = b.codigoVerificacion
 INNER JOIN dbo.vwAnaliticaCandidaturas k ON k.codigoCandidato = b.codigoCandidato
-LEFT  JOIN dbo.Categorias cat            ON cat.codigoCategoria = b.codigoCategoria;
+LEFT  JOIN dbo.Categorias cat            ON cat.codigoCategoria = b.codigoCategoria
+WHERE b.activo = 1;
 GO
 
 /* ==================================== 4. Valoraciones

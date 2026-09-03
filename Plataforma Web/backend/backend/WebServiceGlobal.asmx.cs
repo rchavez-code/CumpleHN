@@ -362,7 +362,7 @@ namespace backend
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
-                string filtro = string.IsNullOrEmpty(campanaSlug) ? "" : "WHERE ca.slug = @campana ";
+                string filtro = string.IsNullOrEmpty(campanaSlug) ? "" : "AND ca.slug = @campana ";
 
                 SqlCommand cmd = new SqlCommand(
                     SelectPropuesta + filtro + "ORDER BY p.fechaRegistro DESC", conn);
@@ -431,7 +431,11 @@ namespace backend
             "INNER JOIN dbo.Cargos cg ON cg.codigoCargo = k.codigoCargo " +
             "INNER JOIN dbo.NivelesVerificacion nv ON nv.codigoVerificacion = b.codigoVerificacion " +
             "LEFT JOIN dbo.Categorias cat ON cat.codigoCategoria = b.codigoCategoria " +
-            "LEFT JOIN dbo.Propuestas p ON p.codigoPropuesta = b.codigoPropuesta ";
+            "LEFT JOIN dbo.Propuestas p ON p.codigoPropuesta = b.codigoPropuesta " +
+            /* La consulta pública nunca ve una publicación retirada por
+               moderación. El filtro va en el SELECT compartido y no en cada
+               método, para que agregar una consulta nueva no pueda olvidarlo. */
+            "WHERE b.activo = 1 ";
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
@@ -471,7 +475,7 @@ namespace backend
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
                 SqlCommand cmd = new SqlCommand(
-                    SelectPublicacion + "WHERE k.slug = @slug ORDER BY b.fecha DESC", conn);
+                    SelectPublicacion + "AND k.slug = @slug ORDER BY b.fecha DESC", conn);
                 cmd.Parameters.AddWithValue("@slug", candidatoSlug);
                 conn.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
@@ -1602,6 +1606,267 @@ namespace backend
                 noMeGusta = Convert.ToInt32(reader["noMeGusta"]),
                 comentarios = Convert.ToInt32(reader["comentarios"])
             };
+        }
+
+
+        // =============================================================
+        //  Administración de la plataforma
+        //
+        //  Todo lo de esta sección exige el rol Administrador, incluidas las
+        //  consultas: la bandeja de verificación y la bitácora no son públicas.
+        //
+        //  La comprobación se hace dos veces, acá y dentro de cada
+        //  procedimiento de escritura. No es redundancia por descuido: el
+        //  control de acceso no debe depender de un solo punto, y la
+        //  comprobación de la base queda documentada como parte del modelo.
+        //
+        //  Ninguno de estos métodos escribe SQL propio. Cada uno invoca su
+        //  procedimiento del script 09, que es donde vive la regla y donde el
+        //  Manual Técnico del capítulo IX la puede citar.
+        // =============================================================
+
+        /// <summary>
+        /// Cola de trabajo de la verificación: candidaturas, propuestas y
+        /// publicaciones con su nivel actual.
+        ///
+        /// Con <paramref name="soloPendientes"/> en verdadero deja fuera lo ya
+        /// verificado, que es la vista con la que se trabaja a diario.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<ItemVerificacion> listarBandejaVerificacion(
+            int codigoUsuario, string tipoObjeto, string campanaSlug, bool soloPendientes)
+        {
+            List<ItemVerificacion> lista = new List<ItemVerificacion>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminBandejaVerificacion", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@tipoObjeto", (object)tipoObjeto ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@campanaSlug", (object)campanaSlug ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@soloPendientes", soloPendientes);
+
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new ItemVerificacion
+                    {
+                        tipoObjeto = Texto(reader, "tipoObjeto"),
+                        codigoObjeto = Convert.ToInt32(reader["codigoObjeto"]),
+                        titulo = Texto(reader, "titulo"),
+                        resumen = Texto(reader, "resumen"),
+                        slug = Texto(reader, "slug"),
+                        candidato = Texto(reader, "candidato"),
+                        candidatoSlug = Texto(reader, "candidatoSlug"),
+                        campanaSlug = Texto(reader, "campanaSlug"),
+                        codigoVerificacion = Convert.ToInt32(reader["codigoVerificacion"]),
+                        verificacion = Texto(reader, "verificacion"),
+                        verificacionOrden = Convert.ToInt32(reader["verificacionOrden"]),
+                        fecha = Convert.ToDateTime(reader["fecha"])
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Asigna el nivel de verificación de una candidatura, una propuesta o
+        /// una publicación.
+        ///
+        /// El motivo es donde queda anotada la fuente que respalda la decisión,
+        /// y el procedimiento lo exige al marcar como verificado.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin cambiarVerificacion(
+            int codigoUsuario, string tipoObjeto, int codigoObjeto,
+            int codigoVerificacion, string motivo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("La cuenta no tiene permiso para verificar contenido.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminCambiarVerificacion", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@tipoObjeto", (object)tipoObjeto ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@codigoObjeto", codigoObjeto);
+                cmd.Parameters.AddWithValue("@codigoVerificacion", codigoVerificacion);
+                cmd.Parameters.AddWithValue("@motivo", (object)motivo ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Publicaciones para moderación, incluidas las retiradas.
+        ///
+        /// <paramref name="estado"/> acepta Activas, Retiradas o vacío para
+        /// todas.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<PublicacionModerada> listarPublicacionesModeracion(
+            int codigoUsuario, string campanaSlug, string estado)
+        {
+            List<PublicacionModerada> lista = new List<PublicacionModerada>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminPublicaciones", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@campanaSlug", (object)campanaSlug ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@estado", (object)estado ?? DBNull.Value);
+
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new PublicacionModerada
+                    {
+                        codigoPublicacion = Convert.ToInt32(reader["codigoPublicacion"]),
+                        texto = Texto(reader, "texto"),
+                        fecha = Convert.ToDateTime(reader["fecha"]),
+                        activo = Convert.ToBoolean(reader["activo"]),
+                        motivoBaja = Texto(reader, "motivoBaja"),
+                        retiradaPor = Texto(reader, "retiradaPor"),
+                        candidato = Texto(reader, "candidato"),
+                        candidatoSlug = Texto(reader, "candidatoSlug"),
+                        campanaSlug = Texto(reader, "campanaSlug"),
+                        categoria = Texto(reader, "categoria"),
+                        verificacion = Texto(reader, "verificacion"),
+                        meGusta = Convert.ToInt32(reader["meGusta"]),
+                        noMeGusta = Convert.ToInt32(reader["noMeGusta"]),
+                        comentarios = Convert.ToInt32(reader["comentarios"])
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Retira una publicación de la consulta pública, o la restaura.
+        ///
+        /// Retirar es una baja lógica: la fila se conserva con el motivo y el
+        /// responsable. El motivo es obligatorio en las dos direcciones.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin moderarPublicacion(
+            int codigoUsuario, int codigoPublicacion, bool activo, string motivo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("La cuenta no tiene permiso para moderar publicaciones.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminModerarPublicacion", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoPublicacion", codigoPublicacion);
+                cmd.Parameters.AddWithValue("@activo", activo);
+                cmd.Parameters.AddWithValue("@motivo", (object)motivo ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Bitácora de administración, de lo más reciente a lo más antiguo.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<RegistroAuditoria> listarAuditoria(int codigoUsuario, string accion, int limite)
+        {
+            List<RegistroAuditoria> lista = new List<RegistroAuditoria>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminAuditoria", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@accion", (object)accion ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@limite", limite);
+
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new RegistroAuditoria
+                    {
+                        codigoAuditoria = Convert.ToInt32(reader["codigoAuditoria"]),
+                        fecha = Convert.ToDateTime(reader["fecha"]),
+                        usuario = Texto(reader, "usuario"),
+                        accion = Texto(reader, "accion"),
+                        tipoObjeto = Texto(reader, "tipoObjeto"),
+                        codigoObjeto = Convert.ToInt32(reader["codigoObjeto"]),
+                        detalle = Texto(reader, "detalle"),
+                        motivo = Texto(reader, "motivo")
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Niveles de verificación disponibles, para el desplegable del área de
+        /// administración. Es público: los mismos niveles se muestran como
+        /// etiqueta en todo el sitio.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<Catalogo> listarNivelesVerificacion()
+        {
+            return LeerCatalogo(
+                "SELECT codigoVerificacion AS codigo, nombre, ISNULL(descripcion,'') AS detalle " +
+                "FROM dbo.NivelesVerificacion ORDER BY orden");
+        }
+
+        /// <summary>
+        /// Lee la fila de ok y mensaje que devuelven los procedimientos de
+        /// escritura del script 09.
+        /// </summary>
+        private static RespuestaAdmin LeerRespuesta(SqlCommand cmd)
+        {
+            RespuestaAdmin respuesta = new RespuestaAdmin();
+            respuesta.ok = false;
+            respuesta.mensaje = "No se pudo completar la acción.";
+
+            SqlDataReader reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                respuesta.ok = Convert.ToBoolean(reader["ok"]);
+                respuesta.mensaje = Convert.ToString(reader["mensaje"]);
+            }
+
+            return respuesta;
+        }
+
+        private static RespuestaAdmin Rechazo(string mensaje)
+        {
+            return new RespuestaAdmin { ok = false, mensaje = mensaje };
         }
 
         /// <summary>

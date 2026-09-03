@@ -237,6 +237,69 @@ namespace frontend.Servicios
         /// Gobierno (ONU, 2000). El orden refleja el interés medido en la
         /// encuesta del proyecto: seguridad, salud y educación al frente.
         /// </summary>
+
+        // =============================================================
+        //  Administración
+        //
+        //  El origen de demostración no la implementa. Administrar significa
+        //  escribir, y estos datos viven en memoria: se pierden al reciclar el
+        //  proceso, así que una verificación hecha acá sería una verificación
+        //  que se deshace sola. Peor que no poder hacerla.
+        //
+        //  Las consultas devuelven vacío y las acciones lo dicen en su mensaje,
+        //  para que la pantalla explique la situación en vez de fallar.
+        // =============================================================
+
+        public IList<ItemVerificacion> ObtenerBandejaVerificacion(
+            int codigoUsuario, string tipoObjeto, string campanaSlug, bool soloPendientes)
+        {
+            return new List<ItemVerificacion>();
+        }
+
+        public Resultado CambiarVerificacion(
+            int codigoUsuario, string tipoObjeto, int codigoObjeto,
+            int codigoVerificacion, string motivo)
+        {
+            return SinAdministracion();
+        }
+
+        public IList<PublicacionModerada> ObtenerPublicacionesModeracion(
+            int codigoUsuario, string campanaSlug, string estado)
+        {
+            return new List<PublicacionModerada>();
+        }
+
+        public Resultado ModerarPublicacion(
+            int codigoUsuario, int codigoPublicacion, bool activa, string motivo)
+        {
+            return SinAdministracion();
+        }
+
+        public IList<RegistroAuditoria> ObtenerAuditoria(int codigoUsuario, string accion, int limite)
+        {
+            return new List<RegistroAuditoria>();
+        }
+
+        public IList<OpcionCatalogo> ObtenerNivelesVerificacion()
+        {
+            return new List<OpcionCatalogo>
+            {
+                new OpcionCatalogo { Codigo = 1, Nombre = NivelesVerificacion.Declarado },
+                new OpcionCatalogo { Codigo = 2, Nombre = NivelesVerificacion.EnRevision },
+                new OpcionCatalogo { Codigo = 3, Nombre = NivelesVerificacion.Verificado }
+            };
+        }
+
+        private static Resultado SinAdministracion()
+        {
+            return new Resultado
+            {
+                Ok = false,
+                Mensaje = "La administración necesita la base de datos. " +
+                          "Este origen de datos es solo de demostración."
+            };
+        }
+
         public IList<string> ObtenerCategorias()
         {
             return new List<string>

@@ -655,6 +655,161 @@ namespace frontend.Servicios
             return NivelGobierno.Nacional;
         }
 
+
+        // =============================================================
+        //  Administración
+        //
+        //  El código de usuario viaja como parámetro y el backend confirma el
+        //  rol contra la base. Si la cuenta no lo tiene, las consultas vuelven
+        //  vacías y las acciones en falso: el frontend no decide el permiso.
+        // =============================================================
+
+        public IList<ItemVerificacion> ObtenerBandejaVerificacion(
+            int codigoUsuario, string tipoObjeto, string campanaSlug, bool soloPendientes)
+        {
+            ws.ItemVerificacion[] datos = Ejecutar(
+                c => c.listarBandejaVerificacion(codigoUsuario, tipoObjeto, campanaSlug, soloPendientes),
+                new ws.ItemVerificacion[0]);
+
+            List<ItemVerificacion> lista = new List<ItemVerificacion>();
+            if (datos == null) return lista;
+
+            foreach (ws.ItemVerificacion d in datos)
+            {
+                lista.Add(new ItemVerificacion
+                {
+                    TipoObjeto = d.tipoObjeto,
+                    CodigoObjeto = d.codigoObjeto,
+                    Titulo = d.titulo,
+                    Resumen = d.resumen,
+                    Slug = d.slug,
+                    Candidato = d.candidato,
+                    CandidatoSlug = d.candidatoSlug,
+                    CampanaSlug = d.campanaSlug,
+                    CodigoVerificacion = d.codigoVerificacion,
+                    Verificacion = d.verificacion,
+                    VerificacionOrden = d.verificacionOrden,
+                    Fecha = d.fecha
+                });
+            }
+
+            return lista;
+        }
+
+        public Resultado CambiarVerificacion(
+            int codigoUsuario, string tipoObjeto, int codigoObjeto,
+            int codigoVerificacion, string motivo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.cambiarVerificacion(codigoUsuario, tipoObjeto, codigoObjeto,
+                                           codigoVerificacion, motivo), null);
+
+            return ARespuesta(d);
+        }
+
+        public IList<PublicacionModerada> ObtenerPublicacionesModeracion(
+            int codigoUsuario, string campanaSlug, string estado)
+        {
+            ws.PublicacionModerada[] datos = Ejecutar(
+                c => c.listarPublicacionesModeracion(codigoUsuario, campanaSlug, estado),
+                new ws.PublicacionModerada[0]);
+
+            List<PublicacionModerada> lista = new List<PublicacionModerada>();
+            if (datos == null) return lista;
+
+            foreach (ws.PublicacionModerada d in datos)
+            {
+                lista.Add(new PublicacionModerada
+                {
+                    CodigoPublicacion = d.codigoPublicacion,
+                    Texto = d.texto,
+                    Fecha = d.fecha,
+                    Activa = d.activo,
+                    MotivoBaja = d.motivoBaja,
+                    RetiradaPor = d.retiradaPor,
+                    Candidato = d.candidato,
+                    CandidatoSlug = d.candidatoSlug,
+                    CampanaSlug = d.campanaSlug,
+                    Categoria = d.categoria,
+                    Verificacion = d.verificacion,
+                    MeGusta = d.meGusta,
+                    NoMeGusta = d.noMeGusta,
+                    Comentarios = d.comentarios
+                });
+            }
+
+            return lista;
+        }
+
+        public Resultado ModerarPublicacion(
+            int codigoUsuario, int codigoPublicacion, bool activa, string motivo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.moderarPublicacion(codigoUsuario, codigoPublicacion, activa, motivo), null);
+
+            return ARespuesta(d);
+        }
+
+        public IList<RegistroAuditoria> ObtenerAuditoria(int codigoUsuario, string accion, int limite)
+        {
+            ws.RegistroAuditoria[] datos = Ejecutar(
+                c => c.listarAuditoria(codigoUsuario, accion, limite),
+                new ws.RegistroAuditoria[0]);
+
+            List<RegistroAuditoria> lista = new List<RegistroAuditoria>();
+            if (datos == null) return lista;
+
+            foreach (ws.RegistroAuditoria d in datos)
+            {
+                lista.Add(new RegistroAuditoria
+                {
+                    Codigo = d.codigoAuditoria,
+                    Fecha = d.fecha,
+                    Usuario = d.usuario,
+                    Accion = d.accion,
+                    TipoObjeto = d.tipoObjeto,
+                    CodigoObjeto = d.codigoObjeto,
+                    Detalle = d.detalle,
+                    Motivo = d.motivo
+                });
+            }
+
+            return lista;
+        }
+
+        public IList<OpcionCatalogo> ObtenerNivelesVerificacion()
+        {
+            ws.Catalogo[] datos = Ejecutar(c => c.listarNivelesVerificacion(), new ws.Catalogo[0]);
+
+            List<OpcionCatalogo> lista = new List<OpcionCatalogo>();
+            if (datos == null) return lista;
+
+            foreach (ws.Catalogo d in datos)
+            {
+                lista.Add(new OpcionCatalogo { Codigo = d.codigo, Nombre = d.nombre });
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Convierte la respuesta del servicio, distinguiendo el rechazo de la
+        /// acción (que trae su propio mensaje) de la caída del backend.
+        /// </summary>
+        private static Resultado ARespuesta(ws.RespuestaAdmin d)
+        {
+            if (d == null)
+            {
+                return new Resultado
+                {
+                    Ok = false,
+                    Mensaje = "No se pudo contactar al servidor. Intentá de nuevo."
+                };
+            }
+
+            return new Resultado { Ok = d.ok, Mensaje = d.mensaje };
+        }
+
         private static NivelVerificacion AVerificacion(string valor)
         {
             if (string.Equals(valor, "Verificado", StringComparison.OrdinalIgnoreCase)) return NivelVerificacion.Verificado;
