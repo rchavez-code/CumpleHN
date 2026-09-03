@@ -990,6 +990,63 @@ namespace frontend.Servicios
             return new ResultadoGuardado { Ok = d.ok, Mensaje = d.mensaje, Codigo = d.codigo };
         }
 
+
+        // ------------------------------------------------------- Módulos
+
+        public IList<EstadoModulo> ObtenerModulosVisibles()
+        {
+            ws.EstadoModulo[] datos = Ejecutar(
+                c => c.listarModulosVisibles(), new ws.EstadoModulo[0]);
+
+            List<EstadoModulo> lista = new List<EstadoModulo>();
+            if (datos == null) return lista;
+
+            foreach (ws.EstadoModulo d in datos)
+            {
+                lista.Add(new EstadoModulo { Clave = d.clave, Visible = d.visible });
+            }
+
+            return lista;
+        }
+
+        public IList<ModuloAdmin> ObtenerModulosAdmin(int codigoUsuario)
+        {
+            ws.ModuloAdmin[] datos = Ejecutar(
+                c => c.listarModulosAdmin(codigoUsuario), new ws.ModuloAdmin[0]);
+
+            List<ModuloAdmin> lista = new List<ModuloAdmin>();
+            if (datos == null) return lista;
+
+            foreach (ws.ModuloAdmin d in datos)
+            {
+                lista.Add(new ModuloAdmin
+                {
+                    Codigo = d.codigoModulo,
+                    Clave = d.clave,
+                    Nombre = d.nombre,
+                    Descripcion = d.descripcion,
+                    Grupo = d.grupo,
+                    ClavePadre = d.clavePadre,
+                    Habilitado = d.habilitado,
+                    Visible = d.visible,
+                    ApagadoPorPadre = d.apagadoPorPadre,
+                    FechaCambio = d.fechaCambio,
+                    CambiadoPor = d.cambiadoPor
+                });
+            }
+
+            return lista;
+        }
+
+        public Resultado CambiarEstadoModulo(
+            int codigoUsuario, string clave, bool habilitado, string motivo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.cambiarEstadoModulo(codigoUsuario, clave, habilitado, motivo), null);
+
+            return ARespuesta(d);
+        }
+
         /// <summary>
         /// Convierte la respuesta del servicio, distinguiendo el rechazo de la
         /// acción (que trae su propio mensaje) de la caída del backend.

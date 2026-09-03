@@ -15,8 +15,14 @@ namespace frontend
     /// modo que cada vista tiene su propia dirección compartible y funciona sin
     /// JavaScript.
     /// </summary>
-    public partial class CampanaPagina : Page
+    public partial class CampanaPagina : PaginaDeModulo
     {
+        /// <summary>Módulo al que pertenece esta página.</summary>
+        protected override string ModuloRequerido
+        {
+            get { return Modulos.Campanas; }
+        }
+
         private const string TabFeed = "feed";
 
         private Campana _campana;

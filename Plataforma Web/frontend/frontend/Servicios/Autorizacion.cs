@@ -124,6 +124,41 @@ namespace frontend.Servicios
         }
     }
 
+
+    /// <summary>
+    /// Página pública que pertenece a un módulo que la administración puede
+    /// ocultar.
+    ///
+    /// La comprobación va en la clase base y no en cada página por la misma
+    /// razón que en <see cref="PaginaSegura"/>: ocultar el enlace del menú no
+    /// alcanza, porque la dirección se puede escribir a mano, y una página que
+    /// se sigue sirviendo a quien conoce su URL no está oculta.
+    ///
+    /// El rol Administrador entra igual, para poder revisar antes de publicar.
+    /// La página avisa que el público no lo ve.
+    /// </summary>
+    public abstract class PaginaDeModulo : Page
+    {
+        /// <summary>Clave del catálogo dbo.Modulos a la que pertenece la página.</summary>
+        protected abstract string ModuloRequerido { get; }
+
+        protected override void OnPreInit(EventArgs e)
+        {
+            base.OnPreInit(e);
+
+            Modulos.ExigirVisible(ModuloRequerido);
+        }
+
+        /// <summary>
+        /// Verdadero cuando la página se está mostrando solo porque quien mira
+        /// administra. Las páginas lo usan para mostrar el aviso.
+        /// </summary>
+        protected bool ModuloOcultoAlPublico
+        {
+            get { return Modulos.OcultoAlPublico(ModuloRequerido); }
+        }
+    }
+
     /// <summary>
     /// Página del área de administración de la plataforma.
     /// </summary>

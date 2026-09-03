@@ -147,11 +147,24 @@
 
         <%-- =================================================== Tablero --%>
 
+        <%-- Aviso para la administración: lo que ve acá no es lo que ve el
+             público. Sin decirlo, quien administra creería que el sitio se ve
+             como lo está viendo él. --%>
+        <asp:PlaceHolder ID="phAvisoOculto" runat="server" Visible="false">
+            <div class="gc-note gc-note--ambar gc-mb">
+                <span>
+                    <strong>Esta sección está oculta al público.</strong>
+                    La estás viendo porque administrás la plataforma. Quien consulte el sitio
+                    no la encuentra ni por el menú ni escribiendo la dirección.
+                </span>
+            </div>
+        </asp:PlaceHolder>
+
         <asp:PlaceHolder ID="phTablero" runat="server">
 
             <%-- --------------------------------------------- Indicadores --%>
 
-            <div class="gc-kpis">
+            <div id="grafKpi" runat="server" class="gc-kpis">
                 <asp:Repeater ID="rptKpis" runat="server">
                     <ItemTemplate>
                         <div class="gc-kpi <%# Eval("ClaseTono") %>">
@@ -190,7 +203,7 @@
 
             <div class="gc-vista" data-panel="hallazgos" role="tabpanel" <%= OcultarTab("hallazgos") %>>
 
-                <div class="gc-card gc-graf">
+                <div id="grafHallazgos" runat="server" class="gc-card gc-graf">
                     <div class="gc-card__head">
                         <h3>Principales hallazgos</h3>
                     </div>
@@ -221,7 +234,7 @@
                     </div>
                 </div>
 
-                <div class="gc-card gc-graf">
+                <div id="grafBrecha" runat="server" class="gc-card gc-graf">
                     <div class="gc-card__head">
                         <h3>Lo que la ciudadanía prioriza y lo que las candidaturas proponen</h3>
                     </div>
@@ -301,7 +314,7 @@
 
             <div class="gc-vista" data-panel="oferta" role="tabpanel" <%= OcultarTab("oferta") %>>
 
-                <div class="gc-card gc-graf">
+                <div id="grafEstados" runat="server" class="gc-card gc-graf">
                     <div class="gc-card__head">
                         <h3>Estado de cumplimiento de las propuestas</h3>
                     </div>
@@ -337,7 +350,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-lg-6 gc-mb">
+                    <div id="grafPartidos" runat="server" class="col-lg-6 gc-mb">
                         <div class="gc-card" style="height: 100%;">
                             <div class="gc-card__head">
                                 <h3>Propuestas por partido</h3>
@@ -370,7 +383,7 @@
                         </div>
                     </div>
 
-                    <div class="col-lg-6 gc-mb">
+                    <div id="grafDensidad" runat="server" class="col-lg-6 gc-mb">
                         <div class="gc-card" style="height: 100%;">
                             <div class="gc-card__head">
                                 <h3>Densidad programática</h3>
@@ -448,7 +461,7 @@
             <div class="gc-vista" data-panel="participacion" role="tabpanel" <%= OcultarTab("participacion") %>>
 
                 <div class="row">
-                    <div class="col-lg-5 gc-mb">
+                    <div id="grafSigno" runat="server" class="col-lg-5 gc-mb">
                         <div class="gc-card" style="height: 100%;">
                             <div class="gc-card__head">
                                 <h3>Signo de la participación</h3>
@@ -485,7 +498,7 @@
                         </div>
                     </div>
 
-                    <div class="col-lg-7 gc-mb">
+                    <div id="grafTipos" runat="server" class="col-lg-7 gc-mb">
                         <div class="gc-card" style="height: 100%;">
                             <div class="gc-card__head">
                                 <h3>Participación por tipo de contenido</h3>
@@ -555,7 +568,7 @@
                     </div>
                 </div>
 
-                <div class="gc-card gc-graf">
+                <div id="grafRanking" runat="server" class="gc-card gc-graf">
                     <div class="gc-card__head">
                         <h3>Ranking de candidaturas por saldo de valoraciones</h3>
                     </div>
@@ -649,7 +662,7 @@
                     </div>
                 </div>
 
-                <div class="gc-card gc-graf">
+                <div id="grafActividad" runat="server" class="gc-card gc-graf">
                     <div class="gc-card__head">
                         <h3>Actividad registrada por día</h3>
                     </div>
@@ -678,7 +691,7 @@
 
             <div class="gc-vista" data-panel="cobertura" role="tabpanel" <%= OcultarTab("cobertura") %>>
 
-                <div class="gc-card gc-graf">
+                <div id="grafTerritorio" runat="server" class="gc-card gc-graf">
                     <div class="gc-card__head">
                         <h3>Cobertura territorial</h3>
                     </div>
@@ -746,7 +759,7 @@
                     </div>
                 </div>
 
-                <div class="gc-card gc-graf">
+                <div id="grafVerificacion" runat="server" class="gc-card gc-graf">
                     <div class="gc-card__head">
                         <h3>Verificación por tipo de contenido</h3>
                     </div>
@@ -789,7 +802,7 @@
 
         <%-- ============================================ Asistente IA --%>
 
-        <div class="gc-ia gc-mb">
+        <div id="grafAsistente" runat="server" class="gc-ia gc-mb">
             <div class="gc-ia__cabeza">
                 <span class="gc-msg__ico" style="background: rgba(255,255,255,.18); color: #fff;">IA</span>
                 <h3>Asistente de consulta en lenguaje natural</h3>

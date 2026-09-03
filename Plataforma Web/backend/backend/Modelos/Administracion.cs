@@ -100,6 +100,43 @@ namespace backend.Modelos
         public int propuestas { get; set; }
     }
 
+
+    /// <summary>
+    /// Estado efectivo de un elemento apagable, tal como lo consulta el sitio.
+    /// Es deliberadamente mínimo: viaja en cada carga de página.
+    /// </summary>
+    public class EstadoModulo
+    {
+        public string clave { get; set; }
+        public bool visible { get; set; }
+    }
+
+    /// <summary>
+    /// Un elemento apagable visto desde la administración.
+    ///
+    /// Distingue <c>habilitado</c> — su propio interruptor — de
+    /// <c>visible</c>, que ya tiene en cuenta al padre. Un gráfico con su
+    /// interruptor encendido dentro de un tablero apagado no está visible, y
+    /// la pantalla tiene que poder explicarlo en lugar de mostrar dos estados
+    /// que se contradicen.
+    /// </summary>
+    public class ModuloAdmin
+    {
+        public int codigoModulo { get; set; }
+        public string clave { get; set; }
+        public string nombre { get; set; }
+        public string descripcion { get; set; }
+        public string grupo { get; set; }
+        public string clavePadre { get; set; }
+
+        public bool habilitado { get; set; }
+        public bool visible { get; set; }
+        public bool apagadoPorPadre { get; set; }
+
+        public DateTime fechaCambio { get; set; }
+        public string cambiadoPor { get; set; }
+    }
+
     /// <summary>
     /// Una fila de la bandeja de verificación. Puede ser una candidatura, una
     /// propuesta o una publicación: los tres tipos que llevan nivel de

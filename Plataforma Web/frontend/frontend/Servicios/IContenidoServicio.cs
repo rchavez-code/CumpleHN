@@ -180,6 +180,23 @@ namespace frontend.Servicios
 
         IList<OpcionCatalogo> ObtenerDepartamentosConCodigo();
 
+        // ------------------------------------------------------- Módulos
+
+        /// <summary>
+        /// Estado de cada elemento apagable del sitio. No exige rol: lo
+        /// consulta cada página en cada carga, también las de un visitante
+        /// anónimo.
+        /// </summary>
+        IList<EstadoModulo> ObtenerModulosVisibles();
+
+        IList<ModuloAdmin> ObtenerModulosAdmin(int codigoUsuario);
+
+        /// <summary>
+        /// Oculta un elemento del sitio público o lo devuelve a la vista.
+        /// Ocultar exige motivo, encender no.
+        /// </summary>
+        Resultado CambiarEstadoModulo(int codigoUsuario, string clave, bool habilitado, string motivo);
+
         // ------------------------------------------------------ Catálogos
 
         /// <summary>Categorías temáticas disponibles para clasificar propuestas.</summary>

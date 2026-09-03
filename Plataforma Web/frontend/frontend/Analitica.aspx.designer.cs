@@ -205,5 +205,75 @@ namespace frontend
         /// btnPreguntar control.
         /// </summary>
         protected global::System.Web.UI.WebControls.Button btnPreguntar;
+
+        /// <summary>
+        /// phAvisoOculto control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phAvisoOculto;
+
+        /// <summary>
+        /// grafKpi control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl grafKpi;
+
+        /// <summary>
+        /// grafHallazgos control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl grafHallazgos;
+
+        /// <summary>
+        /// grafBrecha control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl grafBrecha;
+
+        /// <summary>
+        /// grafEstados control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl grafEstados;
+
+        /// <summary>
+        /// grafPartidos control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl grafPartidos;
+
+        /// <summary>
+        /// grafDensidad control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl grafDensidad;
+
+        /// <summary>
+        /// grafSigno control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl grafSigno;
+
+        /// <summary>
+        /// grafTipos control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl grafTipos;
+
+        /// <summary>
+        /// grafRanking control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl grafRanking;
+
+        /// <summary>
+        /// grafActividad control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl grafActividad;
+
+        /// <summary>
+        /// grafTerritorio control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl grafTerritorio;
+
+        /// <summary>
+        /// grafVerificacion control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl grafVerificacion;
+
+        /// <summary>
+        /// grafAsistente control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl grafAsistente;
     }
 }

@@ -42,9 +42,9 @@
                 </div>
                 <div class="gc-card__body">
                     <p class="gc-muted gc-small" style="margin-top: 0;">
-                        Cada facultad se habilita cuando existan su procedimiento en la base de datos, su
-                        método en el Web Service y su registro en la bitácora. Mientras tanto la sección
-                        aparece deshabilitada en el menú, en lugar de mostrar una pantalla que no guarda.
+                        Cada facultad tiene su procedimiento en la base de datos, su método en el Web
+                        Service y su registro en la bitácora. El permiso se comprueba en las dos capas:
+                        llamar al servicio directamente sin el rol tampoco funciona.
                     </p>
 
                     <table class="gc-table">
@@ -80,8 +80,8 @@
                                 <td><span class="gc-chip gc-chip--cumplida">Habilitado</span></td>
                             </tr>
                             <tr>
-                                <td>Habilitar o deshabilitar módulos de la plataforma</td>
-                                <td><span class="gc-chip gc-chip--declarada">Etapa 4</span></td>
+                                <td>Ocultar módulos y gráficos del sitio público</td>
+                                <td><span class="gc-chip gc-chip--cumplida">Habilitado</span></td>
                             </tr>
                         </tbody>
                     </table>

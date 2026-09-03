@@ -365,6 +365,29 @@ namespace frontend.Servicios
             return new ResultadoGuardado { Ok = r.Ok, Mensaje = r.Mensaje, Codigo = 0 };
         }
 
+
+        // ------------------------------------------------------- Módulos
+
+        /// <summary>
+        /// Sin base de datos no hay catálogo de módulos, y una lista vacía deja
+        /// todo visible: es lo que corresponde para trabajar en el diseño.
+        /// </summary>
+        public IList<EstadoModulo> ObtenerModulosVisibles()
+        {
+            return new List<EstadoModulo>();
+        }
+
+        public IList<ModuloAdmin> ObtenerModulosAdmin(int codigoUsuario)
+        {
+            return new List<ModuloAdmin>();
+        }
+
+        public Resultado CambiarEstadoModulo(
+            int codigoUsuario, string clave, bool habilitado, string motivo)
+        {
+            return SinAdministracion();
+        }
+
         private static Resultado SinAdministracion()
         {
             return new Resultado

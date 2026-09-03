@@ -1,4 +1,5 @@
 using System;
+using System.Web.UI.HtmlControls;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -31,8 +32,14 @@ namespace frontend
     /// entre entidades —categoría contra categoría, candidatura contra
     /// candidatura, partido contra partido— hacen el resto del trabajo.
     /// </summary>
-    public partial class AnaliticaPagina : Page
+    public partial class AnaliticaPagina : PaginaDeModulo
     {
+        /// <summary>Módulo al que pertenece esta página.</summary>
+        protected override string ModuloRequerido
+        {
+            get { return Modulos.Analitica; }
+        }
+
         private Analitica _datos;
         private FiltroAnalitica _filtro;
 
@@ -60,6 +67,58 @@ namespace frontend
             // postbacks. Un repetidor sin enlazar deja las tarjetas sin modelo
             // al procesar el clic.
             Enlazar();
+
+            AplicarModulos();
+        }
+
+        /// <summary>
+        /// Oculta los bloques que la administración apagó.
+        ///
+        /// Cada bloque consulta su propia clave del catálogo dbo.Modulos. Para
+        /// el rol Administrador se muestran todos, con el aviso de arriba: si
+        /// no pudiera verlos, no podría decidir cuándo volver a publicarlos.
+        ///
+        /// Se resuelve acá y no en el marcado porque son trece decisiones del
+        /// mismo tipo, y repartirlas por la página las volvería imposibles de
+        /// revisar juntas.
+        /// </summary>
+        private void AplicarModulos()
+        {
+            phAvisoOculto.Visible = Modulos.OcultoAlPublico(Modulos.Analitica);
+
+            Aplicar(grafKpi,          Modulos.AnaliticaKpi);
+            Aplicar(grafHallazgos,    Modulos.AnaliticaHallazgos);
+            Aplicar(grafBrecha,       Modulos.AnaliticaBrecha);
+            Aplicar(grafEstados,      Modulos.AnaliticaEstados);
+            Aplicar(grafPartidos,     Modulos.AnaliticaPartidos);
+            Aplicar(grafDensidad,     Modulos.AnaliticaDensidad);
+            Aplicar(grafSigno,        Modulos.AnaliticaSigno);
+            Aplicar(grafTipos,        Modulos.AnaliticaTipos);
+            Aplicar(grafRanking,      Modulos.AnaliticaRanking);
+            Aplicar(grafActividad,    Modulos.AnaliticaActividad);
+            Aplicar(grafTerritorio,   Modulos.AnaliticaTerritorio);
+            Aplicar(grafVerificacion, Modulos.AnaliticaVerificacion);
+            Aplicar(grafAsistente,    Modulos.AnaliticaAsistente);
+        }
+
+        /// <summary>
+        /// Muestra u oculta un bloque, y lo marca cuando se está mostrando solo
+        /// porque quien mira administra.
+        ///
+        /// La marca importa tanto como el interruptor: sin ella, quien
+        /// administra confundiría lo que ve él con lo que ve el resto, y creería
+        /// publicado algo que retiró.
+        /// </summary>
+        private static void Aplicar(HtmlGenericControl bloque, string clave)
+        {
+            bloque.Visible = Modulos.Visible(clave);
+
+            if (!Modulos.OcultoAlPublico(clave)) return;
+
+            string clases = bloque.Attributes["class"];
+            bloque.Attributes["class"] = string.IsNullOrEmpty(clases)
+                ? "gc-oculto"
+                : clases + " gc-oculto";
         }
 
         /// <summary>

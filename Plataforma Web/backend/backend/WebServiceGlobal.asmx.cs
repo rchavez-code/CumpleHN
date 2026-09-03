@@ -682,6 +682,22 @@ namespace backend
             return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
         }
 
+        /// <summary>
+        /// Confirma que un módulo está visible en el sitio.
+        ///
+        /// Hace falta acá y no solo en el frontend: si la comprobación viviera
+        /// únicamente en la página, cerrar la participación se saltaría
+        /// llamando a este servicio directamente, que es la misma razón por la
+        /// que el rol se confirma contra la base.
+        /// </summary>
+        private static bool ModuloVisible(SqlConnection conn, string clave)
+        {
+            SqlCommand cmd = new SqlCommand(
+                "SELECT COUNT(*) FROM dbo.vwModulosEfectivos WHERE clave = @c AND visible = 1", conn);
+            cmd.Parameters.AddWithValue("@c", clave);
+            return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+        }
+
         /// <summary>Confirma que la cuenta existe y está activa.</summary>
         private static bool UsuarioActivo(SqlConnection conn, int codigoUsuario)
         {
@@ -779,6 +795,12 @@ namespace backend
                 using (SqlConnection conn = new SqlConnection(cadenaConexion))
                 {
                     conn.Open();
+
+                    if (!ModuloVisible(conn, "interaccion"))
+                    {
+                        r.mensaje = "La participación está temporalmente cerrada.";
+                        return r;
+                    }
 
                     if (!UsuarioActivo(conn, codigoUsuario))
                     {
@@ -939,6 +961,12 @@ namespace backend
                 using (SqlConnection conn = new SqlConnection(cadenaConexion))
                 {
                     conn.Open();
+
+                    if (!ModuloVisible(conn, "interaccion"))
+                    {
+                        r.mensaje = "La participación está temporalmente cerrada.";
+                        return r;
+                    }
 
                     if (!UsuarioActivo(conn, codigoUsuario))
                     {
@@ -2211,6 +2239,121 @@ namespace backend
         private static RespuestaGuardado RechazoGuardado(string mensaje)
         {
             return new RespuestaGuardado { ok = false, mensaje = mensaje, codigo = 0 };
+        }
+
+
+        // =============================================================
+        //  Módulos
+        //
+        //  Qué está visible en el sitio público y qué está oculto.
+        // =============================================================
+
+        /// <summary>
+        /// Estado efectivo de cada elemento apagable, para que el sitio sepa
+        /// qué mostrar.
+        ///
+        /// No exige rol a propósito: lo consulta cada página en cada carga,
+        /// también las que ve un visitante anónimo. Saber que el tablero está
+        /// oculto no es información reservada, y pedir credenciales obligaría a
+        /// autenticar a quien solo está consultando.
+        ///
+        /// Devuelve solo la clave y si está visible. El nombre, la descripción
+        /// y quién lo cambió son parte de la administración y viajan por el otro
+        /// método.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<EstadoModulo> listarModulosVisibles()
+        {
+            List<EstadoModulo> lista = new List<EstadoModulo>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                SqlCommand cmd = new SqlCommand("dbo.spModulosVisibles", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                conn.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new EstadoModulo
+                    {
+                        clave = Texto(reader, "clave"),
+                        visible = Convert.ToBoolean(reader["visible"])
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<ModuloAdmin> listarModulosAdmin(int codigoUsuario)
+        {
+            List<ModuloAdmin> lista = new List<ModuloAdmin>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminModulos", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new ModuloAdmin
+                    {
+                        codigoModulo = Convert.ToInt32(reader["codigoModulo"]),
+                        clave = Texto(reader, "clave"),
+                        nombre = Texto(reader, "nombre"),
+                        descripcion = Texto(reader, "descripcion"),
+                        grupo = Texto(reader, "grupo"),
+                        clavePadre = Texto(reader, "clavePadre"),
+                        habilitado = Convert.ToBoolean(reader["habilitado"]),
+                        visible = Convert.ToBoolean(reader["visible"]),
+                        apagadoPorPadre = Convert.ToBoolean(reader["apagadoPorPadre"]),
+                        fechaCambio = reader["fechaCambio"] == DBNull.Value
+                            ? DateTime.MinValue
+                            : Convert.ToDateTime(reader["fechaCambio"]),
+                        cambiadoPor = Texto(reader, "cambiadoPor")
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Oculta un elemento del sitio público, o lo devuelve a la vista.
+        /// Ocultar exige motivo, encender no: volver al estado normal no
+        /// necesita justificación.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin cambiarEstadoModulo(
+            int codigoUsuario, string clave, bool habilitado, string motivo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("La cuenta no tiene permiso para configurar los módulos.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminCambiarModulo", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@clave", (object)clave ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@habilitado", habilitado);
+                cmd.Parameters.AddWithValue("@motivo", (object)motivo ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
+            }
         }
 
         /// <summary>

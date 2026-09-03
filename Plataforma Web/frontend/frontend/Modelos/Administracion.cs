@@ -204,6 +204,78 @@ namespace frontend.Modelos
         }
     }
 
+
+    /// <summary>
+    /// Estado de un elemento apagable, tal como lo consulta el sitio.
+    /// Deliberadamente mínimo: viaja en cada carga de página.
+    /// </summary>
+    public class EstadoModulo
+    {
+        public string Clave { get; set; }
+        public bool Visible { get; set; }
+    }
+
+    /// <summary>
+    /// Un elemento apagable visto desde la administración.
+    ///
+    /// <see cref="Habilitado"/> es su propio interruptor y <see cref="Visible"/>
+    /// ya tiene en cuenta al padre. Un gráfico encendido dentro de un tablero
+    /// apagado no está visible, y la pantalla tiene que poder explicarlo en
+    /// lugar de mostrar dos estados que se contradicen.
+    /// </summary>
+    public class ModuloAdmin
+    {
+        public int Codigo { get; set; }
+        public string Clave { get; set; }
+        public string Nombre { get; set; }
+        public string Descripcion { get; set; }
+        public string Grupo { get; set; }
+        public string ClavePadre { get; set; }
+
+        public bool Habilitado { get; set; }
+        public bool Visible { get; set; }
+        public bool ApagadoPorPadre { get; set; }
+
+        public DateTime FechaCambio { get; set; }
+        public string CambiadoPor { get; set; }
+
+        public bool EsHijo
+        {
+            get { return !string.IsNullOrEmpty(ClavePadre); }
+        }
+
+        public string EstadoTexto
+        {
+            get
+            {
+                if (ApagadoPorPadre) return "Oculto por su módulo";
+                return Habilitado ? "Visible" : "Oculto";
+            }
+        }
+
+        public string EstadoClase
+        {
+            get
+            {
+                if (ApagadoPorPadre) return "gc-chip gc-chip--estancada";
+                return Habilitado ? "gc-chip gc-chip--cumplida" : "gc-chip gc-chip--incumplida";
+            }
+        }
+
+        /// <summary>
+        /// Cuándo y quién lo cambió por última vez. Vacío si nunca se tocó, que
+        /// es distinto de no saberlo.
+        /// </summary>
+        public string UltimoCambio
+        {
+            get
+            {
+                if (FechaCambio == DateTime.MinValue) return string.Empty;
+                return Vista.FechaHora(FechaCambio) + " · " + CambiadoPor;
+            }
+        }
+    }
+
     /// <summary>
     /// Una fila de la bandeja de verificación. Puede ser una candidatura, una
     /// propuesta o una publicación: los tres tipos que llevan nivel de

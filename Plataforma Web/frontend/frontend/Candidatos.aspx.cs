@@ -15,8 +15,14 @@ namespace frontend
     /// <c>n</c>) para que cualquier resultado se pueda compartir o marcar como
     /// favorito, en lugar de quedar atrapado en el estado de un formulario.
     /// </summary>
-    public partial class CandidatosPagina : Page
+    public partial class CandidatosPagina : PaginaDeModulo
     {
+        /// <summary>Módulo al que pertenece esta página.</summary>
+        protected override string ModuloRequerido
+        {
+            get { return Modulos.Perfiles; }
+        }
+
         private const string TodasLasCampanas = "";
         private const string TodosLosNiveles = "";
 

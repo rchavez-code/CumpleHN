@@ -1219,32 +1219,6 @@ a.gc-chip:hover { text-decoration: none; border-color: #d3d8dd; }
     font-weight: 600;
 }
 
-/* Sección del área de administración que todavía no está habilitada. Se marca
-   deshabilitada en lugar de omitirse, para que el menú declare el alcance
-   completo del área. Es un span y no un enlace, así que repite el layout: el
-   selector de arriba solo alcanza a los <a>. */
-.gc-side span.gc-side__link.is-soon {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 10px;
-    border-radius: var(--gc-r-sm);
-    font-size: .9rem;
-    font-weight: 500;
-    color: var(--gc-muted);
-    cursor: default;
-}
-
-.gc-side span.gc-side__link.is-soon::after {
-    content: "pendiente";
-    margin-left: auto;
-    font-size: .68rem;
-    font-weight: 600;
-    letter-spacing: .02em;
-    text-transform: uppercase;
-    opacity: .7;
-}
-
 .gc-side__foot { padding: 14px 20px; border-top: 1px solid var(--gc-line-2); }
 
 .gc-main { flex: 1 1 auto; min-width: 0; }

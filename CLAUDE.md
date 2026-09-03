@@ -69,7 +69,7 @@ Tres soluciones `.slnx` independientes:
 
 - `Plataforma Web/frontend/` → `frontend.csproj`. IIS Express en el puerto 5080.
 - `Plataforma Web/backend/` → `backend.csproj`. Vacío por ahora, ya referencia `System.Web.Services`.
-- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`, `09_administracion`, `10_catalogos_admin`.
+- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`, `09_administracion`, `10_catalogos_admin`, `11_modulos`.
 
 Los scripts están en UTF-8 **sin BOM**, así que por línea de comandos hay que pasarle la página de códigos a sqlcmd o las tildes entran corruptas:
 
@@ -261,13 +261,27 @@ Las contraseñas de las cuentas nuevas se cifran con `HASHBYTES('SHA2_256', CONV
 
 **`SET QUOTED_IDENTIFIER ON` al inicio de los scripts 09 y 10.** Un procedimiento guarda para siempre el valor que esa opción tenía al crearse, y **sqlcmd la trae apagada** (a diferencia de SSMS). Con la opción apagada, cualquier escritura sobre una tabla con índice filtrado falla con el error 1934 — `Campanas` tiene `UQ_Campanas_unicaActual`, el índice que garantiza una sola campaña destacada. Sin esa línea, los procedimientos compilan bien y fallan solo al ejecutarse.
 
+### Interruptores de módulos
+
+La administración puede ocultar del sitio público un módulo entero o un gráfico concreto del tablero (`11_modulos.sql`). **Ocultar no es dar de baja**: el contenido sigue en la base, y el rol Administrador lo sigue viendo con un aviso — así se puede preparar algo antes de publicarlo, o retirar lo que no está listo sin perder la capacidad de revisarlo.
+
+**Un solo mecanismo para dos niveles de detalle.** `Modulos` tiene una fila por cada cosa apagable, y `clavePadre` expresa la jerarquía: apagar `analitica` apaga sus doce gráficos aunque cada uno tenga su interruptor encendido. La resolución vive en `vwModulosEfectivos`, que distingue `habilitado` (el interruptor propio) de `visible` (ya con el padre aplicado). Si cada página lo calculara por su cuenta, bastaría con que una lo hiciera distinto para que el tablero se contradijera.
+
+**Solo se registran elementos que el código consulta de verdad.** No hay interruptor para «consulta ciudadana con filtros» de los seis módulos comprometidos: no es una página sino una capacidad repartida por el sitio, y apagarla no tendría efecto verificable. Un interruptor que no apaga nada es peor que no tenerlo, porque en la pantalla se ve igual que los que sí funcionan.
+
+**Ocultar el enlace del menú nunca alcanza.** La dirección se puede escribir a mano. Cada página pública hereda de `PaginaDeModulo`, que comprueba su módulo en `OnPreInit`, y el Web Service comprueba `ModuloVisible` antes de aceptar una valoración o un comentario: cerrar la participación desde el frontend se saltaría llamando al ASMX directamente.
+
+**Al cerrar la participación, lo ya registrado sigue visible** y solo se impide participar de nuevo. Los contadores se muestran, los botones quedan deshabilitados con su explicación, y el hilo de comentarios se lee. Esconder lo que ya se dijo sería reescribir el pasado, y además el tablero lo seguiría contando.
+
+`Servicios/Modulos.cs` consulta el estado **una vez por petición** (caché en `HttpContext.Items`). Sin eso, una página con doce gráficos abriría doce llamadas al Web Service para responder doce veces la misma pregunta. Ante una clave desconocida o un backend caído devuelve visible: un error de comunicación no debe vaciar la plataforma.
+
+Los bloques del tablero se marcan con `runat="server"` sobre su propio `div` en lugar de envolverse en un `PlaceHolder` — son divs anidados y envolverlos habría sido frágil. En las dos parejas de columnas el atributo va en el `col-*`, no en la tarjeta, para que no quede media fila vacía. El bloque que solo ve el administrador lleva la clase **`.gc-oculto`** (borde ámbar punteado y etiqueta «Oculto al público»): sin esa marca, quien administra confundiría lo que ve él con lo que ve el resto, que es el error que vuelve inútil un interruptor.
+
 ### Pendiente
 
 Alta de cuentas ciudadanas desde el registro público (las de candidatura ya se crean desde el área de administración), guardado del perfil y de los proyectos desde el panel del candidato (los formularios ya validan del lado del servidor pero todavía no persisten), y conectar el asistente a la API de un modelo de lenguaje.
 
-Las facultades del administrador se construyen por etapas, y cada una necesita las cuatro capas: procedimiento almacenado, método en el Web Service, sección en `Admin/` y registro en bitácora. Las etapas 1 (roles, áreas separadas y control de acceso), 2 (verificación y moderación) y 3 (partidos, campañas, candidaturas y sus cuentas) están hechas. Falta:
-
-- **Etapa 4** — habilitar o deshabilitar módulos de la plataforma. Necesita una tabla `Modulos`, hoy no hay dónde guardar ese estado.
+Las cuatro etapas del área de administración están hechas: roles y control de acceso, verificación y moderación, catálogos con sus cuentas, e interruptores de módulos. Cada facultad tiene su procedimiento almacenado, su método en el Web Service, su sección en `Admin/` y su registro en bitácora, y el permiso se comprueba en las dos capas.
 
 Mientras una sección no exista, aparece **deshabilitada** en el menú de `Admin/` en lugar de mostrar una pantalla que no guarda.
 

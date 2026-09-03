@@ -55,10 +55,6 @@
                     <a class="gc-side__link <%= ClaseNav("Moderacion") %>" href="<%= ResolveUrl("~/Admin/Moderacion") %>">Moderación</a>
                     <a class="gc-side__link <%= ClaseNav("Bitacora") %>" href="<%= ResolveUrl("~/Admin/Bitacora") %>">Bitácora</a>
 
-                    <%-- Las secciones de abajo se habilitan en las etapas siguientes.
-                         Se muestran deshabilitadas y no como enlaces rotos, para que el
-                         área declare su propio alcance. --%>
-
                     <div class="gc-side__lbl">Catálogos</div>
 
                     <a class="gc-side__link <%= ClaseNav("Partidos") %>" href="<%= ResolveUrl("~/Admin/Partidos") %>">Partidos</a>
@@ -67,7 +63,7 @@
 
                     <div class="gc-side__lbl">Configuración</div>
 
-                    <span class="gc-side__link is-soon" aria-disabled="true">Módulos</span>
+                    <a class="gc-side__link <%= ClaseNav("Modulos") %>" href="<%= ResolveUrl("~/Admin/Modulos") %>">Módulos</a>
                 </nav>
 
                 <div class="gc-side__foot">

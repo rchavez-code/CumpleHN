@@ -10,8 +10,14 @@ namespace frontend
     /// Ficha pública de un partido político, con sus candidaturas y el espacio
     /// de participación ciudadana.
     /// </summary>
-    public partial class PartidoPagina : Page
+    public partial class PartidoPagina : PaginaDeModulo
     {
+        /// <summary>Módulo al que pertenece esta página.</summary>
+        protected override string ModuloRequerido
+        {
+            get { return Modulos.Perfiles; }
+        }
+
         private Partido _partido;
 
         /// <summary>Partido en pantalla. Nunca es nulo: si no existe, se redirige.</summary>

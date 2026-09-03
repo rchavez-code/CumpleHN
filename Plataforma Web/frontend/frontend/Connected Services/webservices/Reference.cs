@@ -275,6 +275,27 @@ namespace frontend.webservices
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/crearCuentaCandidato", ReplyAction="*")]
         System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> crearCuentaCandidatoAsync(int codigoUsuario, int codigoCandidato, string login, string correo, string clave);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosVisibles", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.EstadoModulo[] listarModulosVisibles();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosVisibles", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.EstadoModulo[]> listarModulosVisiblesAsync();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosAdmin", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.ModuloAdmin[] listarModulosAdmin(int codigoUsuario);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosAdmin", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.ModuloAdmin[]> listarModulosAdminAsync(int codigoUsuario);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoModulo", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin cambiarEstadoModulo(int codigoUsuario, string clave, bool habilitado, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoModulo", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoModuloAsync(int codigoUsuario, string clave, bool habilitado, string motivo);
     }
     
     /// <remarks/>
@@ -453,6 +474,234 @@ namespace frontend.webservices
             set
             {
                 this.candidatoSlugField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class ModuloAdmin
+    {
+        
+        private int codigoModuloField;
+        
+        private string claveField;
+        
+        private string nombreField;
+        
+        private string descripcionField;
+        
+        private string grupoField;
+        
+        private string clavePadreField;
+        
+        private bool habilitadoField;
+        
+        private bool visibleField;
+        
+        private bool apagadoPorPadreField;
+        
+        private System.DateTime fechaCambioField;
+        
+        private string cambiadoPorField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoModulo
+        {
+            get
+            {
+                return this.codigoModuloField;
+            }
+            set
+            {
+                this.codigoModuloField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string clave
+        {
+            get
+            {
+                return this.claveField;
+            }
+            set
+            {
+                this.claveField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string nombre
+        {
+            get
+            {
+                return this.nombreField;
+            }
+            set
+            {
+                this.nombreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public string descripcion
+        {
+            get
+            {
+                return this.descripcionField;
+            }
+            set
+            {
+                this.descripcionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public string grupo
+        {
+            get
+            {
+                return this.grupoField;
+            }
+            set
+            {
+                this.grupoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        public string clavePadre
+        {
+            get
+            {
+                return this.clavePadreField;
+            }
+            set
+            {
+                this.clavePadreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        public bool habilitado
+        {
+            get
+            {
+                return this.habilitadoField;
+            }
+            set
+            {
+                this.habilitadoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        public bool visible
+        {
+            get
+            {
+                return this.visibleField;
+            }
+            set
+            {
+                this.visibleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        public bool apagadoPorPadre
+        {
+            get
+            {
+                return this.apagadoPorPadreField;
+            }
+            set
+            {
+                this.apagadoPorPadreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
+        public System.DateTime fechaCambio
+        {
+            get
+            {
+                return this.fechaCambioField;
+            }
+            set
+            {
+                this.fechaCambioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
+        public string cambiadoPor
+        {
+            get
+            {
+                return this.cambiadoPorField;
+            }
+            set
+            {
+                this.cambiadoPorField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class EstadoModulo
+    {
+        
+        private string claveField;
+        
+        private bool visibleField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public string clave
+        {
+            get
+            {
+                return this.claveField;
+            }
+            set
+            {
+                this.claveField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public bool visible
+        {
+            get
+            {
+                return this.visibleField;
+            }
+            set
+            {
+                this.visibleField = value;
             }
         }
     }
@@ -5623,6 +5872,36 @@ namespace frontend.webservices
         public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> crearCuentaCandidatoAsync(int codigoUsuario, int codigoCandidato, string login, string correo, string clave)
         {
             return base.Channel.crearCuentaCandidatoAsync(codigoUsuario, codigoCandidato, login, correo, clave);
+        }
+        
+        public frontend.webservices.EstadoModulo[] listarModulosVisibles()
+        {
+            return base.Channel.listarModulosVisibles();
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.EstadoModulo[]> listarModulosVisiblesAsync()
+        {
+            return base.Channel.listarModulosVisiblesAsync();
+        }
+        
+        public frontend.webservices.ModuloAdmin[] listarModulosAdmin(int codigoUsuario)
+        {
+            return base.Channel.listarModulosAdmin(codigoUsuario);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.ModuloAdmin[]> listarModulosAdminAsync(int codigoUsuario)
+        {
+            return base.Channel.listarModulosAdminAsync(codigoUsuario);
+        }
+        
+        public frontend.webservices.RespuestaAdmin cambiarEstadoModulo(int codigoUsuario, string clave, bool habilitado, string motivo)
+        {
+            return base.Channel.cambiarEstadoModulo(codigoUsuario, clave, habilitado, motivo);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoModuloAsync(int codigoUsuario, string clave, bool habilitado, string motivo)
+        {
+            return base.Channel.cambiarEstadoModuloAsync(codigoUsuario, clave, habilitado, motivo);
         }
     }
 }

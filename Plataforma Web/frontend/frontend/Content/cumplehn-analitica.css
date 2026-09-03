@@ -866,3 +866,34 @@ body.gc-esperando .gc-cuerpo { opacity: .45; pointer-events: none; }
     .gc-dona-caja { gap: 16px; }
     .gc-dona-caja svg { width: 128px; }
 }
+
+/* ============================================================
+   Bloque oculto al público
+
+   Solo lo ve quien administra. La marca existe porque sin ella
+   confundiría lo que ve él con lo que ve el resto, y ese es el
+   error que vuelve inútil un interruptor: creer que algo está
+   publicado cuando no lo está.
+   ============================================================ */
+
+.gc-oculto {
+    position: relative;
+    outline: 2px dashed var(--gc-ambar);
+    outline-offset: 4px;
+}
+
+.gc-oculto::before {
+    content: "Oculto al público";
+    position: absolute;
+    top: -10px;
+    right: 12px;
+    z-index: 2;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--gc-ambar);
+    color: #fff;
+    font-size: .64rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}

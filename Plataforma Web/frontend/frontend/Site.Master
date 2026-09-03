@@ -40,11 +40,23 @@
 
                 <ul class="gc-nav" id="gcNav">
                     <li><a class="<%= ClaseNav("Default") %>" href="<%= ResolveUrl("~/") %>">Inicio</a></li>
-                    <li><a class="<%= ClaseNav("Campanas", "Campana") %>" href="<%= ResolveUrl("~/Campanas") %>">Campañas</a></li>
-                    <li><a class="<%= ClaseNav("Candidatos", "Candidato") %>" href="<%= ResolveUrl("~/Candidatos") %>">Candidatos</a></li>
-                    <li><a class="<%= ClaseNav("Partidos", "Partido") %>" href="<%= ResolveUrl("~/Partidos") %>">Partidos</a></li>
-                    <li><a class="<%= ClaseNav("Propuestas", "Propuesta") %>" href="<%= ResolveUrl("~/Propuestas") %>">Propuestas</a></li>
-                    <li><a class="<%= ClaseNav("Analitica") %>" href="<%= ResolveUrl("~/Analitica") %>">Analítica</a></li>
+                    <%-- Cada enlace desaparece cuando la administración oculta su
+                         módulo. Ocultar el enlace no basta por sí solo: la página
+                         también comprueba su módulo, porque la dirección se puede
+                         escribir a mano. --%>
+                    <asp:PlaceHolder ID="phNavCampanas" runat="server">
+                        <li><a class="<%= ClaseNav("Campanas", "Campana") %>" href="<%= ResolveUrl("~/Campanas") %>">Campañas</a></li>
+                    </asp:PlaceHolder>
+                    <asp:PlaceHolder ID="phNavPerfiles" runat="server">
+                        <li><a class="<%= ClaseNav("Candidatos", "Candidato") %>" href="<%= ResolveUrl("~/Candidatos") %>">Candidatos</a></li>
+                        <li><a class="<%= ClaseNav("Partidos", "Partido") %>" href="<%= ResolveUrl("~/Partidos") %>">Partidos</a></li>
+                    </asp:PlaceHolder>
+                    <asp:PlaceHolder ID="phNavPropuestas" runat="server">
+                        <li><a class="<%= ClaseNav("Propuestas", "Propuesta") %>" href="<%= ResolveUrl("~/Propuestas") %>">Propuestas</a></li>
+                    </asp:PlaceHolder>
+                    <asp:PlaceHolder ID="phNavAnalitica" runat="server">
+                        <li><a class="<%= ClaseNav("Analitica") %>" href="<%= ResolveUrl("~/Analitica") %>">Analítica</a></li>
+                    </asp:PlaceHolder>
                 </ul>
 
                 <div class="gc-header__actions">
