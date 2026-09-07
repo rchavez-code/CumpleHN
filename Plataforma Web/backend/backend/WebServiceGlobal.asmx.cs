@@ -8,6 +8,7 @@ using System.Text;
 using System.Web.Script.Services;
 using System.Web.Services;
 using backend.Modelos;
+using backend.Servicios;
 
 namespace backend
 {
@@ -1113,7 +1114,7 @@ namespace backend
         // ------------------------------------------------- Armado de comandos
 
         /// <summary>Cadena sin espacios sobrantes. Nulo se vuelve vacío.</summary>
-        private static string Limpio(string texto)
+        internal static string Limpio(string texto)
         {
             return texto == null ? string.Empty : texto.Trim();
         }
@@ -1185,7 +1186,7 @@ namespace backend
 
         // ------------------------------------------------------- Indicadores
 
-        private static OpcionFiltro[] LeerOpciones(SqlConnection conn)
+        internal static OpcionFiltro[] LeerOpciones(SqlConnection conn)
         {
             List<OpcionFiltro> lista = new List<OpcionFiltro>();
 
@@ -1208,7 +1209,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static ResumenAnalitica LeerResumen(SqlConnection conn, FiltroAnalitica f)
+        internal static ResumenAnalitica LeerResumen(SqlConnection conn, FiltroAnalitica f)
         {
             ResumenAnalitica r = new ResumenAnalitica();
 
@@ -1242,7 +1243,7 @@ namespace backend
             return r;
         }
 
-        private static FilaCategoria[] LeerCategorias(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaCategoria[] LeerCategorias(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaCategoria> lista = new List<FilaCategoria>();
 
@@ -1267,7 +1268,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static FilaEstado[] LeerEstados(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaEstado[] LeerEstados(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaEstado> lista = new List<FilaEstado>();
 
@@ -1291,7 +1292,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static FilaVerificacion[] LeerVerificacion(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaVerificacion[] LeerVerificacion(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaVerificacion> lista = new List<FilaVerificacion>();
 
@@ -1314,7 +1315,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static FilaParticipacion[] LeerParticipacion(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaParticipacion[] LeerParticipacion(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaParticipacion> lista = new List<FilaParticipacion>();
 
@@ -1338,7 +1339,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static FilaCandidato[] LeerCandidatos(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaCandidato[] LeerCandidatos(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaCandidato> lista = new List<FilaCandidato>();
 
@@ -1370,7 +1371,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static FilaPartido[] LeerPartidos(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaPartido[] LeerPartidos(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaPartido> lista = new List<FilaPartido>();
 
@@ -1400,7 +1401,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static FilaDepartamento[] LeerTerritorio(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaDepartamento[] LeerTerritorio(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaDepartamento> lista = new List<FilaDepartamento>();
 
@@ -1427,7 +1428,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static FilaActividad[] LeerActividad(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaActividad[] LeerActividad(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaActividad> lista = new List<FilaActividad>();
 
@@ -2364,6 +2365,233 @@ namespace backend
         {
             object valor = reader[columna];
             return valor == DBNull.Value ? string.Empty : Convert.ToString(valor);
+        }
+
+        // =============================================================
+        //  Asistente de consulta en lenguaje natural
+        // =============================================================
+
+        /// <summary>
+        /// Responde una pregunta en lenguaje natural sobre lo registrado en
+        /// la plataforma.
+        ///
+        /// Las tres comprobaciones previas van acá y no en la página. El
+        /// frontend decide qué botones muestra, nunca qué se permite: quien
+        /// llame al servicio directamente manda el código de usuario que
+        /// quiera, y este método es el que cuesta dinero de verdad.
+        ///
+        /// El registro se escribe siempre, responda el modelo o falle. Una
+        /// bitácora que solo guarda los casos buenos no sirve para revisar
+        /// los malos, que son los que hay que revisar.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAsistente preguntarAsistente(int codigoUsuario, string pregunta,
+                                                     string campanaSlug)
+        {
+            RespuestaAsistente r = new RespuestaAsistente();
+            r.fuentes = new string[0];
+            r.mensaje = string.Empty;
+            r.respuesta = string.Empty;
+
+            string texto = Limpio(pregunta);
+
+            if (texto.Length == 0)
+            {
+                r.mensaje = "Escribí una pregunta.";
+                return r;
+            }
+
+            if (texto.Length > 1000) texto = texto.Substring(0, 1000);
+
+            int limiteDiario;
+            if (!int.TryParse(ConfigurationManager.AppSettings["AsistenteCuotaDiaria"],
+                              out limiteDiario) || limiteDiario <= 0)
+                limiteDiario = 20;
+
+            // --- Comprobaciones, con la conexión de siempre ---------------
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!ModuloVisible(conn, "analitica.asistente"))
+                {
+                    r.mensaje = "El asistente está fuera de servicio en este momento.";
+                    return r;
+                }
+
+                if (!UsuarioActivo(conn, codigoUsuario))
+                {
+                    r.mensaje = "Para preguntarle al asistente hay que iniciar sesión.";
+                    return r;
+                }
+
+                SqlCommand cmd = new SqlCommand("dbo.spIACuotaDisponible", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@limiteDiario", limiteDiario);
+
+                using (SqlDataReader lector = cmd.ExecuteReader())
+                {
+                    if (lector.Read())
+                    {
+                        r.restantes = Convert.ToInt32(lector["restantes"]);
+
+                        if (!Convert.ToBoolean(lector["permitido"]))
+                        {
+                            r.mensaje = "Llegaste al límite de " + limiteDiario
+                                      + " consultas por día. Vuelve mañana.";
+                            return r;
+                        }
+                    }
+                }
+            }
+
+            // --- La llamada al modelo, ya sin conexión abierta ------------
+            //
+            // Tarda entre unos pocos segundos y medio minuto. Sostener una
+            // conexión de SQL Server durante ese rato desperdicia una del
+            // pool por cada pregunta en curso, sin ninguna necesidad.
+
+            System.Diagnostics.Stopwatch reloj = System.Diagnostics.Stopwatch.StartNew();
+            ResultadoIA salida = null;
+            string error = null;
+
+            try
+            {
+                salida = AsistenteIA.Preguntar(texto, campanaSlug);
+            }
+            catch (Exception ex)
+            {
+                error = ex.GetType().Name + ": " + ex.Message;
+                System.Diagnostics.Trace.TraceError("Asistente: " + ex);
+            }
+
+            reloj.Stop();
+
+            // --- Registro y respuesta ------------------------------------
+            bool respondio = error == null && salida != null
+                          && !string.IsNullOrEmpty(salida.texto);
+
+            if (respondio)
+            {
+                r.ok = true;
+                r.respuesta = salida.texto;
+                r.fuentes = FuentesDe(salida.herramientas);
+                r.restantes = r.restantes - 1;
+            }
+            else
+            {
+                r.mensaje = "No se pudo consultar al asistente en este momento. "
+                          + "Los gráficos del tablero siguen disponibles.";
+            }
+
+            RegistrarConsulta(codigoUsuario, texto, salida, error,
+                              (int)reloj.ElapsedMilliseconds, respondio);
+
+            return r;
+        }
+
+        /// <summary>
+        /// Traduce las herramientas que se ejecutaron a las fuentes que ve el
+        /// ciudadano.
+        ///
+        /// Se arma con lo que efectivamente se invocó y no con lo que el
+        /// modelo diga haber consultado. Un modelo puede describir mal su
+        /// propio trabajo, el registro de llamadas no.
+        /// </summary>
+        private static string[] FuentesDe(List<string> herramientas)
+        {
+            List<string> fuentes = new List<string>();
+
+            if (herramientas != null)
+                foreach (string h in herramientas)
+                {
+                    switch (h)
+                    {
+                        case "consultar_tablero":
+                            fuentes.Add("Procedimientos spAnalitica* del script 08, sobre las "
+                                      + "vistas de detalle del script 07");
+                            break;
+                        case "buscar_propuestas":
+                            fuentes.Add("Procedimiento spIABuscarPropuestas, sobre "
+                                      + "vwAnaliticaPropuestas");
+                            break;
+                        case "ficha_candidato":
+                            fuentes.Add("Procedimiento spIAFichaCandidato, sobre "
+                                      + "vwAnaliticaCandidaturas");
+                            break;
+                        case "catalogos":
+                            fuentes.Add("Procedimiento spAnaliticaCatalogos");
+                            break;
+                    }
+                }
+
+            if (fuentes.Count == 0)
+                fuentes.Add("Sin fuentes: el asistente no consultó la base para esta respuesta");
+            else
+                fuentes.Add("Base BDCUMPLEHN, consultada con el login de solo lectura cumplehn_ia");
+
+            return fuentes.ToArray();
+        }
+
+        /// <summary>
+        /// Deja la consulta en ConsultasIA. Usa la conexión normal y no la del
+        /// asistente, que no tiene permiso de escritura: la bitácora es una
+        /// decisión del servicio, no algo que el modelo pueda provocar.
+        ///
+        /// Si el registro falla no se le arruina la respuesta a la persona.
+        /// Queda en el rastro de la aplicación y ya.
+        /// </summary>
+        private static void RegistrarConsulta(int codigoUsuario, string pregunta,
+                                              ResultadoIA salida, string error,
+                                              int milisegundos, bool respondio)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(cadenaConexion))
+                {
+                    conn.Open();
+
+                    SqlCommand cmd = new SqlCommand("dbo.spIARegistrarConsulta", conn);
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                    cmd.Parameters.AddWithValue("@pregunta", pregunta);
+                    cmd.Parameters.AddWithValue("@respondio", respondio);
+                    cmd.Parameters.AddWithValue("@milisegundos", milisegundos);
+                    cmd.Parameters.AddWithValue("@modelo",
+                        (object)ConfigurationManager.AppSettings["AsistenteModelo"] ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@error",
+                        error == null ? (object)DBNull.Value
+                                      : (error.Length > 300 ? error.Substring(0, 300) : error));
+
+                    if (salida == null)
+                    {
+                        cmd.Parameters.AddWithValue("@respuesta", DBNull.Value);
+                        cmd.Parameters.AddWithValue("@herramientas", DBNull.Value);
+                        cmd.Parameters.AddWithValue("@tokensEntrada", DBNull.Value);
+                        cmd.Parameters.AddWithValue("@tokensSalida", DBNull.Value);
+                    }
+                    else
+                    {
+                        cmd.Parameters.AddWithValue("@respuesta",
+                            (object)salida.texto ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@herramientas",
+                            salida.herramientas == null || salida.herramientas.Count == 0
+                                ? (object)DBNull.Value
+                                : string.Join(", ", salida.herramientas.ToArray()));
+                        cmd.Parameters.AddWithValue("@tokensEntrada", salida.tokensEntrada);
+                        cmd.Parameters.AddWithValue("@tokensSalida", salida.tokensSalida);
+                    }
+
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("Registro de consulta IA: " + ex);
+            }
         }
     }
 }
