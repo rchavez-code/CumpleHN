@@ -190,5 +190,38 @@ WHERE u.name = N'cumplehn_ia'
 ORDER BY p.state_desc, o.type_desc, o.name;
 GO
 
+/* ============================================================
+   5. Comprobación del comportamiento
+
+   Que los permisos existan no prueba que se comporten. Se
+   verificaron asumiendo la identidad del usuario, que no
+   necesita su contraseña:
+
+     EXECUTE AS USER = 'cumplehn_ia';  ...  REVERT;
+
+   Resultado, el 6 de septiembre de 2026:
+
+     [1] spIABuscarPropuestas ......... permite
+     [2] spAnaliticaParticipacion ..... permite
+     [3] SELECT sobre Usuarios ........ bloquea
+     [4] SELECT sobre vwAnaliticaValoraciones  bloquea
+     [5] SELECT sobre Propuestas ...... bloquea
+     [6] spIARegistrarConsulta ........ bloquea
+     [7] UPDATE sobre Propuestas ...... bloquea
+
+   El caso [2] es el que sostiene todo el esquema y por eso se
+   probó aparte: spAnaliticaParticipacion lee
+   vwAnaliticaValoraciones, que tiene DENY explícito, y aun así
+   funciona. Es el encadenamiento de propiedad — con la cadena
+   intacta el permiso del objeto referido no se evalúa. Sin esa
+   propiedad habría que elegir entre proteger la vista o tener
+   tablero, y acá se tienen las dos cosas.
+
+   El [5] muestra la otra cara: Propuestas no lleva DENY y
+   tampoco se puede leer directo, porque nunca se concedió el
+   permiso. Los DENY del bloque 3 son para lo que no debe
+   leerse ni por accidente, no la única defensa.
+   ============================================================ */
+
 PRINT '13_permisos_ia.sql aplicado.';
 GO
