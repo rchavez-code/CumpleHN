@@ -115,11 +115,13 @@ namespace backend.Servicios
 
             using (SqlConnection conn = Abrir())
             {
-                if (string.IsNullOrEmpty(WebServiceGlobal.Limpio(filtro.campanaSlug)))
-                    filtro.campanaSlug = CampanaDestacada(conn);
+                // Slug y nombre en una sola ida, por procedimiento. El login
+                // del asistente no puede leer Campanas de forma directa.
+                string[] campana = Campana(conn, filtro.campanaSlug);
 
-                a.campanaSlug   = WebServiceGlobal.Limpio(filtro.campanaSlug);
-                a.campanaNombre = NombreCampana(conn, a.campanaSlug);
+                filtro.campanaSlug = campana[0];
+                a.campanaSlug      = campana[0];
+                a.campanaNombre    = campana[1];
 
                 a.opciones      = WebServiceGlobal.LeerOpciones(conn);
                 a.resumen       = WebServiceGlobal.LeerResumen(conn, filtro);
@@ -231,21 +233,32 @@ namespace backend.Servicios
         //  Auxiliares
         // =============================================================
 
-        private static string CampanaDestacada(SqlConnection conn)
+        /// <summary>
+        /// Slug y nombre de la campaña, en ese orden. Sin slug devuelve la
+        /// destacada.
+        ///
+        /// Va por procedimiento y no con un SELECT acá porque el login del
+        /// asistente no tiene permiso de lectura sobre ninguna tabla. La
+        /// primera versión lo hacía con dos consultas sueltas y falló en la
+        /// primera consulta real — el permiso atrapó lo que la regla del
+        /// encabezado de esta clase ya prohibía.
+        /// </summary>
+        private static string[] Campana(SqlConnection conn, string slug)
         {
-            SqlCommand cmd = new SqlCommand(
-                "SELECT TOP (1) slug FROM dbo.Campanas WHERE esActual = 1", conn);
-            object v = cmd.ExecuteScalar();
-            return v == null ? string.Empty : Convert.ToString(v);
-        }
+            SqlCommand cmd = new SqlCommand("dbo.spIACampana", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
 
-        private static string NombreCampana(SqlConnection conn, string slug)
-        {
-            SqlCommand cmd = new SqlCommand(
-                "SELECT nombre FROM dbo.Campanas WHERE slug = @slug", conn);
-            cmd.Parameters.AddWithValue("@slug", slug ?? string.Empty);
-            object v = cmd.ExecuteScalar();
-            return v == null ? string.Empty : Convert.ToString(v);
+            string s = WebServiceGlobal.Limpio(slug);
+            cmd.Parameters.AddWithValue("@campanaSlug",
+                s.Length == 0 ? (object)DBNull.Value : s);
+
+            using (SqlDataReader r = cmd.ExecuteReader())
+                if (r.Read())
+                    return new string[] { Texto(r, "slug"), Texto(r, "nombre") };
+
+            // Slug inexistente. Se devuelve vacío y los indicadores salen en
+            // cero, que la página ya trata como selección sin datos.
+            return new string[] { string.Empty, string.Empty };
         }
 
         /// <summary>

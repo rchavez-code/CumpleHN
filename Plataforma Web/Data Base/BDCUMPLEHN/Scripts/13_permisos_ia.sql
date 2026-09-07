@@ -133,6 +133,7 @@ GRANT EXECUTE ON dbo.spAnaliticaTerritorio    TO cumplehn_ia;
 GRANT EXECUTE ON dbo.spAnaliticaActividad     TO cumplehn_ia;
 GRANT EXECUTE ON dbo.spIABuscarPropuestas     TO cumplehn_ia;
 GRANT EXECUTE ON dbo.spIAFichaCandidato       TO cumplehn_ia;
+GRANT EXECUTE ON dbo.spIACampana              TO cumplehn_ia;
 GO
 
 /* spIACuotaDisponible y spIARegistrarConsulta quedan fuera a

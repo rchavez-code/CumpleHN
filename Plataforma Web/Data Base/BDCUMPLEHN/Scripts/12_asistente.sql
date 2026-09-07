@@ -351,5 +351,46 @@ BEGIN
 END
 GO
 
+/* ============================================================
+   6. Campaña sobre la que se responde
+
+   El tablero necesita el slug y el nombre de la campaña antes de
+   pedir ningún indicador, y sin campaña indicada usa la
+   destacada.
+
+   Existe como procedimiento y no como un par de SELECT en el
+   backend por una razón concreta: el login del asistente no
+   tiene permiso de lectura sobre ninguna tabla, ni siquiera
+   sobre Campanas. La primera versión resolvía esto con dos
+   consultas sueltas y falló en la primera consulta real, con el
+   modelo informando correctamente que no podía dar la cifra.
+
+   Vale como recordatorio de la regla del encabezado: cuando el
+   asistente necesita un dato nuevo se le agrega un procedimiento
+   y su GRANT, nunca una consulta suelta.
+   ============================================================ */
+
+IF OBJECT_ID('dbo.spIACampana') IS NOT NULL
+    DROP PROCEDURE dbo.spIACampana;
+GO
+
+CREATE PROCEDURE dbo.spIACampana
+    @campanaSlug NVARCHAR(80) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @campanaSlug IS NULL OR LTRIM(RTRIM(@campanaSlug)) = N''
+        SELECT TOP (1) slug, nombre
+        FROM dbo.Campanas
+        WHERE esActual = 1
+        ORDER BY codigoCampana;
+    ELSE
+        SELECT slug, nombre
+        FROM dbo.Campanas
+        WHERE slug = @campanaSlug;
+END
+GO
+
 PRINT '12_asistente.sql aplicado.';
 GO
