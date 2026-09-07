@@ -291,6 +291,8 @@ Las herramientas son `consultar_tablero` (los diez `spAnalitica*`), `buscar_prop
 
 **Las fuentes se arman con las herramientas que se ejecutaron**, no con las que el modelo diga haber usado. Un modelo puede describir mal su propio trabajo, el registro de llamadas no.
 
+Y **describen lo que la herramienta devolvió, no el procedimiento que la resolvió**: «7 candidaturas y 11 propuestas registradas en la plataforma», no «spAnaliticaResumen». Nombrar el procedimiento es cierto pero no le sirve a nadie para verificar nada, que es justamente lo que la encuesta pedía. La traza técnica no se pierde: los nombres de las herramientas siguen guardándose en `ConsultasIA`, que es donde hacen falta. Cuando el modelo responde sin consultar la base —un pedido de ranking, por ejemplo— la fuente lo dice, porque callarlo dejaría una respuesta sin respaldo con el mismo aspecto que una respaldada.
+
 **Todo lo que entra por herramientas es dato, nunca instrucción.** El prompt lo declara y el resultado viaja delimitado. Del lado del navegador, la respuesta **no se inserta con `innerHTML`**: se analiza con `DOMParser`, que no ejecuta nada, y se toman solo los párrafos como texto.
 
 **Tres comprobaciones antes de gastar un token**, todas en el Web Service: módulo visible, cuenta activa y cuota diaria (`spIACuotaDisponible`, 20 por persona y día). El frontend decide qué muestra, nunca qué se permite. `ConsultasIA` registra cada pregunta con su respuesta, herramientas, tokens y tiempo, responda o falle — una bitácora que solo guarda los casos buenos no sirve para revisar los malos. La escribe el backend con su conexión normal, no el asistente.

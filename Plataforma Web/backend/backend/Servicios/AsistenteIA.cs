@@ -130,6 +130,7 @@ FORMA DE RESPONDER:
         {
             ResultadoIA salida = new ResultadoIA();
             salida.herramientas = new List<string>();
+            salida.fuentes      = new List<string>();
 
             AnthropicClient cliente = new AnthropicClient { ApiKey = Clave };
 
@@ -204,7 +205,7 @@ FORMA DE RESPONDER:
                     resultados.Add(new ToolResultBlockParam
                     {
                         ToolUseID = llamada.ID,
-                        Content   = Ejecutar(llamada)
+                        Content   = Ejecutar(llamada, salida)
                     });
                 }
 
@@ -306,7 +307,7 @@ FORMA DE RESPONDER:
         /// referirse a ello como contenido citado y no como algo dicho
         /// por la plataforma.
         /// </summary>
-        private static string Ejecutar(ToolUseBlock llamada)
+        private static string Ejecutar(ToolUseBlock llamada, ResultadoIA salida)
         {
             try
             {
@@ -320,11 +321,21 @@ FORMA DE RESPONDER:
                         f.codigoCategoria    = Entero(llamada, "codigoCategoria");
                         f.codigoPartido      = Entero(llamada, "codigoPartido");
                         f.codigoDepartamento = Entero(llamada, "codigoDepartamento");
-                        resultado = AsistenteDatos.Tablero(f);
+
+                        Analitica a = AsistenteDatos.Tablero(f);
+                        resultado = a;
+
+                        Fuente(salida, "Indicadores del tablero de esta página — campaña "
+                                     + a.campanaNombre);
+
+                        if (a.resumen != null)
+                            Fuente(salida, Plural(a.resumen.candidaturas, "candidatura", "candidaturas")
+                                         + " y " + Plural(a.resumen.propuestas, "propuesta", "propuestas")
+                                         + " registradas en la plataforma");
                         break;
 
                     case "buscar_propuestas":
-                        resultado = AsistenteDatos.BuscarPropuestas(
+                        List<PropuestaIA> encontradas = AsistenteDatos.BuscarPropuestas(
                             Entero(llamada, "codigoPropuesta"),
                             Cadena(llamada, "texto"),
                             Cadena(llamada, "campanaSlug"),
@@ -333,14 +344,26 @@ FORMA DE RESPONDER:
                             Cadena(llamada, "candidatoSlug"),
                             Entero(llamada, "codigoPartido"),
                             Entero(llamada, "limite"));
+
+                        resultado = encontradas;
+
+                        Fuente(salida, "Búsqueda entre las propuestas registradas — "
+                                     + Plural(encontradas.Count, "resultado", "resultados"));
                         break;
 
                     case "ficha_candidato":
-                        resultado = AsistenteDatos.FichaCandidato(Cadena(llamada, "candidatoSlug"));
+                        FichaIA ficha = AsistenteDatos.FichaCandidato(Cadena(llamada, "candidatoSlug"));
+                        resultado = ficha;
+
+                        if (ficha != null)
+                            Fuente(salida, "Ficha de " + ficha.candidato + " y sus "
+                                         + Plural(ficha.propuestas == null ? 0 : ficha.propuestas.Length,
+                                                  "propuesta registrada", "propuestas registradas"));
                         break;
 
                     case "catalogos":
                         resultado = AsistenteDatos.Catalogos();
+                        Fuente(salida, "Catálogo de campañas, categorías, partidos y departamentos");
                         break;
 
                     default:
@@ -366,6 +389,29 @@ FORMA DE RESPONDER:
         // =============================================================
         //  Auxiliares
         // =============================================================
+
+        /// <summary>
+        /// Agrega una fuente, sin repetir.
+        ///
+        /// Las fuentes describen lo que la herramienta devolvió, no solo que
+        /// se la llamó, y por eso llevan las cifras: son lo que la persona
+        /// puede contrastar subiendo la página. Antes nombraban el
+        /// procedimiento almacenado, que es cierto pero no le sirve a nadie
+        /// para verificar nada.
+        ///
+        /// La traza técnica no se perdió: los nombres de las herramientas
+        /// siguen guardándose en ConsultasIA, que es donde hacen falta.
+        /// </summary>
+        private static void Fuente(ResultadoIA salida, string texto)
+        {
+            if (salida == null || string.IsNullOrEmpty(texto)) return;
+            if (!salida.fuentes.Contains(texto)) salida.fuentes.Add(texto);
+        }
+
+        private static string Plural(int n, string singular, string plural)
+        {
+            return n + " " + (n == 1 ? singular : plural);
+        }
 
         private static string Clave
         {
@@ -484,7 +530,12 @@ FORMA DE RESPONDER:
     internal class ResultadoIA
     {
         public string texto { get; set; }
+
+        /// <summary>Las que se invocaron. Van a la bitacora.</summary>
         public List<string> herramientas { get; set; }
+
+        /// <summary>Lo que se consulto, en palabras. Va a la pantalla.</summary>
+        public List<string> fuentes { get; set; }
         public int tokensEntrada { get; set; }
         public int tokensSalida { get; set; }
     }

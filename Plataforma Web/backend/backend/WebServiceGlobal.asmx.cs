@@ -2477,7 +2477,14 @@ namespace backend
             {
                 r.ok = true;
                 r.respuesta = salida.texto;
-                r.fuentes = FuentesDe(salida.herramientas);
+                // Sin fuentes significa que el modelo respondió sin consultar
+                // la base, que pasa cuando la pregunta se contesta con las
+                // reglas —un pedido de ranking, por ejemplo—. Decirlo importa:
+                // callarlo dejaría una respuesta sin respaldo con el mismo
+                // aspecto que una respaldada.
+                r.fuentes = salida.fuentes.Count > 0
+                          ? salida.fuentes.ToArray()
+                          : new string[] { "Esta respuesta no consultó datos de la plataforma" };
                 r.restantes = r.restantes - 1;
             }
             else
@@ -2490,49 +2497,6 @@ namespace backend
                               (int)reloj.ElapsedMilliseconds, respondio);
 
             return r;
-        }
-
-        /// <summary>
-        /// Traduce las herramientas que se ejecutaron a las fuentes que ve el
-        /// ciudadano.
-        ///
-        /// Se arma con lo que efectivamente se invocó y no con lo que el
-        /// modelo diga haber consultado. Un modelo puede describir mal su
-        /// propio trabajo, el registro de llamadas no.
-        /// </summary>
-        private static string[] FuentesDe(List<string> herramientas)
-        {
-            List<string> fuentes = new List<string>();
-
-            if (herramientas != null)
-                foreach (string h in herramientas)
-                {
-                    switch (h)
-                    {
-                        case "consultar_tablero":
-                            fuentes.Add("Procedimientos spAnalitica* del script 08, sobre las "
-                                      + "vistas de detalle del script 07");
-                            break;
-                        case "buscar_propuestas":
-                            fuentes.Add("Procedimiento spIABuscarPropuestas, sobre "
-                                      + "vwAnaliticaPropuestas");
-                            break;
-                        case "ficha_candidato":
-                            fuentes.Add("Procedimiento spIAFichaCandidato, sobre "
-                                      + "vwAnaliticaCandidaturas");
-                            break;
-                        case "catalogos":
-                            fuentes.Add("Procedimiento spAnaliticaCatalogos");
-                            break;
-                    }
-                }
-
-            if (fuentes.Count == 0)
-                fuentes.Add("Sin fuentes: el asistente no consultó la base para esta respuesta");
-            else
-                fuentes.Add("Base BDCUMPLEHN, consultada con el login de solo lectura cumplehn_ia");
-
-            return fuentes.ToArray();
         }
 
         /// <summary>
