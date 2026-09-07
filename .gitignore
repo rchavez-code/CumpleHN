@@ -33,6 +33,13 @@ packages/
 # --- Archivos de bloqueo de Office ---------------------------
 ~$*
 
+# --- Secretos ------------------------------------------------
+#  La clave de la API del asistente y la contraseña del login
+#  cumplehn_ia. El repositorio es privado, pero una clave subida
+#  a GitHub se considera filtrada y hay que rotarla igual.
+#  secrets.config.ejemplo sí se versiona: dice qué hay que crear.
+secrets.config
+
 # --- Registros y temporales ----------------------------------
 *.log
 *.tmp
