@@ -1047,6 +1047,48 @@ namespace frontend.Servicios
             return ARespuesta(d);
         }
 
+        // =============================================================
+        //  Asistente
+        // =============================================================
+
+        /// <summary>
+        /// Le pasa la pregunta al backend, que es quien tiene la clave del
+        /// modelo y quien comprueba sesión, cuota y módulo.
+        ///
+        /// Es la llamada más lenta del proyecto, entre diez y veinte
+        /// segundos, y por eso la página la hace desde script y no en un
+        /// postback. Acá no se hace nada especial por eso: el que espera es
+        /// el hilo que atiende la petición asíncrona, no la carga de la
+        /// página.
+        /// </summary>
+        public RespuestaAsistente PreguntarAsistente(
+            int codigoUsuario, string pregunta, string campanaSlug)
+        {
+            ws.RespuestaAsistente d = Ejecutar(
+                c => c.preguntarAsistente(codigoUsuario, pregunta, campanaSlug), null);
+
+            // Nulo es que el backend no respondió. Se distingue del rechazo,
+            // que sí trae su propio motivo desde el servicio.
+            if (d == null)
+                return new RespuestaAsistente
+                {
+                    Ok = false,
+                    Mensaje = "No se pudo comunicar con el servicio. "
+                            + "Los gráficos del tablero siguen disponibles."
+                };
+
+            return new RespuestaAsistente
+            {
+                Ok = d.ok,
+                Respuesta = d.respuesta ?? string.Empty,
+                Mensaje = d.mensaje ?? string.Empty,
+                Restantes = d.restantes,
+                Fuentes = d.fuentes == null
+                        ? new List<string>()
+                        : new List<string>(d.fuentes)
+            };
+        }
+
         /// <summary>
         /// Convierte la respuesta del servicio, distinguiendo el rechazo de la
         /// acción (que trae su propio mensaje) de la caída del backend.

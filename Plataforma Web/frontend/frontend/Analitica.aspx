@@ -811,64 +811,56 @@
 
             <div class="gc-ia__cuerpo">
 
-                <div class="gc-note gc-note--ambar" style="margin-bottom: 18px;">
+                <div class="gc-note" style="margin-bottom: 18px;">
                     <span>
-                        <strong>Esto es una maqueta funcional, no el asistente terminado.</strong>
-                        Las respuestas se arman con las cifras reales del tablero que está en pantalla,
-                        pero las preguntas no se procesan con un modelo de lenguaje todavía. Sirve para
-                        mostrar la forma que va a tener la respuesta, incluidas sus fuentes.
+                        Las respuestas se arman con lo que está registrado en la plataforma y citan
+                        el procedimiento del que sale cada cifra. El asistente no recomienda por
+                        quién votar ni evalúa candidaturas, y cuando un dato no está registrado lo
+                        dice en lugar de completarlo. Puede equivocarse al redactar: las cifras se
+                        pueden contrastar con los gráficos de esta misma página.
                     </span>
                 </div>
 
                 <p class="gc-muted gc-small">Preguntas de ejemplo:</p>
                 <div class="gc-ia__sug">
-                    <asp:Repeater ID="rptSugerencias" runat="server" OnItemCommand="rptSugerencias_ItemCommand">
+                    <asp:Repeater ID="rptSugerencias" runat="server">
                         <ItemTemplate>
-                            <asp:LinkButton runat="server" CssClass="gc-chip" CommandName="preguntar"
-                                CommandArgument="<%# Container.ItemIndex %>"><%#: Container.DataItem %></asp:LinkButton>
+                            <button type="button" class="gc-chip"
+                                data-gc-pregunta="<%#: Container.DataItem %>"><%#: Container.DataItem %></button>
                         </ItemTemplate>
                     </asp:Repeater>
                 </div>
 
-                <asp:PlaceHolder ID="phConversacion" runat="server" Visible="false">
-                    <div class="gc-msg gc-msg--yo">
-                        <span class="gc-msg__ico"><%: InicialesUsuario %></span>
-                        <div class="gc-msg__b"><asp:Literal ID="litPregunta" runat="server" /></div>
-                    </div>
+                <%-- El hilo lo llena cumplehn-analitica.js. Empieza vacío a propósito:
+                     una conversación inventada de ejemplo se confundiría con una real. --%>
+                <div id="gcIaHilo" class="gc-ia__hilo" aria-live="polite"></div>
 
-                    <div class="gc-msg gc-msg--ia">
-                        <span class="gc-msg__ico">IA</span>
-                        <div class="gc-msg__b">
-                            <asp:Literal ID="litRespuesta" runat="server" />
-
-                            <div class="gc-fuentes">
-                                <div class="gc-fuentes__t">Fuentes consultadas</div>
-                                <ol>
-                                    <asp:Repeater ID="rptFuentes" runat="server">
-                                        <ItemTemplate>
-                                            <li><%#: Container.DataItem %></li>
-                                        </ItemTemplate>
-                                    </asp:Repeater>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                </asp:PlaceHolder>
+                <% if (PuedePreguntar) { %>
 
                 <div class="gc-coment-form" style="margin-top: 6px;">
                     <span class="gc-msg__ico"><%: InicialesUsuario %></span>
                     <div style="flex: 1 1 auto; min-width: 0;">
-                        <asp:TextBox ID="txtPregunta" runat="server" CssClass="gc-input"
+                        <input type="text" id="gcIaPregunta" class="gc-input" maxlength="1000"
+                            autocomplete="off"
                             placeholder="Escribí tu pregunta sobre las candidaturas o sus propuestas" />
                         <div class="gc-coment-form__pie">
-                            <span class="gc-muted gc-small">
-                                En esta etapa solo responden las preguntas de ejemplo de arriba.
+                            <span class="gc-ia__estado gc-muted gc-small" id="gcIaEstado">
+                                Consultar la base y redactar la respuesta toma unos segundos.
                             </span>
-                            <asp:Button ID="btnPreguntar" runat="server" CssClass="gc-btn gc-btn--sm"
-                                Text="Preguntar" OnClick="btnPreguntar_Click" />
+                            <button type="button" id="gcIaEnviar" class="gc-btn gc-btn--sm" data-gc-iniciales="<%: InicialesUsuario %>">Preguntar</button>
                         </div>
                     </div>
                 </div>
+
+                <% } else { %>
+
+                <p class="gc-muted gc-small" style="margin-top: 6px;">
+                    Para preguntarle al asistente hay que
+                    <a href="<%: UrlAcceso %>">iniciar sesión</a>. Los gráficos de esta página se
+                    consultan sin cuenta.
+                </p>
+
+                <% } %>
 
             </div>
         </div>
@@ -882,6 +874,7 @@
 
     </div>
 
+    <input type="hidden" id="gcCampanaSlug" value="<%: CampanaSlugActual %>" />
     <input type="hidden" id="gcPestana" name="gcPestana" value="<%: PestanaActiva %>" />
 
     <script src="<%= Recurso("~/Scripts/cumplehn-analitica.js") %>"></script>

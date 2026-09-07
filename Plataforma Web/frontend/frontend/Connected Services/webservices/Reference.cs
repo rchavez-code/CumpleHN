@@ -296,6 +296,13 @@ namespace frontend.webservices
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoModulo", ReplyAction="*")]
         System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoModuloAsync(int codigoUsuario, string clave, bool habilitado, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/preguntarAsistente", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAsistente preguntarAsistente(int codigoUsuario, string pregunta, string campanaSlug);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/preguntarAsistente", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAsistente> preguntarAsistenteAsync(int codigoUsuario, string pregunta, string campanaSlug);
     }
     
     /// <remarks/>
@@ -474,6 +481,96 @@ namespace frontend.webservices
             set
             {
                 this.candidatoSlugField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class RespuestaAsistente
+    {
+        
+        private bool okField;
+        
+        private string respuestaField;
+        
+        private string[] fuentesField;
+        
+        private string mensajeField;
+        
+        private int restantesField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public bool ok
+        {
+            get
+            {
+                return this.okField;
+            }
+            set
+            {
+                this.okField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string respuesta
+        {
+            get
+            {
+                return this.respuestaField;
+            }
+            set
+            {
+                this.respuestaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayAttribute(Order=2)]
+        public string[] fuentes
+        {
+            get
+            {
+                return this.fuentesField;
+            }
+            set
+            {
+                this.fuentesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public string mensaje
+        {
+            get
+            {
+                return this.mensajeField;
+            }
+            set
+            {
+                this.mensajeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public int restantes
+        {
+            get
+            {
+                return this.restantesField;
+            }
+            set
+            {
+                this.restantesField = value;
             }
         }
     }
@@ -5902,6 +5999,16 @@ namespace frontend.webservices
         public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoModuloAsync(int codigoUsuario, string clave, bool habilitado, string motivo)
         {
             return base.Channel.cambiarEstadoModuloAsync(codigoUsuario, clave, habilitado, motivo);
+        }
+        
+        public frontend.webservices.RespuestaAsistente preguntarAsistente(int codigoUsuario, string pregunta, string campanaSlug)
+        {
+            return base.Channel.preguntarAsistente(codigoUsuario, pregunta, campanaSlug);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAsistente> preguntarAsistenteAsync(int codigoUsuario, string pregunta, string campanaSlug)
+        {
+            return base.Channel.preguntarAsistenteAsync(codigoUsuario, pregunta, campanaSlug);
         }
     }
 }

@@ -228,6 +228,7 @@
     <Content Include="Partido.aspx" />
     <Content Include="Error.aspx" />
     <Content Include="Analitica.aspx" />
+    <Content Include="Asistente.ashx" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Analitica.aspx.cs">
@@ -238,6 +239,10 @@
       <DependentUpon>Analitica.aspx</DependentUpon>
     </Compile>
     <Compile Include="Modelos\Analitica.cs" />
+    <Compile Include="Modelos\Asistente.cs" />
+    <Compile Include="Asistente.ashx.cs">
+      <DependentUpon>Asistente.ashx</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Error.aspx.cs">

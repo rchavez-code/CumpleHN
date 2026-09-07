@@ -229,6 +229,29 @@ namespace frontend.Servicios
         }
 
         // =============================================================
+        //  Asistente
+        // =============================================================
+
+        /// <summary>
+        /// El asistente no tiene versión de demostración, y es a propósito.
+        ///
+        /// Esta clase existe para trabajar el diseño sin levantar el backend.
+        /// Devolver acá una respuesta inventada sería exactamente lo que el
+        /// asistente tiene prohibido hacer, y además haría creer que funciona
+        /// mientras se revisa la maqueta. Dice lo que pasa y ya.
+        /// </summary>
+        public RespuestaAsistente PreguntarAsistente(
+            int codigoUsuario, string pregunta, string campanaSlug)
+        {
+            return new RespuestaAsistente
+            {
+                Ok = false,
+                Mensaje = "El asistente necesita el backend en marcha. "
+                        + "Los datos de demostración no lo incluyen."
+            };
+        }
+
+        // =============================================================
         //  Catálogos
         // =============================================================
 

@@ -1141,10 +1141,19 @@ namespace frontend
         }
 
         // =============================================================
-        //  Asistente, prototipo
+        //  Asistente
         // =============================================================
 
-        private static readonly string[] Preguntas =
+        /// <summary>
+        /// Preguntas de ejemplo. Siguen acá y no en la base porque son parte
+        /// de la interfaz: le enseñan a la persona qué clase de cosas puede
+        /// preguntar, que es el problema real de una caja de texto vacía.
+        ///
+        /// Ya no son las únicas que el asistente entiende. Antes de conectar
+        /// el modelo, la maqueta reconocía estas cuatro por palabras clave y
+        /// respondía «todavía no puedo» a cualquier otra.
+        /// </summary>
+        protected static readonly string[] Preguntas =
         {
             "¿Qué categoría le interesa más a la ciudadanía y cuántas propuestas tiene?",
             "¿Cuántas candidaturas tienen su información verificada?",
@@ -1161,166 +1170,39 @@ namespace frontend
             }
         }
 
-        protected void rptSugerencias_ItemCommand(object source, RepeaterCommandEventArgs e)
+        /// <summary>
+        /// Si la persona puede preguntar. Con sesión iniciada puede, sin ella
+        /// solo lee.
+        ///
+        /// Es la misma regla que ya rige la participación: consultar es
+        /// público, participar requiere cuenta. Acá además la consulta cuesta
+        /// dinero, así que la cuota necesita a quién contársela.
+        ///
+        /// Esto decide qué se muestra, nunca qué se permite. El manejador y
+        /// el Web Service vuelven a comprobarlo.
+        /// </summary>
+        protected bool PuedePreguntar
         {
-            if (e.CommandName != "preguntar") return;
-
-            int indice;
-            if (!int.TryParse(Convert.ToString(e.CommandArgument), out indice)) return;
-            if (indice < 0 || indice >= Preguntas.Length) return;
-
-            Responder(Preguntas[indice], indice);
+            get { return Sesion.Autenticado; }
         }
 
-        protected void btnPreguntar_Click(object sender, EventArgs e)
+        /// <summary>Dirección a la que vuelve el acceso si entra desde acá.</summary>
+        protected string UrlAcceso
         {
-            string pregunta = txtPregunta.Text.Trim();
-            if (string.IsNullOrEmpty(pregunta)) return;
-
-            // El prototipo no interpreta lenguaje natural: reconoce la pregunta
-            // de ejemplo más parecida por palabras clave. Cuando no reconoce
-            // nada lo dice, en lugar de inventar una respuesta.
-            Responder(pregunta, Reconocer(pregunta));
-            txtPregunta.Text = string.Empty;
-        }
-
-        private static int Reconocer(string pregunta)
-        {
-            string p = pregunta.ToLowerInvariant();
-
-            if (p.Contains("categor") || p.Contains("interes") || p.Contains("prioriza")) return 0;
-            if (p.Contains("verific")) return 1;
-            if (p.Contains("cumpl") || p.Contains("estado")) return 2;
-            if (p.Contains("departamento") || p.Contains("territor") || p.Contains("dónde")
-                || p.Contains("donde")) return 3;
-
-            return -1;
+            get { return Sesion.UrlAccesoDeVuelta(); }
         }
 
         /// <summary>
-        /// Arma la respuesta con las cifras del tablero que está en pantalla.
-        /// La redacción es fija, los números no, y las fuentes citan el objeto
-        /// de base de datos del que sale cada cifra.
+        /// Campaña que está mirando la persona, para que el asistente responda
+        /// sobre lo mismo que muestran los gráficos.
+        ///
+        /// Viaja en un campo oculto y no se lee del desplegable porque ese
+        /// tiene AutoPostBack: cuando cambia, la página se vuelve a dibujar y
+        /// el campo ya trae el valor nuevo.
         /// </summary>
-        private void Responder(string pregunta, int indice)
+        protected string CampanaSlugActual
         {
-            litPregunta.Text = Server.HtmlEncode(pregunta);
-            phConversacion.Visible = true;
-
-            List<string> fuentes = new List<string>();
-            string cuerpo;
-
-            switch (indice)
-            {
-                case 0:
-                    {
-                        FilaCategoria mayor = null;
-                        foreach (FilaCategoria c in _datos.Categorias)
-                            if (mayor == null || c.InteresEncuesta > mayor.InteresEncuesta) mayor = c;
-
-                        if (mayor == null)
-                        {
-                            cuerpo = "<p>No hay categorías con datos en la selección actual.</p>";
-                            break;
-                        }
-
-                        cuerpo = "<p>La categoría con mayor interés ciudadano es <strong>"
-                               + Server.HtmlEncode(mayor.Categoria) + "</strong>, con "
-                               + mayor.InteresEncuesta.ToString("0.#") + " % de las respuestas de la "
-                               + "encuesta.</p><p>En esta selección tiene <strong>" + mayor.Propuestas
-                               + "</strong> propuestas registradas, el " + mayor.PorcentajeOferta.ToString("0.#")
-                               + " % del total documentado. La diferencia entre lo que se prioriza y lo "
-                               + "que se propone es de " + mayor.Brecha.ToString("0.#")
-                               + " puntos porcentuales.</p>";
-
-                        fuentes.Add("Encuesta del proyecto, tabla VI-17 «Interés sobre los tipos de información de promesa política» (n = 150)");
-                        fuentes.Add("Procedimiento spAnaliticaCategorias, campaña " + _datos.CampanaNombre);
-                        break;
-                    }
-
-                case 1:
-                    {
-                        int ok = _datos.VerificacionDe("Candidaturas", "Verificado");
-                        int rev = _datos.VerificacionDe("Candidaturas", "En revisión");
-                        int dec = _datos.VerificacionDe("Candidaturas", "Declarado");
-
-                        cuerpo = "<p>De las " + _datos.Resumen.Candidaturas + " candidaturas de "
-                               + Server.HtmlEncode(CampanaNombre) + ", <strong>" + ok
-                               + "</strong> tienen su información verificada, " + rev
-                               + " está en revisión y " + dec + " se muestran únicamente como "
-                               + "declaradas por la propia candidatura.</p>"
-                               + "<p>En las propuestas la proporción es distinta: "
-                               + _datos.VerificacionDe("Propuestas", "Verificado") + " de "
-                               + _datos.TotalEntidad("Propuestas") + " tienen fuente verificable. "
-                               + "Verificado significa que existe al menos una fuente registrada que "
-                               + "respalda el contenido. Mientras no la haya, la plataforma lo presenta "
-                               + "como afirmación de la candidatura y no como hecho comprobado.</p>";
-
-                        fuentes.Add("Procedimiento spAnaliticaVerificacion, campaña " + _datos.CampanaNombre);
-                        fuentes.Add("Catálogo NivelesVerificacion de la base de datos");
-                        break;
-                    }
-
-                case 2:
-                    {
-                        cuerpo = "<p>" + Server.HtmlEncode(LecturaEstados) + "</p>"
-                               + "<p>El esquema de estados que usa la plataforma tiene siete niveles, "
-                               + "desde declarada hasta cumplida o incumplida, con los intermedios en "
-                               + "proceso, estancada, sin avance y cumplida a medias. Cada cambio de "
-                               + "estado exige evidencia documentada.</p>";
-
-                        fuentes.Add("Procedimiento spAnaliticaEstados, campaña " + _datos.CampanaNombre);
-                        fuentes.Add("Catálogo EstadosPropuesta, esquema basado en el rastreador de promesas de PolitiFact (2018)");
-                        break;
-                    }
-
-                case 3:
-                    {
-                        StringBuilder sb = new StringBuilder();
-                        ResumenAnalitica r = _datos.Resumen;
-
-                        sb.Append("<p>Hay candidaturas registradas en <strong>")
-                          .Append(r.DepartamentosConCandidatura).Append("</strong> de los ")
-                          .Append(r.DepartamentosTotal).Append(" departamentos del país:</p><p>");
-
-                        foreach (FilaDepartamento d in _datos.Territorio)
-                        {
-                            if (d.Candidaturas == 0) continue;
-
-                            sb.Append("— <strong>").Append(Server.HtmlEncode(d.Departamento))
-                              .Append("</strong>: ")
-                              .Append(Vista.Plural(d.Candidaturas, "candidatura", "candidaturas"))
-                              .Append(" y ").Append(Vista.Plural(d.Propuestas, "propuesta", "propuestas"))
-                              .Append(".<br />");
-                        }
-
-                        sb.Append("</p><p>Los ").Append(r.DepartamentosTotal - r.DepartamentosConCandidatura)
-                          .Append(" departamentos restantes no tienen ninguna candidatura registrada en la "
-                                + "plataforma. Eso describe la cobertura de CumpleHN, no la oferta "
-                                + "electoral real de cada departamento.</p>");
-
-                        cuerpo = sb.ToString();
-
-                        fuentes.Add("Procedimiento spAnaliticaTerritorio, campaña " + _datos.CampanaNombre);
-                        fuentes.Add("Catálogo Departamentos de la base de datos, los 18 departamentos de Honduras");
-                        break;
-                    }
-
-                default:
-                    cuerpo = "<p>Todavía no puedo responder esa pregunta. En esta etapa el asistente es "
-                           + "una maqueta y solo atiende las preguntas de ejemplo que aparecen arriba.</p>"
-                           + "<p>Cuando se conecte el modelo de lenguaje, la respuesta se va a construir "
-                           + "sobre las mismas propuestas y evidencias de la base de datos, y va a citar "
-                           + "sus fuentes igual que en los ejemplos.</p>";
-
-                    fuentes.Add("Sin fuentes: el asistente no reconoció la pregunta");
-                    break;
-            }
-
-            litRespuesta.Text = cuerpo;
-
-            rptFuentes.DataSource = fuentes;
-            rptFuentes.DataBind();
+            get { return _datos == null ? string.Empty : (_datos.CampanaSlug ?? string.Empty); }
         }
     }
 }

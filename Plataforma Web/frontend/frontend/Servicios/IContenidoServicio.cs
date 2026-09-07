@@ -197,6 +197,21 @@ namespace frontend.Servicios
         /// </summary>
         Resultado CambiarEstadoModulo(int codigoUsuario, string clave, bool habilitado, string motivo);
 
+        // ------------------------------------------------------ Asistente
+
+        /// <summary>
+        /// Responde una pregunta en lenguaje natural sobre lo registrado en
+        /// la plataforma.
+        ///
+        /// El código de usuario viaja porque el backend comprueba con él la
+        /// sesión y la cuota diaria, y porque deja la consulta registrada. La
+        /// página no puede decidir ninguna de esas tres cosas: lo que el
+        /// frontend sabe de su sesión decide qué muestra, nunca qué se
+        /// permite.
+        /// </summary>
+        RespuestaAsistente PreguntarAsistente(int codigoUsuario, string pregunta,
+                                              string campanaSlug);
+
         // ------------------------------------------------------ Catálogos
 
         /// <summary>Categorías temáticas disponibles para clasificar propuestas.</summary>

@@ -177,36 +177,6 @@ namespace frontend
         protected global::System.Web.UI.WebControls.Repeater rptSugerencias;
 
         /// <summary>
-        /// phConversacion control.
-        /// </summary>
-        protected global::System.Web.UI.WebControls.PlaceHolder phConversacion;
-
-        /// <summary>
-        /// litPregunta control.
-        /// </summary>
-        protected global::System.Web.UI.WebControls.Literal litPregunta;
-
-        /// <summary>
-        /// litRespuesta control.
-        /// </summary>
-        protected global::System.Web.UI.WebControls.Literal litRespuesta;
-
-        /// <summary>
-        /// rptFuentes control.
-        /// </summary>
-        protected global::System.Web.UI.WebControls.Repeater rptFuentes;
-
-        /// <summary>
-        /// txtPregunta control.
-        /// </summary>
-        protected global::System.Web.UI.WebControls.TextBox txtPregunta;
-
-        /// <summary>
-        /// btnPreguntar control.
-        /// </summary>
-        protected global::System.Web.UI.WebControls.Button btnPreguntar;
-
-        /// <summary>
         /// phAvisoOculto control.
         /// </summary>
         protected global::System.Web.UI.WebControls.PlaceHolder phAvisoOculto;

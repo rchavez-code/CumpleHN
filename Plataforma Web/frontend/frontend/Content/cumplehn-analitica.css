@@ -776,6 +776,24 @@ body.gc-esperando .gc-cuerpo { opacity: .45; pointer-events: none; }
     padding: 6px 12px;
 }
 
+/* La sugerencia dejó de ser un enlace y pasó a ser un botón cuando la
+   conversación dejó de ir por postback. Un botón no hereda la tipografía de
+   la página, y el :hover de cumplehn.css está escrito como a.gc-chip, así
+   que las dos cosas se reponen acá. */
+.gc-ia__sug button.gc-chip {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.gc-ia__sug button.gc-chip:hover { border-color: #d3d8dd; }
+
+/* El hilo empieza vacío y solo ocupa lugar cuando tiene algo. Un espacio
+   reservado de antemano se lee como un bloque roto. */
+.gc-ia__hilo:not(:empty) { margin-bottom: 18px; }
+
+.gc-ia__estado { flex: 1 1 auto; min-width: 0; }
+
 .gc-msg { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 15px; }
 .gc-msg--yo { flex-direction: row-reverse; }
 
