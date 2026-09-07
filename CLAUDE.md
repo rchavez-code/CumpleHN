@@ -227,7 +227,7 @@ Reglas de los gráficos, aplicadas a mano porque no hay node para correr el vali
 8. El SVG (dona y actividad diaria) **se genera en el servidor**. Los tooltips son elementos `<title>` nativos: no necesitan JavaScript y los lee el lector de pantalla.
 9. La cuadrícula de departamentos **no es un mapa** y la página lo dice. Trazar fronteras aproximadas a mano produciría un mapa falso, y la pregunta que el indicador responde es cuáles tienen cobertura, no dónde quedan.
 
-El asistente de IA de `Analitica.aspx` es una **maqueta declarada como tal en pantalla**: las respuestas se arman con las cifras reales del tablero en pantalla y citan el procedimiento del que sale cada cifra, pero las preguntas se reconocen por palabras clave, no con un modelo de lenguaje. Cuando no reconoce una pregunta lo dice, en lugar de inventar. Al conectar el modelo se conserva la forma de la respuesta con sus fuentes, que es lo que la encuesta dejó como condición de confianza (77.4 %).
+El asistente de IA de `Analitica.aspx` ya está conectado a un modelo de lenguaje. Conserva la forma de respuesta que tenía la maqueta —cuerpo redactado más lista de fuentes—, y esa continuidad es deliberada: es lo que la encuesta dejó como condición de confianza (77.4 %). Se detalla más abajo, en «Módulo del asistente».
 
 ### Módulo de administración
 
@@ -277,9 +277,39 @@ La administración puede ocultar del sitio público un módulo entero o un gráf
 
 Los bloques del tablero se marcan con `runat="server"` sobre su propio `div` en lugar de envolverse en un `PlaceHolder` — son divs anidados y envolverlos habría sido frágil. En las dos parejas de columnas el atributo va en el `col-*`, no en la tarjeta, para que no quede media fila vacía. El bloque que solo ve el administrador lleva la clase **`.gc-oculto`** (borde ámbar punteado y etiqueta «Oculto al público»): sin esa marca, quien administra confundiría lo que ve él con lo que ve el resto, que es el error que vuelve inútil un interruptor.
 
+### Módulo del asistente
+
+Mismo reparto de responsabilidades que la analítica, con una capa más: **la base calcula y además decide qué puede leerse**, el Web Service transporta y comprueba, el modelo redacta, la página dibuja. El modelo **nunca escribe SQL**. Recibe cuatro herramientas y cada una es un procedimiento almacenado con parámetros tipados, así que lo único que conoce de la plataforma es la fila que ese procedimiento le devuelve.
+
+Las herramientas son `consultar_tablero` (los diez `spAnalitica*`), `buscar_propuestas`, `ficha_candidato` y `catalogos`. Agregar una capacidad nueva es agregar un procedimiento con su `GRANT`, **nunca una consulta suelta**.
+
+**Lo que el asistente puede saber lo deciden las columnas, no los permisos.** Ningún procedimiento del script 12 proyecta con `*`. Quedan fuera a propósito el correo y el teléfono de las candidaturas, toda columna de `Usuarios`, y la participación individual: `Valoraciones` vincula a una persona con su preferencia política, que es el dato que más daño haría filtrado. `Comentarios` queda fuera además porque su texto lo escribe cualquier ciudadano, y leerlo sería dejar que un comentario le dé instrucciones al modelo.
+
+**El login `cumplehn_ia` es la segunda capa** (`13_permisos_ia.sql`). No pertenece a `db_datareader` ni tiene permiso sobre ninguna tabla: solo `EXECUTE` sobre los procedimientos concedidos, y llega a las tablas por **encadenamiento de propiedad**. Por eso los `DENY` sobre `Usuarios`, `Valoraciones`, `Comentarios`, `Auditoria`, `ConsultasIA` y las dos vistas que llevan `codigoUsuario` bloquean la consulta directa sin romper los procedimientos. Está verificado con `EXECUTE AS`, y ya sirvió: atrapó una versión que resolvía la campaña con dos `SELECT` sueltos.
+
+`AsistenteDatos` es **el único punto que abre esa conexión**, por la misma razón por la que el control de acceso vive en `PaginaSegura` y no repetido en cada página. Si se abriera en cada método que la necesita, bastaría con que uno nuevo se olvidara para perder la garantía, y el síntoma sería que todo funciona.
+
+**Las fuentes se arman con las herramientas que se ejecutaron**, no con las que el modelo diga haber usado. Un modelo puede describir mal su propio trabajo, el registro de llamadas no.
+
+**Todo lo que entra por herramientas es dato, nunca instrucción.** El prompt lo declara y el resultado viaja delimitado. Del lado del navegador, la respuesta **no se inserta con `innerHTML`**: se analiza con `DOMParser`, que no ejecuta nada, y se toman solo los párrafos como texto.
+
+**Tres comprobaciones antes de gastar un token**, todas en el Web Service: módulo visible, cuenta activa y cuota diaria (`spIACuotaDisponible`, 20 por persona y día). El frontend decide qué muestra, nunca qué se permite. `ConsultasIA` registra cada pregunta con su respuesta, herramientas, tokens y tiempo, responda o falle — una bitácora que solo guarda los casos buenos no sirve para revisar los malos. La escribe el backend con su conexión normal, no el asistente.
+
+La conversación **no va por postback**: la consulta tarda de diez a veinte segundos y eso congelaría la página y perdería la pestaña activa. Va contra `Asistente.ashx`, que vive en el frontend y no expone el backend al navegador — abrir CORS sobre el método que gasta dinero sería dejarlo al alcance de cualquier sitio.
+
+El modelo y el esfuerzo son ajustes del `Web.config` (`AsistenteModelo`, `AsistenteEsfuerzo`), no del código. En desarrollo va `claude-sonnet-5`, que cuesta alrededor de la tercera parte que Opus 5. La elección definitiva se decide comparando lo guardado en `ConsultasIA`, y lo que hay que mirar no es si la respuesta suena bien sino si sostiene las tres reglas que hacen defendible el módulo: negarse a rankear candidaturas, decir el nivel de verificación sin que se lo pidan, y responder que no sabe en vez de completar.
+
+La clave de la API y la cadena de `cumplehn_ia` viven en `secrets.config`, fuera de git, enganchado con el atributo `file` de `appSettings` — que complementa en vez de reemplazar y se ignora en silencio si falta, así el backend arranca en una máquina recién clonada. `secrets.config.ejemplo` sí se versiona.
+
+El SDK `Anthropic` arrastra trece dependencias y exige `LangVersion 9.0`, porque declara sus propiedades con establecedores `init`. Las redirecciones de enlace usan la versión del **ensamblado** dentro de cada paquete, que no coincide con la del paquete: `System.Memory` 4.6.3 contiene el ensamblado 4.0.5.0. Sin ellas el sitio compila y falla al ejecutarse.
+
+**Costo medido:** unos 11.000 tokens de entrada y 470 de salida por consulta, alrededor de $0.027 con Sonnet 5 y $0.077 con Opus 5. Casi toda la entrada es que `consultar_tablero` devuelve los diez indicadores aunque la pregunta necesite uno — dejarle al modelo elegir cuáles pedir es la optimización pendiente, y es mejor idea que bajar de modelo.
+
 ### Pendiente
 
-Alta de cuentas ciudadanas desde el registro público (las de candidatura ya se crean desde el área de administración), guardado del perfil y de los proyectos desde el panel del candidato (los formularios ya validan del lado del servidor pero todavía no persisten), y conectar el asistente a la API de un modelo de lenguaje.
+Alta de cuentas ciudadanas desde el registro público (las de candidatura ya se crean desde el área de administración) y guardado del perfil y de los proyectos desde el panel del candidato (los formularios ya validan del lado del servidor pero todavía no persisten).
+
+Del asistente quedan tres decisiones anotadas y ninguna urgente: que una consulta fallida no consuma cuota, un techo diario para toda la plataforma además del tope por persona, y que `consultar_tablero` deje elegir indicadores. Gráficos y PDF generados por el modelo **se descartaron a propósito**: la página ya dibuja los doce gráficos en el servidor y el backend puede armar un informe sin gastar un token, mientras que un gráfico dibujado por el modelo podría contradecir al del tablero.
 
 Las cuatro etapas del área de administración están hechas: roles y control de acceso, verificación y moderación, catálogos con sus cuentas, e interruptores de módulos. Cada facultad tiene su procedimiento almacenado, su método en el Web Service, su sección en `Admin/` y su registro en bitácora, y el permiso se comprueba en las dos capas.
 
