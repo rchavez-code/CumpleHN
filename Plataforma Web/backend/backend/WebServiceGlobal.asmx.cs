@@ -617,7 +617,8 @@ namespace backend
             return tipoObjeto == "Publicacion"
                 || tipoObjeto == "Candidato"
                 || tipoObjeto == "Partido"
-                || tipoObjeto == "Propuesta";
+                || tipoObjeto == "Propuesta"
+                || tipoObjeto == "Encuesta";
         }
 
         /// <summary>
@@ -643,6 +644,12 @@ namespace backend
                     break;
                 case "Propuesta":
                     query = "SELECT COUNT(*) FROM dbo.Propuestas WHERE codigoPropuesta = @codigo";
+                    break;
+                case "Encuesta":
+                    // La única de las cinco que filtra por activo: una encuesta
+                    // retirada sale del sitio público, y comentar algo que ya
+                    // no se ve dejaría el hilo colgando de la nada.
+                    query = "SELECT COUNT(*) FROM dbo.Encuestas WHERE codigoEncuesta = @codigo AND activo = 1";
                     break;
                 default:
                     return false;
@@ -1876,18 +1883,30 @@ namespace backend
         /// Lee la fila de ok y mensaje que devuelven los procedimientos de
         /// escritura del script 09.
         /// </summary>
+        /// <summary>
+        /// Lee la fila de ok y mensaje que devuelven los procedimientos de
+        /// escritura.
+        ///
+        /// El lector se cierra antes de devolver. Mientras cada método hacía
+        /// una sola llamada y soltaba la conexión enseguida, dejarlo abierto no
+        /// se notaba, pero el primer método que quiso ejecutar algo más sobre
+        /// la misma conexión falló con «ya hay un DataReader abierto». Se cierra
+        /// acá y no en cada llamador por la misma razón por la que la
+        /// comprobación de rol vive en un solo lugar.
+        /// </summary>
         private static RespuestaAdmin LeerRespuesta(SqlCommand cmd)
         {
             RespuestaAdmin respuesta = new RespuestaAdmin();
             respuesta.ok = false;
             respuesta.mensaje = "No se pudo completar la acción.";
 
-            SqlDataReader reader = cmd.ExecuteReader();
-
-            while (reader.Read())
+            using (SqlDataReader reader = cmd.ExecuteReader())
             {
-                respuesta.ok = Convert.ToBoolean(reader["ok"]);
-                respuesta.mensaje = Convert.ToString(reader["mensaje"]);
+                while (reader.Read())
+                {
+                    respuesta.ok = Convert.ToBoolean(reader["ok"]);
+                    respuesta.mensaje = Convert.ToString(reader["mensaje"]);
+                }
             }
 
             return respuesta;
@@ -2225,13 +2244,15 @@ namespace backend
             respuesta.mensaje = "No se pudo completar la acción.";
             respuesta.codigo = 0;
 
-            SqlDataReader reader = cmd.ExecuteReader();
-
-            while (reader.Read())
+            // El lector se cierra por la misma razón que en LeerRespuesta.
+            using (SqlDataReader reader = cmd.ExecuteReader())
             {
-                respuesta.ok = Convert.ToBoolean(reader["ok"]);
-                respuesta.mensaje = Convert.ToString(reader["mensaje"]);
-                respuesta.codigo = Convert.ToInt32(reader["codigo"]);
+                while (reader.Read())
+                {
+                    respuesta.ok = Convert.ToBoolean(reader["ok"]);
+                    respuesta.mensaje = Convert.ToString(reader["mensaje"]);
+                    respuesta.codigo = Convert.ToInt32(reader["codigo"]);
+                }
             }
 
             return respuesta;
@@ -2240,6 +2261,358 @@ namespace backend
         private static RespuestaGuardado RechazoGuardado(string mensaje)
         {
             return new RespuestaGuardado { ok = false, mensaje = mensaje, codigo = 0 };
+        }
+
+
+        // =============================================================
+        //  Encuestas de percepción
+        //
+        //  La tercera pata del módulo de participación, junto a las
+        //  valoraciones y los comentarios. Igual que en las otras dos
+        //  secciones, este servicio no escribe SQL: cada método invoca su
+        //  procedimiento del script 14, que es donde vive la regla.
+        //
+        //  Consultar es público y participar exige cuenta, el mismo criterio
+        //  del script 05. Por eso las lecturas no comprueban el módulo y el
+        //  voto sí: quien administra tiene que poder revisar una encuesta
+        //  oculta antes de publicarla.
+        // =============================================================
+
+        /// <summary>
+        /// La encuesta abierta de una campaña, o null si no hay ninguna.
+        ///
+        /// Con la campaña vacía usa la destacada, que es como la pide la
+        /// portada. El código de usuario viaja para saber si esa persona ya
+        /// respondió, y con ello si le corresponde ver el resultado.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public EncuestaPublica obtenerEncuestaVigente(string campanaSlug, int codigoUsuario)
+        {
+            EncuestaPublica encuesta = null;
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                SqlCommand cmd = new SqlCommand("dbo.spEncuestaVigente", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@campanaSlug",
+                    string.IsNullOrEmpty(campanaSlug) ? (object)DBNull.Value : campanaSlug);
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+
+                conn.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    encuesta = new EncuestaPublica
+                    {
+                        codigoEncuesta = Convert.ToInt32(reader["codigoEncuesta"]),
+                        campanaSlug = Texto(reader, "campanaSlug"),
+                        pregunta = Texto(reader, "pregunta"),
+                        descripcion = Texto(reader, "descripcion"),
+                        categoria = Texto(reader, "categoria"),
+                        fechaInicio = Convert.ToDateTime(reader["fechaInicio"]),
+                        fechaCierre = FechaOVacio(reader, "fechaCierre"),
+                        estado = Texto(reader, "estado"),
+                        votos = Convert.ToInt32(reader["votos"]),
+                        miOpcion = Convert.ToInt32(reader["miOpcion"])
+                    };
+                }
+            }
+
+            return encuesta;
+        }
+
+        /// <summary>
+        /// Opciones de una encuesta con su resultado.
+        ///
+        /// Los conteos llegan en cero mientras <c>revelar</c> sea falso. Quien
+        /// decide eso es el procedimiento, no este método ni la página: lo que
+        /// todavía no debe leerse, mejor que no salga de la base.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<OpcionEncuesta> listarOpcionesEncuesta(int codigoEncuesta, int codigoUsuario)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+                return LeerOpciones(conn, "dbo.spEncuestaOpciones", codigoEncuesta, codigoUsuario);
+            }
+        }
+
+        /// <summary>
+        /// Registra la respuesta de una persona y devuelve el resultado ya
+        /// actualizado, para que la página no tenga que pedirlo aparte.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaEncuesta votarEncuesta(int codigoEncuesta, int codigoOpcion, int codigoUsuario)
+        {
+            RespuestaEncuesta r = new RespuestaEncuesta();
+            r.ok = false;
+            r.opciones = new OpcionEncuesta[0];
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(cadenaConexion))
+                {
+                    conn.Open();
+
+                    if (!ModuloVisible(conn, "encuestas"))
+                    {
+                        r.mensaje = "Las encuestas están temporalmente cerradas.";
+                        return r;
+                    }
+
+                    if (!UsuarioActivo(conn, codigoUsuario))
+                    {
+                        r.mensaje = "Necesitás una cuenta activa para participar.";
+                        return r;
+                    }
+
+                    SqlCommand cmd = new SqlCommand("dbo.spEncuestaVotar", conn);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@codigoEncuesta", codigoEncuesta);
+                    cmd.Parameters.AddWithValue("@codigoOpcion", codigoOpcion);
+                    cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+
+                    RespuestaAdmin voto = LeerRespuesta(cmd);
+
+                    r.ok = voto.ok;
+                    r.mensaje = voto.mensaje;
+
+                    // El resultado se devuelve siempre, también cuando el voto
+                    // se rechazó: si la encuesta cerró mientras la persona la
+                    // tenía abierta, mostrarle el resultado explica el rechazo
+                    // mejor que el mensaje solo.
+                    r.opciones = LeerOpciones(conn, "dbo.spEncuestaOpciones",
+                        codigoEncuesta, codigoUsuario).ToArray();
+
+                    SqlCommand total = new SqlCommand(
+                        "SELECT votos FROM dbo.vwEncuestas WHERE codigoEncuesta = @e", conn);
+                    total.Parameters.AddWithValue("@e", codigoEncuesta);
+
+                    object leido = total.ExecuteScalar();
+                    r.votos = leido == null || leido == DBNull.Value ? 0 : Convert.ToInt32(leido);
+                }
+            }
+            catch (Exception ex)
+            {
+                r.ok = false;
+                r.mensaje = "No se pudo registrar tu respuesta: " + ex.Message;
+            }
+
+            return r;
+        }
+
+        /// <summary>
+        /// Lee las opciones desde el procedimiento que se le indique. Los dos
+        /// —el público y el de administración— devuelven las mismas columnas,
+        /// y se diferencian en si reservan el conteo y en si exigen rol.
+        /// </summary>
+        private static List<OpcionEncuesta> LeerOpciones(
+            SqlConnection conn, string procedimiento, int primerParametro, int segundoParametro)
+        {
+            List<OpcionEncuesta> lista = new List<OpcionEncuesta>();
+
+            SqlCommand cmd = new SqlCommand(procedimiento, conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            if (procedimiento == "dbo.spAdminEncuestaOpciones")
+            {
+                cmd.Parameters.AddWithValue("@codigoUsuario", primerParametro);
+                cmd.Parameters.AddWithValue("@codigoEncuesta", segundoParametro);
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@codigoEncuesta", primerParametro);
+                cmd.Parameters.AddWithValue("@codigoUsuario", segundoParametro);
+            }
+
+            SqlDataReader reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                lista.Add(new OpcionEncuesta
+                {
+                    codigoOpcion = Convert.ToInt32(reader["codigoOpcion"]),
+                    texto = Texto(reader, "texto"),
+                    orden = Convert.ToInt32(reader["orden"]),
+                    votos = Convert.ToInt32(reader["votos"]),
+                    miVoto = Convert.ToBoolean(reader["miVoto"]),
+                    revelar = Convert.ToBoolean(reader["revelar"])
+                });
+            }
+            reader.Close();
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Fecha que puede no existir, devuelta como texto. Un DateTime no
+        /// tiene manera de decir «ninguna», y el año uno disfrazado de fecha
+        /// obligaría a cada página a saber que ese valor es en realidad un
+        /// hueco.
+        /// </summary>
+        private static string FechaOVacio(SqlDataReader reader, string columna)
+        {
+            object valor = reader[columna];
+            if (valor == null || valor == DBNull.Value) return string.Empty;
+
+            return Convert.ToDateTime(valor).ToString("yyyy-MM-dd HH:mm");
+        }
+
+        // ------------------------------------------- Administración
+
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<EncuestaAdmin> listarEncuestasAdmin(
+            int codigoUsuario, string campanaSlug, string estado)
+        {
+            List<EncuestaAdmin> lista = new List<EncuestaAdmin>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminEncuestas", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@campanaSlug",
+                    string.IsNullOrEmpty(campanaSlug) ? (object)DBNull.Value : campanaSlug);
+                cmd.Parameters.AddWithValue("@estado",
+                    string.IsNullOrEmpty(estado) ? (object)DBNull.Value : estado);
+
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new EncuestaAdmin
+                    {
+                        codigoEncuesta = Convert.ToInt32(reader["codigoEncuesta"]),
+                        codigoCampana = Convert.ToInt32(reader["codigoCampana"]),
+                        campanaSlug = Texto(reader, "campanaSlug"),
+                        campana = Texto(reader, "campana"),
+                        pregunta = Texto(reader, "pregunta"),
+                        descripcion = Texto(reader, "descripcion"),
+                        codigoCategoria = Convert.ToInt32(reader["codigoCategoria"]),
+                        categoria = Texto(reader, "categoria"),
+                        fechaInicio = Convert.ToDateTime(reader["fechaInicio"]),
+                        fechaCierre = FechaOVacio(reader, "fechaCierre"),
+                        activo = Convert.ToBoolean(reader["activo"]),
+                        motivoBaja = Texto(reader, "motivoBaja"),
+                        estado = Texto(reader, "estado"),
+                        opciones = Convert.ToInt32(reader["opciones"]),
+                        votos = Convert.ToInt32(reader["votos"])
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<OpcionEncuesta> listarOpcionesEncuestaAdmin(int codigoUsuario, int codigoEncuesta)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+                if (!EsAdministrador(conn, codigoUsuario)) return new List<OpcionEncuesta>();
+
+                return LeerOpciones(conn, "dbo.spAdminEncuestaOpciones", codigoUsuario, codigoEncuesta);
+            }
+        }
+
+        /// <summary>
+        /// Alta o edición de una encuesta. Con <paramref name="codigoEncuesta"/>
+        /// en cero es alta.
+        ///
+        /// Las opciones llegan en un solo texto, una por línea, y las separa el
+        /// procedimiento. Va así porque el número de opciones lo decide quien
+        /// escribe la pregunta, y un parámetro por opción obligaría a fijar un
+        /// tope arbitrario en el contrato del servicio.
+        ///
+        /// La fecha de cierre viaja como texto para poder venir vacía. Una
+        /// encuesta sin cierre programado es un caso normal, no un dato que
+        /// falte.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaGuardado guardarEncuesta(
+            int codigoUsuario, int codigoEncuesta, int codigoCampana,
+            string pregunta, string descripcion, int codigoCategoria,
+            DateTime fechaInicio, string fechaCierre, string opciones)
+        {
+            object cierre = DBNull.Value;
+
+            if (!string.IsNullOrEmpty(fechaCierre))
+            {
+                DateTime leida;
+                if (!DateTime.TryParse(fechaCierre,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.None, out leida))
+                {
+                    return RechazoGuardado("La fecha de cierre no se entiende. Usá el formato aaaa-mm-dd.");
+                }
+
+                cierre = leida;
+            }
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return RechazoGuardado("La cuenta no tiene permiso para administrar encuestas.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminGuardarEncuesta", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoEncuesta", codigoEncuesta);
+                cmd.Parameters.AddWithValue("@codigoCampana", codigoCampana);
+                cmd.Parameters.AddWithValue("@pregunta", (object)pregunta ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@descripcion", (object)descripcion ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@codigoCategoria", codigoCategoria);
+                cmd.Parameters.AddWithValue("@fechaInicio", fechaInicio);
+                cmd.Parameters.AddWithValue("@fechaCierre", cierre);
+                cmd.Parameters.AddWithValue("@opciones", (object)opciones ?? DBNull.Value);
+
+                return LeerGuardado(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Cierra, reabre, retira o restaura una encuesta.
+        ///
+        /// Cerrar y retirar no son lo mismo: una encuesta cerrada terminó su
+        /// votación y sigue a la vista con su resultado, una retirada
+        /// desaparece del sitio público. Las dos exigen motivo, y el
+        /// procedimiento es quien lo exige.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin cambiarEstadoEncuesta(
+            int codigoUsuario, int codigoEncuesta, string accion, string motivo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("La cuenta no tiene permiso para administrar encuestas.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminEstadoEncuesta", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoEncuesta", codigoEncuesta);
+                cmd.Parameters.AddWithValue("@accion", (object)accion ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@motivo", (object)motivo ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
+            }
         }
 
 

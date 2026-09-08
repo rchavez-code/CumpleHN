@@ -29,6 +29,7 @@ namespace frontend.Servicios
         public const string Perfiles = "perfiles";
         public const string Propuestas = "propuestas";
         public const string Interaccion = "interaccion";
+        public const string Encuestas = "encuestas";
         public const string Analitica = "analitica";
 
         public const string AnaliticaKpi = "analitica.kpi";

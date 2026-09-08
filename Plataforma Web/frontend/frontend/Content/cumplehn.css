@@ -1625,6 +1625,187 @@ a.gc-chip:hover { text-decoration: none; border-color: #d3d8dd; }
     font-size: .84rem;
 }
 
+/* ---------------------------------------------------- 19b. Encuestas
+
+   Tarjeta de la encuesta de percepción en la portada.
+
+   Las mismas filas sirven para elegir y para leer el resultado. No
+   son dos bloques distintos a propósito: si las opciones se
+   reordenaran o se movieran al votar, se perdería la relación entre
+   lo que se eligió y lo que salió.
+
+   La pista de color va por debajo del texto con position absolute,
+   de modo que una barra al máximo de la escala no empuje su etiqueta
+   fuera de la fila — el mismo criterio de la cuadrícula del tablero,
+   donde el valor tiene columna propia.
+
+   Prefijo gc-enc porque gc-op, gc-voto y gc-barra estaban libres pero
+   son nombres que cualquier módulo futuro podría querer. Antes de
+   agregar una clase acá, grep en este archivo: cumplehn.css se carga
+   en todas las páginas, y una clase repetida hereda estilos que nadie
+   pidió.
+   -------------------------------------------------------------------- */
+
+.gc-enc { padding: 20px; }
+
+.gc-enc__head { margin-bottom: 15px; }
+
+.gc-enc__q {
+    margin: 2px 0 0;
+    font-family: var(--gc-display);
+    font-size: 1.16rem;
+    line-height: 1.32;
+    color: var(--gc-ink);
+}
+
+.gc-enc__d {
+    margin: 8px 0 0;
+    font-size: .9rem;
+    line-height: 1.55;
+    color: var(--gc-ink-2);
+}
+
+.gc-enc__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 11px;
+}
+
+.gc-enc__lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 7px;
+}
+
+/* Tres columnas visibles —marca, texto y cifra— más la pista de
+   fondo, que va fuera del flujo y por eso no ocupa espacio. La cifra
+   no envuelve, así que se mantiene corta. */
+.gc-enc__op {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 13px;
+    border: 1px solid var(--gc-line);
+    border-radius: var(--gc-r-sm);
+    background: var(--gc-surface);
+    color: var(--gc-ink);
+    font-size: .92rem;
+    text-decoration: none;
+    overflow: hidden;
+}
+
+/* El hover se excluye del deshabilitado con :not, y no se define
+   solo para el habilitado, porque ASP.NET rinde igual las dos
+   variantes: un LinkButton apagado sigue siendo un <a>, sin href y
+   con la clase aspNetDisabled. Sin el :not, una opción que no se
+   puede pulsar respondía al mouse como si sí. */
+a.gc-enc__op:not(.aspNetDisabled):hover {
+    border-color: var(--gc-turquesa);
+    background: var(--gc-turquesa-l);
+    color: var(--gc-ink);
+    text-decoration: none;
+}
+
+.gc-enc__op.aspNetDisabled { cursor: default; }
+
+.gc-enc__pista {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 0;
+    background: var(--gc-turquesa-l);
+    transition: width .25s ease;
+}
+
+.gc-enc__marca {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
+    width: 15px;
+    height: 15px;
+    border: 2px solid var(--gc-faint);
+    border-radius: 50%;
+    background: var(--gc-surface);
+}
+
+.gc-enc__txt {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.gc-enc__n {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
+    font-size: .84rem;
+    font-weight: 700;
+    color: var(--gc-ink-2);
+    font-variant-numeric: tabular-nums;
+}
+
+/* La opción elegida se identifica por el punto relleno y por el
+   texto en negrita, no solo por el color de la pista: un solo canal
+   de codificación deja fuera a quien no distingue el tono. */
+.gc-enc__op.is-mia { border-color: var(--gc-turquesa); }
+
+.gc-enc__op.is-mia .gc-enc__marca {
+    border-color: var(--gc-turquesa);
+    background: var(--gc-turquesa);
+    box-shadow: inset 0 0 0 3px var(--gc-surface);
+}
+
+.gc-enc__op.is-mia .gc-enc__txt { font-weight: 600; }
+
+/* Ya resuelta: la marca sobra, porque la fila dejó de ser una
+   pregunta y pasó a ser un dato. La de la opción propia se queda. */
+.gc-enc__op.is-res .gc-enc__marca { display: none; }
+.gc-enc__op.is-res.is-mia .gc-enc__marca { display: block; }
+
+.gc-enc__aviso { margin: 13px 0 0; }
+
+.gc-enc__pie {
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--gc-line-2);
+    font-size: .78rem;
+    line-height: 1.5;
+    color: var(--gc-muted);
+}
+
+/* Visible solo para quien administra. No reusa .gc-oculto del
+   tablero: esa clase vive en cumplehn-analitica.css, que la portada
+   no carga, y definirla dos veces sería la manera de que las dos
+   acaben distintas. */
+.gc-enc--oculta {
+    position: relative;
+    outline: 2px dashed var(--gc-ambar);
+    outline-offset: 4px;
+}
+
+.gc-enc--oculta::before {
+    content: "Oculto al público";
+    position: absolute;
+    top: -10px;
+    right: 12px;
+    z-index: 2;
+    padding: 2px 9px;
+    border-radius: var(--gc-r-pill);
+    background: var(--gc-ambar);
+    color: #fff;
+    font-size: .64rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
 /* --------------------------------------------------------- 20. Responsive */
 
 @media (max-width: 1100px) {

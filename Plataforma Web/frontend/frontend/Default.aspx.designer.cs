@@ -27,6 +27,16 @@ namespace frontend
         protected global::System.Web.UI.WebControls.PlaceHolder phActual;
 
         /// <summary>
+        /// phEncuesta control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phEncuesta;
+
+        /// <summary>
+        /// tarjetaEncuesta control.
+        /// </summary>
+        protected global::frontend.Controles.EncuestaCard tarjetaEncuesta;
+
+        /// <summary>
         /// rptCandidatos control.
         /// </summary>
         protected global::System.Web.UI.WebControls.Repeater rptCandidatos;

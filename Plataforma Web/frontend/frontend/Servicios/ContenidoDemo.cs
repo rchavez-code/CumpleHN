@@ -382,6 +382,11 @@ namespace frontend.Servicios
             return new List<OpcionCatalogo>();
         }
 
+        public IList<OpcionCatalogo> ObtenerCategoriasConCodigo()
+        {
+            return new List<OpcionCatalogo>();
+        }
+
         private static ResultadoGuardado SinAdministracionGuardado()
         {
             Resultado r = SinAdministracion();
@@ -395,6 +400,57 @@ namespace frontend.Servicios
         /// Sin base de datos no hay catálogo de módulos, y una lista vacía deja
         /// todo visible: es lo que corresponde para trabajar en el diseño.
         /// </summary>
+        // =============================================================
+        //  Encuestas
+        //
+        //  Los datos en memoria no incluyen encuestas. Devolver null es lo
+        //  correcto: la portada ya sabe esconder el bloque cuando no hay
+        //  ninguna abierta, así que este origen se ve como un sitio sin
+        //  encuesta en curso y no como uno roto.
+        // =============================================================
+
+        public Encuesta ObtenerEncuestaVigente(string campanaSlug, int codigoUsuario)
+        {
+            return null;
+        }
+
+        public ResultadoEncuesta ResponderEncuesta(
+            int codigoEncuesta, int codigoOpcion, int codigoUsuario)
+        {
+            return new ResultadoEncuesta
+            {
+                Ok = false,
+                Mensaje = "Las encuestas necesitan la base de datos. "
+                        + "Este origen de datos es solo de demostración."
+            };
+        }
+
+        public IList<EncuestaAdmin> ObtenerEncuestasAdmin(
+            int codigoUsuario, string campanaSlug, string estado)
+        {
+            return new List<EncuestaAdmin>();
+        }
+
+        public IList<OpcionEncuesta> ObtenerOpcionesEncuestaAdmin(
+            int codigoUsuario, int codigoEncuesta)
+        {
+            return new List<OpcionEncuesta>();
+        }
+
+        public ResultadoGuardado GuardarEncuesta(
+            int codigoUsuario, int codigoEncuesta, int codigoCampana,
+            string pregunta, string descripcion, int codigoCategoria,
+            DateTime fechaInicio, string fechaCierre, string opciones)
+        {
+            return SinAdministracionGuardado();
+        }
+
+        public Resultado CambiarEstadoEncuesta(
+            int codigoUsuario, int codigoEncuesta, string accion, string motivo)
+        {
+            return SinAdministracion();
+        }
+
         public IList<EstadoModulo> ObtenerModulosVisibles()
         {
             return new List<EstadoModulo>();

@@ -61,6 +61,10 @@
                     <a class="gc-side__link <%= ClaseNav("Campanas") %>" href="<%= ResolveUrl("~/Admin/Campanas") %>">Campañas</a>
                     <a class="gc-side__link <%= ClaseNav("Candidatos") %>" href="<%= ResolveUrl("~/Admin/Candidatos") %>">Candidaturas</a>
 
+                    <div class="gc-side__lbl">Participación</div>
+
+                    <a class="gc-side__link <%= ClaseNav("Encuestas") %>" href="<%= ResolveUrl("~/Admin/Encuestas") %>">Encuestas</a>
+
                     <div class="gc-side__lbl">Configuración</div>
 
                     <a class="gc-side__link <%= ClaseNav("Modulos") %>" href="<%= ResolveUrl("~/Admin/Modulos") %>">Módulos</a>

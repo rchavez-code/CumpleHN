@@ -82,6 +82,30 @@ namespace frontend.Servicios
 
         Resultado AgregarComentario(string tipoObjeto, int codigoObjeto, int codigoUsuario, string texto);
 
+        // ----------------------------------------------------- Encuestas
+
+        /* La tercera pata de la participación, junto a valoraciones y
+           comentarios. Consultar es público y responder exige cuenta, el mismo
+           criterio de las otras dos. */
+
+        /// <summary>
+        /// Encuesta abierta de una campaña, con sus opciones ya cargadas.
+        /// Devuelve null cuando no hay ninguna. Con la campaña vacía usa la
+        /// destacada, que es como la pide la portada.
+        ///
+        /// El código de usuario decide si el reparto de votos viene revelado:
+        /// el resultado se muestra después de responder o al cerrar, y quien lo
+        /// decide es el procedimiento almacenado, no esta capa.
+        /// </summary>
+        Encuesta ObtenerEncuestaVigente(string campanaSlug, int codigoUsuario);
+
+        /// <summary>
+        /// Registra la respuesta de una persona y devuelve la encuesta con el
+        /// resultado ya actualizado. Elegir otra opción mientras sigue abierta
+        /// cambia la respuesta anterior en lugar de sumar otra.
+        /// </summary>
+        ResultadoEncuesta ResponderEncuesta(int codigoEncuesta, int codigoOpcion, int codigoUsuario);
+
         // ----------------------------------------------------- Analítica
 
         /// <summary>
@@ -175,10 +199,53 @@ namespace frontend.Servicios
         Resultado CrearCuentaCandidato(
             int codigoUsuario, int codigoCandidato, string login, string correo, string clave);
 
+        // ------------------------------------------------- Encuestas admin
+
+        /// <summary>
+        /// Todas las encuestas, incluidas las retiradas y las que todavía no
+        /// abren. <paramref name="estado"/> acepta uno de los cuatro estados o
+        /// vacío para todos.
+        /// </summary>
+        IList<EncuestaAdmin> ObtenerEncuestasAdmin(int codigoUsuario, string campanaSlug, string estado);
+
+        /// <summary>
+        /// Opciones de una encuesta con su conteo sin reservar. Es lo que
+        /// necesita quien administra para decidir si la cierra.
+        /// </summary>
+        IList<OpcionEncuesta> ObtenerOpcionesEncuestaAdmin(int codigoUsuario, int codigoEncuesta);
+
+        /// <summary>
+        /// Alta si el código es cero, edición si no. Las opciones van en un
+        /// solo texto, una por línea, y las separa el procedimiento almacenado.
+        ///
+        /// Con votos ya registrados, la pregunta y las fechas se pueden
+        /// corregir pero las opciones no: cambiarlas dejaría respuestas
+        /// apuntando a una pregunta que ya no es la que se respondió.
+        /// </summary>
+        ResultadoGuardado GuardarEncuesta(
+            int codigoUsuario, int codigoEncuesta, int codigoCampana,
+            string pregunta, string descripcion, int codigoCategoria,
+            DateTime fechaInicio, string fechaCierre, string opciones);
+
+        /// <summary>
+        /// Cierra, reabre, retira o restaura una encuesta. Cerrar termina la
+        /// votación y deja el resultado a la vista, retirar la saca del sitio
+        /// público. Las dos exigen motivo.
+        /// </summary>
+        Resultado CambiarEstadoEncuesta(
+            int codigoUsuario, int codigoEncuesta, string accion, string motivo);
+
         /// <summary>Cargos con su código, para el formulario de candidaturas.</summary>
         IList<OpcionCatalogo> ObtenerCargosConCodigo();
 
         IList<OpcionCatalogo> ObtenerDepartamentosConCodigo();
+
+        /// <summary>
+        /// Categorías con su código, que es lo que necesita el formulario de
+        /// encuestas. Las páginas públicas usan la versión de solo nombre
+        /// porque filtran por texto.
+        /// </summary>
+        IList<OpcionCatalogo> ObtenerCategoriasConCodigo();
 
         // ------------------------------------------------------- Módulos
 

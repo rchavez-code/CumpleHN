@@ -28,6 +28,38 @@ namespace frontend
             // su modelo presente cuando se procesa el clic.
             CargarCandidatos();
             CargarCampanas();
+            CargarEncuesta();
+        }
+
+        /// <summary>
+        /// Encuesta abierta de la campaña destacada.
+        ///
+        /// El bloque entero desaparece cuando no hay ninguna, igual que el de
+        /// la campaña destacada: una sección que anuncia una pregunta y no la
+        /// tiene es peor que no estar.
+        ///
+        /// La comprobación del módulo usa <c>Visible</c> y no
+        /// <c>Habilitado</c>, para que quien administra siga viendo la encuesta
+        /// apagada —marcada como oculta— y pueda revisarla antes de publicarla.
+        /// </summary>
+        private void CargarEncuesta()
+        {
+            if (!Modulos.Visible(Modulos.Encuestas))
+            {
+                phEncuesta.Visible = false;
+                return;
+            }
+
+            string slug = _actual != null ? _actual.Slug : null;
+
+            Encuesta encuesta = Contenido.Datos.ObtenerEncuestaVigente(slug, Sesion.CodigoUsuario);
+
+            phEncuesta.Visible = encuesta != null;
+
+            // Se asigna en cada carga por la misma razón que los repetidores:
+            // sin modelo, el clic sobre una opción llega sin saber a qué
+            // encuesta pertenece.
+            if (encuesta != null) tarjetaEncuesta.Item = encuesta;
         }
 
         private void CargarCandidatos()

@@ -298,6 +298,85 @@ namespace frontend.Servicios
         }
 
         // =============================================================
+        //  Encuestas
+        // =============================================================
+
+        public Encuesta ObtenerEncuestaVigente(string campanaSlug, int codigoUsuario)
+        {
+            ws.EncuestaPublica d = Ejecutar(
+                c => c.obtenerEncuestaVigente(campanaSlug, codigoUsuario), null);
+
+            if (d == null) return null;
+
+            Encuesta e = new Encuesta
+            {
+                Id = d.codigoEncuesta,
+                CampanaSlug = d.campanaSlug,
+                Pregunta = d.pregunta,
+                Descripcion = d.descripcion,
+                Categoria = d.categoria,
+                FechaInicio = d.fechaInicio,
+                FechaCierre = d.fechaCierre,
+                Estado = d.estado,
+                Votos = d.votos,
+                MiOpcion = d.miOpcion
+            };
+
+            // Las opciones van en una segunda llamada y no dentro de la
+            // primera porque son lo único que cambia después de responder: la
+            // tarjeta las vuelve a pedir sin arrastrar otra vez la pregunta.
+            e.Opciones = AOpcionesEncuesta(Ejecutar(
+                c => c.listarOpcionesEncuesta(e.Id, codigoUsuario), new ws.OpcionEncuesta[0]));
+
+            return e;
+        }
+
+        public ResultadoEncuesta ResponderEncuesta(
+            int codigoEncuesta, int codigoOpcion, int codigoUsuario)
+        {
+            ws.RespuestaEncuesta d = Ejecutar(
+                c => c.votarEncuesta(codigoEncuesta, codigoOpcion, codigoUsuario), null);
+
+            if (d == null)
+            {
+                return new ResultadoEncuesta
+                {
+                    Ok = false,
+                    Mensaje = "No se pudo contactar al servidor. Intentá de nuevo."
+                };
+            }
+
+            return new ResultadoEncuesta
+            {
+                Ok = d.ok,
+                Mensaje = d.mensaje,
+                Votos = d.votos,
+                Opciones = AOpcionesEncuesta(d.opciones)
+            };
+        }
+
+        private static IList<OpcionEncuesta> AOpcionesEncuesta(ws.OpcionEncuesta[] datos)
+        {
+            List<OpcionEncuesta> lista = new List<OpcionEncuesta>();
+            if (datos == null) return lista;
+
+            foreach (ws.OpcionEncuesta d in datos)
+            {
+                lista.Add(new OpcionEncuesta
+                {
+                    Id = d.codigoOpcion,
+                    Texto = d.texto,
+                    Orden = d.orden,
+                    Votos = d.votos,
+                    MiVoto = d.miVoto,
+                    Revelar = d.revelar
+                });
+            }
+
+            return lista;
+        }
+
+        // =============================================================
         //  Analítica
         // =============================================================
 
@@ -952,6 +1031,73 @@ namespace frontend.Servicios
             return ARespuesta(d);
         }
 
+        // ------------------------------------------------- Encuestas admin
+
+        public IList<EncuestaAdmin> ObtenerEncuestasAdmin(
+            int codigoUsuario, string campanaSlug, string estado)
+        {
+            ws.EncuestaAdmin[] datos = Ejecutar(
+                c => c.listarEncuestasAdmin(codigoUsuario, campanaSlug, estado),
+                new ws.EncuestaAdmin[0]);
+
+            List<EncuestaAdmin> lista = new List<EncuestaAdmin>();
+            if (datos == null) return lista;
+
+            foreach (ws.EncuestaAdmin d in datos)
+            {
+                lista.Add(new EncuestaAdmin
+                {
+                    Codigo = d.codigoEncuesta,
+                    CodigoCampana = d.codigoCampana,
+                    CampanaSlug = d.campanaSlug,
+                    Campana = d.campana,
+                    Pregunta = d.pregunta,
+                    Descripcion = d.descripcion,
+                    CodigoCategoria = d.codigoCategoria,
+                    Categoria = d.categoria,
+                    FechaInicio = d.fechaInicio,
+                    FechaCierre = d.fechaCierre,
+                    Activo = d.activo,
+                    MotivoBaja = d.motivoBaja,
+                    Estado = d.estado,
+                    Opciones = d.opciones,
+                    Votos = d.votos
+                });
+            }
+
+            return lista;
+        }
+
+        public IList<OpcionEncuesta> ObtenerOpcionesEncuestaAdmin(
+            int codigoUsuario, int codigoEncuesta)
+        {
+            return AOpcionesEncuesta(Ejecutar(
+                c => c.listarOpcionesEncuestaAdmin(codigoUsuario, codigoEncuesta),
+                new ws.OpcionEncuesta[0]));
+        }
+
+        public ResultadoGuardado GuardarEncuesta(
+            int codigoUsuario, int codigoEncuesta, int codigoCampana,
+            string pregunta, string descripcion, int codigoCategoria,
+            DateTime fechaInicio, string fechaCierre, string opciones)
+        {
+            ws.RespuestaGuardado d = Ejecutar(
+                c => c.guardarEncuesta(codigoUsuario, codigoEncuesta, codigoCampana,
+                                       pregunta, descripcion, codigoCategoria,
+                                       fechaInicio, fechaCierre, opciones), null);
+
+            return AGuardado(d);
+        }
+
+        public Resultado CambiarEstadoEncuesta(
+            int codigoUsuario, int codigoEncuesta, string accion, string motivo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.cambiarEstadoEncuesta(codigoUsuario, codigoEncuesta, accion, motivo), null);
+
+            return ARespuesta(d);
+        }
+
         public IList<OpcionCatalogo> ObtenerCargosConCodigo()
         {
             return AOpciones(Ejecutar(c => c.listarCargos(), new ws.Catalogo[0]));
@@ -960,6 +1106,11 @@ namespace frontend.Servicios
         public IList<OpcionCatalogo> ObtenerDepartamentosConCodigo()
         {
             return AOpciones(Ejecutar(c => c.listarDepartamentos(), new ws.Catalogo[0]));
+        }
+
+        public IList<OpcionCatalogo> ObtenerCategoriasConCodigo()
+        {
+            return AOpciones(Ejecutar(c => c.listarCategorias(), new ws.Catalogo[0]));
         }
 
         private static IList<OpcionCatalogo> AOpciones(ws.Catalogo[] datos)

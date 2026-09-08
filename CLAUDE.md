@@ -309,9 +309,51 @@ El SDK `Anthropic` arrastra trece dependencias y exige `LangVersion 9.0`, porque
 
 **Costo medido:** unos 11.000 tokens de entrada y 470 de salida por consulta, alrededor de $0.027 con Sonnet 5 y $0.077 con Opus 5. Casi toda la entrada es que `consultar_tablero` devuelve los diez indicadores aunque la pregunta necesite uno — dejarle al modelo elegir cuáles pedir es la optimización pendiente, y es mejor idea que bajar de modelo.
 
+### Módulo de encuestas de percepción
+
+La tercera pata del módulo de participación ciudadana. El FO-GR-013 aprobado describe ese módulo como «comentarios, valoraciones **o votaciones de percepción**»: las dos primeras están en el script 05, esta es la tercera. No es alcance nuevo, así que no hay que reabrir la descripción aprobada con el asesor.
+
+**Solo el rol Administrador crea encuestas** (`Admin/Encuestas.aspx`). El candidato no: quien redacta las opciones controla el marco, y una encuesta escrita por una parte interesada dentro de una plataforma que se declara neutral sería un instrumento de campaña. El ciudadano tampoco, porque no hay moderación previa para preguntas escritas por cualquiera. El contenido de la pregunta queda **a criterio del administrador**.
+
+**No se reusan las `Valoraciones`.** Aquella tabla guarda −1 o 1, y una encuesta es una opción entre N. Forzarla ahí ensuciaría el gráfico de signo de la participación, que hoy significa una sola cosa. Tres tablas nuevas en `14_encuestas.sql`: `Encuestas`, `EncuestaOpciones` y `EncuestaVotos`.
+
+Reglas que no se deben romper:
+
+1. **Un voto por persona y encuesta**, garantizado por `UQ_EncuestaVotos_unoPorUsuario` y no solo por el código, igual que `UQ_Valoraciones_unaPorUsuario`. Cambiar de opción mientras sigue abierta actualiza la fila, nunca agrega otra. Elegir la misma opción de nuevo no hace nada: a diferencia del me gusta, retirar el voto dejaría a la persona sin ver un resultado que ya vio.
+2. **`EncuestaVotos` referencia el par `(codigoEncuesta, codigoOpcion)` con llave foránea compuesta**, apoyada en `UQ_EncuestaOpciones_par`. Esa restricción única parece redundante con la llave primaria y no lo es: sin ella un voto podría guardar una opción de otra encuesta y nada lo impediría.
+3. **Los conteos no se guardan.** Se derivan con `COUNT` sobre `EncuestaVotos`. Una columna `votos` en la opción es la misma contradicción que se eliminó de `Publicaciones`.
+4. **El estado se deriva de las fechas**, en `vwEncuestas`: Retirada, Programada, Cerrada o Abierta. No hay columna de estado — una que dijera «abierta» sobre una encuesta cuya fecha de cierre ya pasó es una mentira esperando a ocurrir.
+5. **Nada se borra.** Retirar es baja lógica con `activo`, `motivoBaja`, `fechaBaja` y `codigoUsuarioBaja`, como en `Publicaciones`. Un `DELETE` se llevaría los votos.
+6. **Las opciones solo se pueden cambiar mientras la encuesta no tenga votos.** Con votos, la pregunta y las fechas se corrigen y las opciones no: cambiarlas dejaría respuestas apuntando a algo que nadie respondió. Lo impide `spAdminGuardarEncuesta`, no el formulario.
+7. **Dos encuestas activas de la misma campaña no pueden solaparse en fechas.** Con dos compitiendo ninguna junta participación suficiente, y la portada tendría que elegir una por su cuenta. El guardado lo rechaza con su mensaje.
+
+**El resultado se revela después de votar o al cerrar, y lo decide el procedimiento almacenado.** Mientras la votación sigue abierta y quien consulta no respondió, `spEncuestaOpciones` devuelve los conteos en cero y una columna `revelar` que avisa de que ese cero es una reserva y no un dato. Se decide en la base y no en la página por la misma razón por la que el alcance del asistente lo deciden las columnas de sus procedimientos. El motivo de fondo es el efecto de arrastre: mostrar el reparto mientras se vota empuja hacia la mayoría, y una plataforma cuyo propósito declarado es que cada quien pondere por su cuenta no debería empujar hacia ningún lado.
+
+**Cerrar y retirar no son lo mismo.** La cerrada terminó su votación y **sigue en la portada un mes** con su resultado a la vista — si desapareciera en el momento del cierre, quien participó nunca llegaría a ver el resultado y solo lo vería quien administra. Pasado ese mes la portada la suelta. La retirada desaparece del sitio público de inmediato. Las dos acciones exigen motivo, y lo exige `spAdminEstadoEncuesta`.
+
+**El instante de cierre se trunca al segundo, no se redondea.** `DATETIME2(0)` redondea al segundo más cercano, así que guardar `SYSDATETIME()` directo puede dejar la fecha de cierre medio segundo en el futuro, y durante esa fracción `vwEncuestas` sigue diciendo «Abierta». La pantalla que acababa de confirmar el cierre mostraba «Abierta» en la misma respuesta. Se corta con `CONVERT(VARCHAR(19), SYSDATETIME(), 126)`.
+
+**La tarjeta declara de qué no es evidencia.** El pie de `EncuestaCard` dice que participa quien decide hacerlo, así que el resultado describe a quienes respondieron y no a la población hondureña. Es la misma clase de aviso que el de la cuadrícula de departamentos del tablero: sin él quedaría una cifra con apariencia de encuesta representativa, que es justo lo que este proyecto no debería producir.
+
+En el frontend, la tarjeta vive en `Controles/EncuestaCard.ascx` y se coloca en `Default.aspx`, entre la campaña destacada y las candidaturas. **Las mismas filas sirven para elegir y para leer el resultado**, con un solo repetidor: si las opciones se movieran al votar se perdería la relación entre lo que se eligió y lo que salió. La opción propia se identifica por el punto relleno y la negrita además del color, porque un solo canal de codificación deja fuera a quien no distingue el tono.
+
+Estilos en `cumplehn.css` con prefijo **`gc-enc`**, verificado con grep antes de nombrarlos. `.gc-enc--oculta` **no reusa** `.gc-oculto` del tablero: aquella vive en `cumplehn-analitica.css`, que la portada no carga, y definirla dos veces sería la manera de que acaben distintas. El hover se excluye con `:not(.aspNetDisabled)`, porque ASP.NET rinde un LinkButton apagado como un `<a>` sin href y no como un `<span>`.
+
+**Interruptor propio `encuestas` en `Modulos`**, y `ModuloVisible` comprobado en el Web Service antes de aceptar un voto: cerrar solo la página se saltaría llamando al ASMX directamente. Está verificado con una llamada directa. `Encuesta` se registró en `TiposObjeto`, lo que deja las encuestas listas para recibir valoraciones y comentarios cuando se quiera — el backend ya las acepta en `TipoValido` y `ExisteObjeto`, que es la única de las cinco ramas que además filtra por `activo`.
+
+**`EncuestaVotos` lleva `DENY SELECT` para `cumplehn_ia`**, junto con `Encuestas`. El login no pertenece a `db_datareader` y no tiene permiso sobre ninguna tabla, así que ya quedaban fuera de alcance, pero un voto vincula a una persona con una preferencia política y ese es el dato que más daño haría filtrado. No se concede `EXECUTE` sobre ningún procedimiento del script 14: cuando el asistente responda sobre encuestas será con un procedimiento propio que devuelva solo agregados.
+
+`15_datos_encuestas.sql` deja una encuesta de demostración con sus votos repartidos entre las cuentas ciudadanas del script 06. Es prescindible, y **da el alta llamando al procedimiento en lugar de con un INSERT**, para que el script de datos pase por las mismas validaciones que la pantalla.
+
+Una corrección de raíz que salió de acá: `LeerRespuesta` y `LeerGuardado` **no cerraban su `SqlDataReader`**. Nunca se notó porque cada método soltaba la conexión enseguida, pero `votarEncuesta` ejecuta más consultas sobre la misma conexión y falló con «ya hay un DataReader abierto». Ahora los dos lo cierran con `using`.
+
 ### Pendiente
 
 Alta de cuentas ciudadanas desde el registro público (las de candidatura ya se crean desde el área de administración) y guardado del perfil y de los proyectos desde el panel del candidato (los formularios ya validan del lado del servidor pero todavía no persisten).
+
+El registro público es **prerrequisito de las encuestas**, no una tarea paralela: sin él, las únicas cuentas que pueden responder son las diez ciudadanas de prueba del script 06 y las de candidatura. El módulo funciona y está verificado, pero hasta entonces no puede recoger participación real.
+
+De las encuestas quedan tres cosas anotadas y ninguna urgente: que el candidato pueda abrir encuestas sobre sus propias propuestas —marcadas como declaradas y fuera del tablero, porque una encuesta escrita por una parte interesada no mide nada—, un gráfico `analitica.encuestas` que contraste el resultado con la oferta programática, y comentarios sobre la encuesta, que el backend ya acepta y la tarjeta todavía no muestra. **El resultado de las encuestas no debe sobrescribir `Categorias.interesEncuesta`**: aquella cifra viene de la encuesta metodológica del proyecto (n = 150) y esta de una muestra autoseleccionada, así que juntarlas mezclaría dos cosas con validez distinta. Si algún día se muestran en el mismo gráfico, van como series separadas y etiquetadas.
 
 Del asistente quedan tres decisiones anotadas y ninguna urgente: que una consulta fallida no consuma cuota, un techo diario para toda la plataforma además del tope por persona, y que `consultar_tablero` deje elegir indicadores. Gráficos y PDF generados por el modelo **se descartaron a propósito**: la página ya dibuja los doce gráficos en el servidor y el backend puede armar un informe sin gastar un token, mientras que un gráfico dibujado por el modelo podría contradecir al del tablero.
 

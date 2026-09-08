@@ -119,6 +119,7 @@
     <Compile Include="Modelos\Administracion.cs" />
     <Compile Include="Modelos\Analitica.cs" />
     <Compile Include="Modelos\Asistente.cs" />
+    <Compile Include="Modelos\Encuestas.cs" />
     <Compile Include="Modelos\Entidades.cs" />
     <Compile Include="Modelos\Interaccion.cs" />
     <Compile Include="Modelos\Seguridad.cs" />

@@ -93,6 +93,44 @@
             </div>
         </asp:PlaceHolder>
 
+        <%-- ================================================== Encuesta --%>
+
+        <%-- Va después de la campaña destacada y antes de las candidaturas:
+             es donde cae la vista de quien llega por primera vez, sin que
+             desplace al contenido que la plataforma existe para mostrar. --%>
+
+        <asp:PlaceHolder ID="phEncuesta" runat="server" Visible="false">
+            <div class="gc-sechead" style="margin-top: 42px;">
+                <div>
+                    <h2>Tu opinión</h2>
+                    <p class="gc-muted">Una pregunta abierta a la ciudadanía. Los resultados se muestran al responder.</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-7 gc-mb">
+                    <gc:EncuestaCard ID="tarjetaEncuesta" runat="server" />
+                </div>
+                <div class="col-lg-5 gc-mb">
+                    <div class="gc-card gc-quick" style="height: 100%;">
+                        <span class="gc-quick__ico" aria-hidden="true"><strong>?</strong></span>
+                        <div>
+                            <h3>Por qué preguntamos</h3>
+                            <p>
+                                CumpleHN ordena lo que las candidaturas prometen. Saber qué área considera
+                                prioritaria quien consulta la plataforma permite contrastar esa demanda con
+                                la oferta programática registrada, que es una de las comparaciones del
+                                tablero de analítica.
+                            </p>
+                            <p class="gc-muted gc-small" style="margin-bottom: 0;">
+                                Una respuesta por cuenta. Podés cambiarla mientras la encuesta siga abierta.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </asp:PlaceHolder>
+
         <%-- ================================================= Candidatos --%>
 
         <div class="gc-sechead" style="margin-top: 42px;">
