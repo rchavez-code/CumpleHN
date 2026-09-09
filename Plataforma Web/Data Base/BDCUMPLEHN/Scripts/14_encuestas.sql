@@ -23,12 +23,13 @@
         encuesta cuya fecha de cierre ya pasó es una mentira
         esperando a ocurrir. Lo resuelve vwEncuestas.
 
-     4. Los resultados se revelan después de responder. Y lo
-        decide el procedimiento, no la página: mostrar el reparto
-        mientras la votación sigue abierta induce a votar con la
-        mayoría, y una plataforma cuyo propósito es que cada quien
-        pondere por su cuenta no debería empujar hacia ningún
-        lado.
+     4. El resultado se muestra siempre, se haya respondido o
+        no. Hubo una versión que lo reservaba hasta después de
+        votar, para no empujar a nadie hacia la opción que iba
+        ganando, y se quitó a pedido: esconder el resultado hasta
+        que participes convierte el dato en un peaje. Lo que
+        queda de aquella decisión es el aviso del pie de la
+        tarjeta, que dice a quién describe el resultado.
 
    Varias encuestas pueden estar abiertas a la vez. La portada
    muestra las dos primeras y deja el resto tras un «Ver más»,
@@ -336,9 +337,9 @@ GO
    por una serían ocho viajes para responder ocho veces la misma
    pregunta.
 
-   La reserva del resultado se resuelve por encuesta, no para el
-   conjunto: alguien puede haber respondido una y no la otra, y
-   cada tarjeta tiene que reflejar su propio caso.               */
+   Del usuario solo hace falta saber qué eligió en cada una, para
+   que la tarjeta pueda marcar su respuesta. El conteo va
+   completo, igual que en spEncuestaOpciones.                    */
 
 IF OBJECT_ID('dbo.spEncuestasVigentesOpciones') IS NOT NULL
     DROP PROCEDURE dbo.spEncuestasVigentesOpciones;
@@ -351,15 +352,12 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    /* Las encuestas en juego y, para cada una, si a esta persona
-       le corresponde ver el reparto. */
-    DECLARE @encuestas TABLE (codigoEncuesta INT, miOpcion INT, revelar BIT);
+    /* Las encuestas en juego y qué eligió esta persona en cada
+       una. Cero es que todavía no respondió. */
+    DECLARE @encuestas TABLE (codigoEncuesta INT, miOpcion INT);
 
-    INSERT INTO @encuestas (codigoEncuesta, miOpcion, revelar)
-    SELECT
-        e.codigoEncuesta,
-        ISNULL(v.codigoOpcion, 0),
-        CASE WHEN v.codigoOpcion IS NOT NULL THEN 1 ELSE 0 END
+    INSERT INTO @encuestas (codigoEncuesta, miOpcion)
+    SELECT e.codigoEncuesta, ISNULL(v.codigoOpcion, 0)
     FROM dbo.vwEncuestas e
     LEFT JOIN dbo.EncuestaVotos v
            ON v.codigoEncuesta = e.codigoEncuesta
@@ -376,12 +374,9 @@ BEGIN
         o.codigoOpcion,
         o.texto,
         o.orden,
-        CASE WHEN x.revelar = 1
-             THEN (SELECT COUNT(*) FROM dbo.EncuestaVotos v
-                    WHERE v.codigoOpcion = o.codigoOpcion)
-             ELSE 0 END                                          AS votos,
-        CASE WHEN o.codigoOpcion = x.miOpcion THEN 1 ELSE 0 END  AS miVoto,
-        x.revelar
+        (SELECT COUNT(*) FROM dbo.EncuestaVotos v
+          WHERE v.codigoOpcion = o.codigoOpcion)                AS votos,
+        CASE WHEN o.codigoOpcion = x.miOpcion THEN 1 ELSE 0 END AS miVoto
     FROM dbo.EncuestaOpciones o
     INNER JOIN @encuestas x ON x.codigoEncuesta = o.codigoEncuesta
     ORDER BY o.codigoEncuesta, o.orden, o.codigoOpcion;
@@ -390,16 +385,16 @@ GO
 
 /* Las opciones de una encuesta, con su resultado.
 
-   Acá vive la regla 4 del encabezado. El resultado se revela
-   cuando quien consulta ya votó, o cuando la encuesta cerró.
-   Mientras no se cumpla ninguna de las dos, los conteos salen en
-   cero y la columna revelar avisa a la página de que ese cero no
-   es un dato sino una reserva.
+   El conteo se devuelve siempre, haya respondido o no quien
+   consulta. Hubo una versión que lo reservaba hasta después de
+   votar, para no empujar a nadie hacia la opción que iba
+   ganando, y se quitó a pedido: una encuesta que esconde su
+   resultado hasta que participes convierte el dato en un peaje.
 
-   Se decide acá y no en la página por la misma razón por la que
-   el alcance del asistente lo deciden las columnas de sus
-   procedimientos: lo que todavía no debe leerse, mejor que no
-   salga de la base.                                             */
+   Lo que se conserva de aquella decisión es el aviso del pie de
+   la tarjeta, que dice a quién describe el resultado. El sesgo
+   de arrastre no desaparece porque se muestre el reparto, pero
+   quien lee sabe de qué muestra sale.                          */
 
 IF OBJECT_ID('dbo.spEncuestaOpciones') IS NOT NULL
     DROP PROCEDURE dbo.spEncuestaOpciones;
@@ -412,27 +407,18 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @estado NVARCHAR(20) =
-        (SELECT estado FROM dbo.vwEncuestas WHERE codigoEncuesta = @codigoEncuesta);
-
     DECLARE @miOpcion INT =
         ISNULL((SELECT codigoOpcion FROM dbo.EncuestaVotos
                  WHERE codigoEncuesta = @codigoEncuesta
                    AND codigoUsuario  = @codigoUsuario), 0);
 
-    DECLARE @revelar BIT =
-        CASE WHEN @miOpcion > 0 OR @estado IN (N'Cerrada', N'Retirada') THEN 1 ELSE 0 END;
-
     SELECT
         o.codigoOpcion,
         o.texto,
         o.orden,
-        CASE WHEN @revelar = 1
-             THEN (SELECT COUNT(*) FROM dbo.EncuestaVotos v
-                    WHERE v.codigoOpcion = o.codigoOpcion)
-             ELSE 0 END                                        AS votos,
-        CASE WHEN o.codigoOpcion = @miOpcion THEN 1 ELSE 0 END AS miVoto,
-        @revelar                                               AS revelar
+        (SELECT COUNT(*) FROM dbo.EncuestaVotos v
+          WHERE v.codigoOpcion = o.codigoOpcion)               AS votos,
+        CASE WHEN o.codigoOpcion = @miOpcion THEN 1 ELSE 0 END AS miVoto
     FROM dbo.EncuestaOpciones o
     WHERE o.codigoEncuesta = @codigoEncuesta
     ORDER BY o.orden, o.codigoOpcion;
@@ -564,12 +550,13 @@ BEGIN
 END
 GO
 
-/* Las opciones de una encuesta, sin reservar el resultado.
+/* Las opciones de una encuesta para la pantalla de
+   administración.
 
-   Es el mismo dato que spEncuestaOpciones devuelve al público,
-   con dos diferencias: acá el conteo se muestra siempre, porque
-   quien administra necesita saber cuántos votos tiene antes de
-   decidir si cierra, y exige rol. */
+   Devuelve las mismas columnas que spEncuestaOpciones, porque el
+   Web Service lee las dos con el mismo lector. Se diferencia en
+   que exige rol y en que no le interesa qué votó quien consulta:
+   acá se mira el resultado, no se participa. */
 
 IF OBJECT_ID('dbo.spAdminEncuestaOpciones') IS NOT NULL
     DROP PROCEDURE dbo.spAdminEncuestaOpciones;
@@ -590,8 +577,7 @@ BEGIN
         o.orden,
         (SELECT COUNT(*) FROM dbo.EncuestaVotos v
           WHERE v.codigoOpcion = o.codigoOpcion) AS votos,
-        CAST(0 AS BIT)                           AS miVoto,
-        CAST(1 AS BIT)                           AS revelar
+        CAST(0 AS BIT)                           AS miVoto
     FROM dbo.EncuestaOpciones o
     WHERE o.codigoEncuesta = @codigoEncuesta
     ORDER BY o.orden, o.codigoOpcion;

@@ -9,16 +9,12 @@ namespace frontend.Controles
     /// <summary>
     /// Encuesta de percepción en la portada.
     ///
-    /// La tarjeta tiene dos caras y la misma lista sirve para las dos: mientras
-    /// la persona no ha respondido, cada opción es un botón. Después de
-    /// responder —o si la encuesta ya cerró— las mismas filas muestran el
-    /// reparto. Se hace con un solo repetidor y no con dos bloques porque las
-    /// opciones no cambian de lugar al votar, y verlas moverse rompería la
-    /// relación entre lo que se eligió y lo que salió.
-    ///
-    /// El reparto solo llega cuando corresponde mostrarlo. Lo decide el
-    /// procedimiento almacenado, no esta clase: mientras la votación sigue
-    /// abierta y la persona no respondió, los conteos vienen en cero.
+    /// Cada fila es a la vez el botón para elegir y la barra con el resultado.
+    /// No son dos estados que se alternan: el reparto se ve desde el principio,
+    /// haya respondido o no quien mira, y lo único que cambia al responder es
+    /// cuál queda marcada como propia. Así las opciones nunca se mueven de
+    /// sitio, que es lo que rompería la relación entre lo que se eligió y lo
+    /// que salió.
     ///
     /// La página que use esta tarjeta debe enlazarla en cada carga, también en
     /// los postbacks, o el clic sobre una opción llega sin modelo.
@@ -129,12 +125,6 @@ namespace frontend.Controles
             }
         }
 
-        /// <summary>Si las filas muestran el reparto en lugar de invitar a elegir.</summary>
-        private bool Resuelta
-        {
-            get { return _item != null && _item.Revelado; }
-        }
-
         /// <summary>
         /// Cuántos colores tiene la paleta de opciones. Coincide con las clases
         /// gc-enc__op--c1 a c8 de la hoja de estilos, y con el máximo de
@@ -149,6 +139,10 @@ namespace frontend.Controles
         /// El color va por clase y no por estilo en línea para que la paleta
         /// viva entera en la hoja de estilos: si algún día hay que revisarla
         /// por contraste, se revisa en un solo archivo.
+        ///
+        /// <c>is-cerrada</c> quita el círculo de selección. Ese círculo es lo
+        /// que dice «esto se puede elegir», así que dejarlo en una encuesta que
+        /// ya no admite respuestas sería una invitación falsa.
         /// </summary>
         protected string ClaseOpcion(object dato, int indice)
         {
@@ -156,7 +150,7 @@ namespace frontend.Controles
 
             string clase = "gc-enc__op gc-enc__op--c" + ((indice % ColoresDisponibles) + 1);
 
-            if (Resuelta) clase += " is-res";
+            if (!PuedeResponder) clase += " is-cerrada";
             if (o.MiVoto) clase += " is-mia";
 
             return clase;
@@ -170,12 +164,14 @@ namespace frontend.Controles
         {
             OpcionEncuesta o = (OpcionEncuesta)dato;
 
-            if (!Resuelta) return "Elegir: " + o.Texto;
-
             string cuenta = Vista.Plural(o.Votos, "respuesta", "respuestas");
-            string propia = o.MiVoto ? ", tu respuesta" : string.Empty;
 
-            return o.Texto + ": " + cuenta + ", " + o.Porcentaje(_item.Votos) + " por ciento" + propia;
+            string texto = o.Texto + ": " + cuenta + ", "
+                         + o.Porcentaje(_item.Votos) + " por ciento";
+
+            if (o.MiVoto) return texto + ", tu respuesta";
+
+            return PuedeResponder ? "Elegir " + texto : texto;
         }
 
         /// <summary>
@@ -185,8 +181,6 @@ namespace frontend.Controles
         /// </summary>
         protected string EstiloPista(object dato)
         {
-            if (!Resuelta) return "width:0";
-
             OpcionEncuesta o = (OpcionEncuesta)dato;
             return "width:" + o.Porcentaje(_item.Votos) + "%";
         }
@@ -203,8 +197,6 @@ namespace frontend.Controles
         /// </summary>
         protected string TextoResultado(object dato)
         {
-            if (!Resuelta) return string.Empty;
-
             OpcionEncuesta o = (OpcionEncuesta)dato;
 
             return Vista.Numero(o.Votos) + " · " + o.Porcentaje(_item.Votos) + " %";

@@ -43,10 +43,10 @@ namespace backend.Modelos
     /// <summary>
     /// Una de las opciones entre las que se elige, con su resultado.
     ///
-    /// El conteo llega en cero mientras <c>revelar</c> sea falso. No es un dato
-    /// faltante sino una reserva deliberada: el resultado se muestra después de
-    /// votar o al cerrar, para no empujar a nadie hacia la respuesta que va
-    /// ganando. La decisión vive en el procedimiento del script 14.
+    /// El conteo viaja siempre, haya respondido o no quien consulta. Hubo una
+    /// columna <c>revelar</c> que lo reservaba hasta después de votar y se
+    /// quitó: una encuesta que esconde su resultado hasta que participes
+    /// convierte el dato en un peaje.
     /// </summary>
     public class OpcionEncuesta
     {
@@ -54,8 +54,9 @@ namespace backend.Modelos
         public string texto { get; set; }
         public int orden { get; set; }
         public int votos { get; set; }
+
+        /// <summary>Si es la opción que eligió quien consulta.</summary>
         public bool miVoto { get; set; }
-        public bool revelar { get; set; }
     }
 
     /// <summary>

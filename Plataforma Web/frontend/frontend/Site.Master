@@ -9,7 +9,11 @@
     <title><%: Page.Title %> · CumpleHN</title>
     <meta name="description" content="CumpleHN organiza las propuestas y el cumplimiento de los candidatos políticos en Honduras para que cada persona decida con evidencia." />
 
-    <webopt:bundlereference runat="server" path="~/Content/css" />
+    <%-- Enlaces explicitos y no el paquete ~/Content/css: con las
+         optimizaciones apagadas ese paquete escribe la ruta pelada, sin
+         version, y el navegador sirve la hoja cacheada. Ver Recursos.Url. --%>
+    <link href="<%= Recursos.Url("~/Content/bootstrap.css") %>" rel="stylesheet" />
+    <link href="<%= Recursos.Url("~/Content/cumplehn.css") %>" rel="stylesheet" />
     <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 
     <asp:ContentPlaceHolder ID="HeadContent" runat="server" />

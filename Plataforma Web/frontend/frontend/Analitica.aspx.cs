@@ -358,19 +358,14 @@ namespace frontend
         /// Cuando el archivo no se puede leer se devuelve la ruta sin huella:
         /// perder el refresco automático es preferible a romper la página.
         /// </summary>
+        /// <remarks>
+        /// La implementación se mudó a <see cref="Recursos.Url"/> cuando las
+        /// plantillas la necesitaron para la hoja principal. Acá queda el
+        /// nombre corto que ya usa el marcado de esta página.
+        /// </remarks>
         protected string Recurso(string ruta)
         {
-            string url = ResolveUrl(ruta);
-
-            try
-            {
-                DateTime f = System.IO.File.GetLastWriteTimeUtc(Server.MapPath(ruta));
-                return url + "?v=" + f.Ticks.ToString(Inv);
-            }
-            catch
-            {
-                return url;
-            }
+            return Recursos.Url(ruta);
         }
 
         // =============================================================

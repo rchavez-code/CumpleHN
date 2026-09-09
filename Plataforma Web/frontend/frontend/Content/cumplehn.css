@@ -1696,6 +1696,33 @@ a.gc-chip:hover { text-decoration: none; border-color: #d3d8dd; }
         var(--gc-turquesa) 75%, var(--gc-turquesa) 100%);
 }
 
+/* Cada encuesta ocupa una fila entera, así que el cuerpo se parte en
+   dos columnas en pantalla ancha: la pregunta a la izquierda y las
+   opciones a la derecha. A una sola columna, con el contenedor en
+   1140 px, cada opción quedaría de mil píxeles con la etiqueta y su
+   cifra en extremos opuestos y nada en medio.
+
+   Debajo de 992 vuelve a una columna, que es donde también se apilan
+   las columnas de Bootstrap. */
+.gc-enc__cuerpo { padding-bottom: 4px; }
+
+@media (min-width: 992px) {
+    .gc-enc__cuerpo {
+        display: grid;
+        grid-template-columns: minmax(0, 38fr) minmax(0, 62fr);
+        align-items: start;
+    }
+
+    .gc-enc__cuerpo .gc-enc__head {
+        height: 100%;
+        border-bottom: 0;
+        border-right: 1px solid var(--gc-line-2);
+        background: linear-gradient(160deg, var(--gc-turquesa-l) 0%, var(--gc-surface) 78%);
+    }
+
+    .gc-enc__cuerpo .gc-enc__lista { padding: 20px; }
+}
+
 .gc-enc__head {
     padding: 17px 20px 15px;
     background: linear-gradient(180deg, var(--gc-turquesa-l) 0%, var(--gc-surface) 100%);
@@ -1881,10 +1908,11 @@ a.gc-enc__op:not(.aspNetDisabled):hover .gc-enc__marca {
 
 .gc-enc__op.is-mia .gc-enc__txt { font-weight: 600; }
 
-/* Ya resuelta: la marca sobra, porque la fila dejó de ser una
-   pregunta y pasó a ser un dato. La de la opción propia se queda. */
-.gc-enc__op.is-res .gc-enc__marca { display: none; }
-.gc-enc__op.is-res.is-mia .gc-enc__marca { display: block; }
+/* Encuesta que ya no admite respuestas: el círculo sobra, porque es
+   lo que dice «esto se puede elegir». La marca de la opción propia
+   se queda, que ahí sí informa. */
+.gc-enc__op.is-cerrada .gc-enc__marca { display: none; }
+.gc-enc__op.is-cerrada.is-mia .gc-enc__marca { display: block; }
 
 .gc-enc__aviso { margin: 14px 20px 0; }
 

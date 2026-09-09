@@ -56,16 +56,6 @@ namespace frontend.Modelos
             get { return MiOpcion > 0; }
         }
 
-        /// <summary>
-        /// Si el reparto de votos se puede mostrar. Lo decide el backend y
-        /// llega marcado en cada opción: acá solo se lee la primera, porque la
-        /// reserva es de la encuesta entera y no de una opción suelta.
-        /// </summary>
-        public bool Revelado
-        {
-            get { return Opciones.Count > 0 && Opciones[0].Revelar; }
-        }
-
         public string TotalTexto
         {
             get { return Vista.Plural(Votos, "respuesta", "respuestas"); }
@@ -110,10 +100,10 @@ namespace frontend.Modelos
     /// <summary>
     /// Una de las opciones entre las que se elige.
     ///
-    /// El conteo llega en cero mientras <see cref="Revelar"/> sea falso, y eso
-    /// no es un dato faltante sino una reserva: el resultado se muestra después
-    /// de votar o al cerrar, para no empujar a nadie hacia la respuesta que va
-    /// ganando. La decisión vive en el procedimiento almacenado.
+    /// El conteo llega siempre, haya respondido o no quien consulta. Hubo una
+    /// bandera <c>Revelar</c> que lo reservaba hasta después de votar y se
+    /// quitó: una encuesta que esconde su resultado hasta que participes
+    /// convierte el dato en un peaje.
     /// </summary>
     public class OpcionEncuesta
     {
@@ -121,8 +111,9 @@ namespace frontend.Modelos
         public string Texto { get; set; }
         public int Orden { get; set; }
         public int Votos { get; set; }
+
+        /// <summary>Si es la opción que eligió quien consulta.</summary>
         public bool MiVoto { get; set; }
-        public bool Revelar { get; set; }
 
         /// <summary>
         /// Porcentaje sobre el total de la encuesta. Se calcula en la vista y

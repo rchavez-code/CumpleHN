@@ -967,8 +967,6 @@ namespace frontend.webservices
         
         private bool miVotoField;
         
-        private bool revelarField;
-        
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=0)]
         public int codigoOpcion
@@ -1036,20 +1034,6 @@ namespace frontend.webservices
             set
             {
                 this.miVotoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
-        public bool revelar
-        {
-            get
-            {
-                return this.revelarField;
-            }
-            set
-            {
-                this.revelarField = value;
             }
         }
     }

@@ -371,8 +371,7 @@ namespace frontend.Servicios
                     Texto = d.texto,
                     Orden = d.orden,
                     Votos = d.votos,
-                    MiVoto = d.miVoto,
-                    Revelar = d.revelar
+                    MiVoto = d.miVoto
                 });
             }
 

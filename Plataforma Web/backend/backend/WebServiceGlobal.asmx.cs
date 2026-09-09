@@ -2367,8 +2367,7 @@ namespace backend
                         texto = Texto(reader, "texto"),
                         orden = Convert.ToInt32(reader["orden"]),
                         votos = Convert.ToInt32(reader["votos"]),
-                        miVoto = Convert.ToBoolean(reader["miVoto"]),
-                        revelar = Convert.ToBoolean(reader["revelar"])
+                        miVoto = Convert.ToBoolean(reader["miVoto"])
                     });
                 }
             }
@@ -2383,9 +2382,8 @@ namespace backend
         /// <summary>
         /// Opciones de una encuesta con su resultado.
         ///
-        /// Los conteos llegan en cero mientras <c>revelar</c> sea falso. Quien
-        /// decide eso es el procedimiento, no este método ni la página: lo que
-        /// todavía no debe leerse, mejor que no salga de la base.
+        /// El conteo va completo, se haya respondido o no. El código de usuario
+        /// solo sirve para marcar cuál eligió esa persona.
         /// </summary>
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
@@ -2497,8 +2495,7 @@ namespace backend
                     texto = Texto(reader, "texto"),
                     orden = Convert.ToInt32(reader["orden"]),
                     votos = Convert.ToInt32(reader["votos"]),
-                    miVoto = Convert.ToBoolean(reader["miVoto"]),
-                    revelar = Convert.ToBoolean(reader["revelar"])
+                    miVoto = Convert.ToBoolean(reader["miVoto"])
                 });
             }
             reader.Close();

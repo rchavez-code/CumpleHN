@@ -213,6 +213,8 @@ Estructura de `Analitica.aspx`: encabezado + filtros + KPI siempre visibles, y c
 
 Los estilos del tablero viven en `Content/cumplehn-analitica.css`, enlazado desde el `HeadContent` de la página y no desde el bundle, porque ninguna otra página los necesita.
 
+**Todo archivo estático se enlaza con `Recursos.Url("~/…")`, que le pega la fecha de modificación como `?v=`.** Las tres plantillas (`Site.Master`, `Admin.Master`, `Panel.Master`) enlazan así `bootstrap.css` y `cumplehn.css`, en lugar del `<webopt:bundlereference path="~/Content/css" />` que usaban antes. Ese paquete, con las optimizaciones apagadas —que es como corre en desarrollo—, no combina ni versiona nada: escribe un enlace por archivo con la ruta pelada, y el navegador sirve para siempre la copia que ya tenía. Es la tercera vez que el proyecto pierde tiempo con esto, y la peor: una tanda entera de rediseño de la tarjeta de encuestas se veía con los estilos anteriores, así que parecía que el trabajo no se había hecho. `Bundle.config` se eliminó, porque un archivo que parece gobernar las hojas de estilo y no las gobierna es peor que no tenerlo.
+
 Las pestañas son un **control segmentado** (pista gris con la activa en superficie blanca elevada), no una fila de títulos subrayados: con cuatro etiquetas largas, el subrayado solo no comunicaba que fueran opciones intercambiables. La activa lleva además un punto de color, para no depender solo de la elevación en alto contraste o al imprimir.
 
 Reglas de los gráficos, aplicadas a mano porque no hay node para correr el validador de paleta:
@@ -327,9 +329,9 @@ Reglas que no se deben romper:
 6. **Las opciones solo se pueden cambiar mientras la encuesta no tenga votos.** Con votos, la pregunta y las fechas se corrigen y las opciones no: cambiarlas dejaría respuestas apuntando a algo que nadie respondió. Lo impide `spAdminGuardarEncuesta`, no el formulario.
 7. **Varias encuestas pueden estar abiertas a la vez.** Hubo una restricción que lo impedía, con el argumento de que dos compitiendo se reparten la participación. Se quitó al pasar la portada a mostrar varias: era una regla de negocio haciendo el trabajo de una decisión de presentación.
 
-**El resultado se revela después de responder, y lo decide el procedimiento almacenado.** Mientras la votación sigue abierta y quien consulta no respondió, `spEncuestaOpciones` devuelve los conteos en cero y una columna `revelar` que avisa de que ese cero es una reserva y no un dato. Se decide en la base y no en la página por la misma razón por la que el alcance del asistente lo deciden las columnas de sus procedimientos. El motivo de fondo es el efecto de arrastre: mostrar el reparto mientras se vota empuja hacia la mayoría, y una plataforma cuyo propósito declarado es que cada quien pondere por su cuenta no debería empujar hacia ningún lado.
+**El resultado se muestra siempre, se haya respondido o no.** Hubo una versión que lo reservaba hasta después de votar, con una columna `revelar`, para no empujar a nadie hacia la opción que iba ganando. Se quitó a pedido de Roy: esconder el resultado hasta que participes convierte el dato en un peaje, y la plataforma existe para mostrar evidencia. Lo que queda de aquella decisión es el aviso del pie de la tarjeta, que dice a quién describe el resultado — el sesgo de arrastre no desaparece porque se muestre el reparto, pero quien lee sabe de qué muestra sale.
 
-La reserva se resuelve **por encuesta y no para el conjunto**: alguien puede haber respondido una y no la otra, y cada tarjeta refleja su propio caso. Lo hace `spEncuestasVigentesOpciones` con un `LEFT JOIN` a los votos de esa persona.
+Del usuario solo se usa **qué eligió en cada encuesta**, para marcar su respuesta. `spEncuestasVigentesOpciones` lo resuelve con un `LEFT JOIN` a sus votos.
 
 **Cada opción muestra el conteo y el porcentaje, no uno de los dos.** El porcentaje solo esconde de cuánta gente sale —el sesenta por ciento de cinco respuestas no es el sesenta por ciento de quinientas— y el conteo solo obliga a dividir de cabeza para comparar dos opciones.
 
@@ -345,11 +347,15 @@ Una sola llamada trae las encuestas con sus opciones dentro (`listarEncuestasVig
 
 En el frontend, la tarjeta vive en `Controles/EncuestaCard.ascx` y se coloca en `Default.aspx`, entre la campaña destacada y las candidaturas. **Las mismas filas sirven para elegir y para leer el resultado**, con un solo repetidor: si las opciones se movieran al votar se perdería la relación entre lo que se eligió y lo que salió. La opción propia se identifica por el punto relleno, el borde y la negrita además del color, porque un solo canal de codificación deja fuera a quien no distingue el tono.
 
+**Cada encuesta ocupa una fila entera**, y en pantalla ancha el cuerpo de la tarjeta se parte en dos columnas: la pregunta a la izquierda y las opciones a la derecha. A una sola columna, con el contenedor en 1140 px, cada opción quedaba de mil píxeles con la etiqueta y su cifra en extremos opuestos y nada en medio. Debajo de 992 vuelve a una columna, que es donde también se apilan las columnas de Bootstrap.
+
 **La portada muestra dos encuestas y esconde el resto tras «Ver más».** Las escondidas se dibujan igual en la misma respuesta y el botón solo les quita el `display: none`: si pidiera otra carga al servidor, desplegar la lista costaría un viaje para mostrar algo ya consultado. El estado del despliegue viaja en un input oculto —igual que la pestaña activa del tablero— para sobrevivir al postback de responder una encuesta. **Cuántas se ven es constante de la página** (`EncuestasALaVista`), no de la base: el procedimiento devuelve todas las abiertas.
 
 **Cada opción lleva su color, de una paleta de ocho** (`gc-enc__op--c1` a `c8`, tantos como el máximo de opciones, así que ninguna encuesta repite). No contradice la regla del tablero de usar un solo tono para magnitud: allá el color codifica el dato y hay que compararlo entre barras, mientras que acá las opciones son categorías nominales de una sola pregunta y el dato lo lleva la cifra escrita al lado. Queda fuera `--gc-azul`, que es identidad y no dato. El color va por clase y no por estilo en línea para que la paleta se pueda revisar entera en un archivo.
 
-El filo de color en el canto izquierdo y el punto coloreado existen para que la tarjeta tenga color **antes** de que nadie responda: hasta que hay resultado las barras miden cero, y sin ellos la encuesta sin votar se veía como una lista de casillas grises.
+El filo de color en el canto izquierdo y el punto coloreado existen para que la tarjeta tenga color aunque una encuesta todavía no tenga respuestas y todas las barras midan cero.
+
+**El círculo de selección desaparece cuando la encuesta ya no admite respuestas** (`is-cerrada`). Ese círculo es lo que dice «esto se puede elegir», así que dejarlo en una encuesta cerrada sería una invitación falsa. El de la opción propia se queda, que ahí sí informa.
 
 Estilos en `cumplehn.css` con prefijo **`gc-enc`**, verificado con grep antes de nombrarlos. `.gc-enc--oculta` **no reusa** `.gc-oculto` del tablero: aquella vive en `cumplehn-analitica.css`, que la portada no carga, y definirla dos veces sería la manera de que acaben distintas. El hover se excluye con `:not(.aspNetDisabled)`, porque ASP.NET rinde un LinkButton apagado como un `<a>` sin href y no como un `<span>`. La tarjeta es una columna flexible con el pie empujado por `margin-top: auto`, que es lo que empareja dos encuestas de distinto largo en la misma fila.
 

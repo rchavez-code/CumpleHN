@@ -6,6 +6,12 @@
          Es identidad, no dato: por eso va en el borde y no en un gráfico. --%>
     <div class="gc-enc__banda" aria-hidden="true"></div>
 
+    <%-- El cuerpo es de dos columnas en pantalla ancha —pregunta a la
+         izquierda, opciones a la derecha— porque la tarjeta ocupa la fila
+         entera. A una sola columna, cada opción quedaría de mil píxeles con la
+         etiqueta y su cifra en extremos opuestos. --%>
+    <div class="gc-enc__cuerpo">
+
     <div class="gc-enc__head">
         <p class="gc-enc__eyebrow">
             <span class="gc-enc__punto" aria-hidden="true"></span>
@@ -57,6 +63,8 @@
             </ul>
         </FooterTemplate>
     </asp:Repeater>
+
+    </div>
 
     <%-- ==================================================== Pie --%>
 

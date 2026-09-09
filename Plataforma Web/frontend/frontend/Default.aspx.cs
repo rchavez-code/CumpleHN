@@ -90,7 +90,7 @@ namespace frontend
         /// </summary>
         protected string ClaseColumnaEncuesta(int indice)
         {
-            string clase = "col-lg-6 gc-mb";
+            string clase = "col-12 gc-mb";
 
             if (indice >= EncuestasALaVista) clase += " gc-encs__extra";
 
