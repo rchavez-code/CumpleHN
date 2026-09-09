@@ -61,16 +61,12 @@ namespace frontend
             }
 
             // Acceso concedido: se guarda lo mínimo necesario en sesión.
-            Session["usuario"] = respuesta.usuario;
-            Session["codigoUsuario"] = respuesta.usuario.codigoUsuario;
-            Session["nombreUsuario"] = respuesta.usuario.nombre;
-            Session["rol"] = respuesta.usuario.rol;
-            Session["candidatoSlug"] = respuesta.usuario.candidatoSlug;
+            Sesion.Iniciar(respuesta.usuario);
 
             // Si llegó acá porque quiso participar en alguna página, se lo
             // devuelve a esa misma página en lugar de mandarlo al inicio.
             string volver = Request.QueryString["volver"];
-            if (EsRutaLocalSegura(volver))
+            if (Sesion.EsDestinoSeguro(volver))
             {
                 Response.Redirect(volver);
                 return;
@@ -83,23 +79,23 @@ namespace frontend
         }
 
         /// <summary>
-        /// Acepta únicamente rutas dentro del propio sitio.
+        /// Dirección del registro que conserva el destino con el que se llegó
+        /// acá.
         ///
-        /// Sin esta comprobación, un enlace con
-        /// <c>?volver=https://sitio-ajeno</c> convertiría la página de acceso en
-        /// un redirector hacia cualquier destino, que es la vulnerabilidad de
-        /// redirección abierta que revisa OWASP.
+        /// Quien quiso comentar y todavía no tiene cuenta llega al acceso con
+        /// un <c>?volver=</c>. Si el enlace de crear cuenta lo perdiera, la
+        /// persona terminaría el registro en la portada y tendría que buscar de
+        /// nuevo la publicación en la que estaba.
         /// </summary>
-        private static bool EsRutaLocalSegura(string ruta)
+        protected string UrlRegistro(string tipo)
         {
-            if (string.IsNullOrEmpty(ruta)) return false;
-            if (!ruta.StartsWith("/")) return false;
+            string url = "~/Registro?tipo=" + tipo;
 
-            // Descarta "//servidor" y "/\servidor", que el navegador interpreta
-            // como direcciones absolutas hacia otro dominio.
-            if (ruta.StartsWith("//") || ruta.StartsWith("/\\")) return false;
+            string volver = Request.QueryString["volver"];
+            if (Sesion.EsDestinoSeguro(volver))
+                url += "&volver=" + Server.UrlEncode(volver);
 
-            return true;
+            return ResolveUrl(url);
         }
 
         private void MostrarError(string mensaje)

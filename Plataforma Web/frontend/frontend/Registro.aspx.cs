@@ -14,8 +14,14 @@ namespace frontend
     /// estado de un control, de modo que el enlace «Soy candidato» del encabezado
     /// llegue directo al formulario correcto.
     ///
-    /// Pendiente: la creación real de la cuenta y el hash de la contraseña
-    /// corresponden al Web Service de usuarios del backend.
+    /// La cuenta ciudadana se crea acá, contra el Web Service. La contraseña no
+    /// se cifra en el frontend: viaja al backend, que es el único que conoce el
+    /// algoritmo con el que después se valida el acceso.
+    ///
+    /// La candidatura no se registra por esta vía. La da de alta la
+    /// administración de la plataforma, junto con su cuenta, porque una ficha
+    /// pública que nadie revisó antes de publicarse es lo contrario de lo que
+    /// sostiene la neutralidad del sitio.
     /// </summary>
     public partial class Registro : Page
     {
@@ -148,11 +154,63 @@ namespace frontend
                 return;
             }
 
-            // Pendiente: falta el método de alta de usuarios en el Web Service.
-            // Hasta que exista no se redirige al panel, porque sin cuenta creada
-            // el panel rebotaría al acceso y parecería un error.
-            MostrarAviso("Los datos son válidos. La creación de la cuenta se habilita al agregar el método "
-                + "de alta de usuarios en el Web Service del backend.");
+            if (_tipo == TipoCandidato)
+            {
+                MostrarAviso("La candidatura la registra la administración de la plataforma, junto con su "
+                    + "cuenta de acceso. Escribí a la dirección de contacto con estos datos y te la damos "
+                    + "de alta.");
+                return;
+            }
+
+            CrearCuentaCiudadana(correo);
+        }
+
+        /// <summary>
+        /// Alta de la cuenta contra el Web Service.
+        ///
+        /// El backend valida de nuevo todo lo que ya validó el formulario, y su
+        /// palabra es la que vale: quien llame al servicio directamente se salta
+        /// esta página entera.
+        /// </summary>
+        private void CrearCuentaCiudadana(string correo)
+        {
+            var cliente = new webservices.WebServiceGlobalSoapClient();
+
+            webservices.RespuestaLogin respuesta;
+            try
+            {
+                respuesta = cliente.RegistrarCiudadano(
+                    txtNombres.Text.Trim(), txtApellidos.Text.Trim(), correo, txtClave.Text);
+                cliente.Close();
+            }
+            catch (Exception ex)
+            {
+                cliente.Abort();
+                MostrarError("No se pudo contactar al servidor. " + ex.Message);
+                return;
+            }
+
+            if (!respuesta.ok || respuesta.usuario == null)
+            {
+                MostrarError(respuesta.mensaje);
+                return;
+            }
+
+            // La cuenta acaba de crearse con estas credenciales, así que mandar
+            // ahora al formulario de acceso sería pedir que se compruebe algo
+            // que se acaba de comprobar. Se entra directo.
+            Sesion.Iniciar(respuesta.usuario);
+
+            // Si llegó al registro desde una publicación en la que quiso
+            // participar, vuelve a esa misma página.
+            string volver = Request.QueryString["volver"];
+            if (Sesion.EsDestinoSeguro(volver))
+            {
+                Response.Redirect(volver);
+                return;
+            }
+
+            Response.Redirect(Autorizacion.InicioDe(respuesta.usuario.rol));
         }
 
         private void MostrarAviso(string mensaje)
@@ -165,6 +223,21 @@ namespace frontend
         {
             litError.Text = Server.HtmlEncode(mensaje);
             phError.Visible = true;
+        }
+
+        /// <summary>
+        /// Enlaces de la propia página que conservan el destino con el que se
+        /// llegó, por la misma razón que en el acceso: perderlo deja a la
+        /// persona en la portada después de registrarse, buscando de nuevo la
+        /// publicación en la que estaba.
+        /// </summary>
+        protected string UrlConDestino(string ruta)
+        {
+            string volver = Request.QueryString["volver"];
+            if (!Sesion.EsDestinoSeguro(volver)) return ResolveUrl(ruta);
+
+            string separador = ruta.IndexOf('?') >= 0 ? "&" : "?";
+            return ResolveUrl(ruta + separador + "volver=" + Server.UrlEncode(volver));
         }
 
         // ---------------------------------------------------- Presentación

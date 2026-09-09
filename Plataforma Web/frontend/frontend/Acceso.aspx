@@ -64,11 +64,11 @@
 
                     <div class="gc-sep">o</div>
 
-                    <a class="gc-btn gc-btn--ghost gc-btn--block" href="<%= ResolveUrl("~/Registro") %>">
+                    <a class="gc-btn gc-btn--ghost gc-btn--block" href="<%= UrlRegistro("ciudadano") %>">
                         Crear una cuenta ciudadana
                     </a>
 
-                    <a class="gc-btn gc-btn--quiet gc-btn--block" href="<%= ResolveUrl("~/Registro?tipo=candidato") %>">
+                    <a class="gc-btn gc-btn--quiet gc-btn--block" href="<%= UrlRegistro("candidato") %>">
                         Registrarme como candidato
                     </a>
                 </div>

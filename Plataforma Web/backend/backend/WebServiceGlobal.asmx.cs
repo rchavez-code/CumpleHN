@@ -135,6 +135,99 @@ namespace backend
             return respuesta;
         }
 
+        /// <summary>
+        /// Longitud mínima de una contraseña nueva. Se exige acá y no solo en
+        /// el formulario porque una validación que vive únicamente en la página
+        /// se salta llamando al servicio directamente.
+        /// </summary>
+        private const int ClaveMinima = 8;
+
+        /// <summary>
+        /// Alta de una cuenta ciudadana desde el registro público.
+        ///
+        /// Devuelve la misma <see cref="RespuestaLogin"/> que
+        /// <see cref="ValidarLogin"/>: cuando la cuenta se crea, el frontend
+        /// abre la sesión con esos datos en lugar de mandar a la persona a un
+        /// formulario de acceso por algo que se acaba de comprobar.
+        ///
+        /// La contraseña se cifra acá, con el mismo <see cref="EncriptarSHA256"/>
+        /// que usa el acceso, y al procedimiento le llega ya el hash. Cifrarla
+        /// con HASHBYTES del lado de la base, como hace la creación de cuentas
+        /// de candidatura, da un hash distinto en cuanto la contraseña lleva
+        /// una tilde: HASHBYTES trabaja sobre la página de códigos de la base y
+        /// EncriptarSHA256 sobre UTF-8. Una cuenta así se crea bien y el acceso
+        /// la rechaza siempre.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaLogin RegistrarCiudadano(string nombres, string apellidos,
+                                                 string correo, string clave)
+        {
+            RespuestaLogin respuesta = new RespuestaLogin();
+            respuesta.ok = false;
+
+            nombres = (nombres ?? string.Empty).Trim();
+            apellidos = (apellidos ?? string.Empty).Trim();
+            correo = (correo ?? string.Empty).Trim();
+            clave = clave ?? string.Empty;
+
+            // El resto de las comprobaciones las hace el procedimiento, que es
+            // donde quedan documentadas. La longitud de la contraseña se queda
+            // acá porque es lo único que la base no llega a ver: le mandamos el
+            // hash, que mide igual para cualquier contraseña.
+            if (clave.Length < ClaveMinima)
+            {
+                respuesta.mensaje = "La contraseña debe tener al menos "
+                    + ClaveMinima + " caracteres.";
+                return respuesta;
+            }
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(cadenaConexion))
+                {
+                    SqlCommand cmd = new SqlCommand("dbo.spRegistrarCiudadano", conn);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@nombres", nombres);
+                    cmd.Parameters.AddWithValue("@apellidos", apellidos);
+                    cmd.Parameters.AddWithValue("@correo", correo);
+                    cmd.Parameters.AddWithValue("@claveHash", EncriptarSHA256(clave));
+
+                    conn.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            respuesta.ok = Convert.ToBoolean(reader["ok"]);
+                            respuesta.mensaje = Texto(reader, "mensaje");
+
+                            if (!respuesta.ok) continue;
+
+                            respuesta.usuario = new InfoUsuario
+                            {
+                                codigoUsuario = Convert.ToInt32(reader["codigoUsuario"]),
+                                login = Texto(reader, "login"),
+                                nombre = Texto(reader, "nombre"),
+                                correo = Texto(reader, "correo"),
+                                rol = Texto(reader, "rol"),
+                                codigoCandidato = 0,
+                                candidatoSlug = string.Empty
+                            };
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                respuesta.ok = false;
+                respuesta.usuario = null;
+                respuesta.mensaje = "No se pudo crear la cuenta: " + ex.Message;
+            }
+
+            return respuesta;
+        }
+
         // =============================================================
         //  Campañas
         // =============================================================

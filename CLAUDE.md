@@ -69,7 +69,7 @@ Tres soluciones `.slnx` independientes:
 
 - `Plataforma Web/frontend/` → `frontend.csproj`. IIS Express en el puerto 5080.
 - `Plataforma Web/backend/` → `backend.csproj`. Vacío por ahora, ya referencia `System.Web.Services`.
-- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`, `09_administracion`, `10_catalogos_admin`, `11_modulos`.
+- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`, `09_administracion`, `10_catalogos_admin`, `11_modulos`, `12_asistente`, `13_permisos_ia`, `14_encuestas`, `15_datos_encuestas`, `16_registro`.
 
 Los scripts están en UTF-8 **sin BOM**, así que por línea de comandos hay que pasarle la página de códigos a sqlcmd o las tildes entran corruptas:
 
@@ -88,7 +88,7 @@ Dentro del frontend:
 
 ### Roles y control de acceso
 
-Dos roles en el catálogo `Roles`: **Administrador** y **Candidato**. Quien se registra sin candidatura queda como ciudadano y participa en las páginas públicas, sin área privada.
+Tres roles en el catálogo `Roles`: **Administrador**, **Candidato** y **Ciudadano**. El ciudadano participa en las páginas públicas y no tiene área privada, así que `Autorizacion.InicioDe` lo manda a la portada.
 
 Cada rol entra a su propia área. La correspondencia rol → área vive **solo** en `Autorizacion.InicioDe`, que usan tanto `Acceso.aspx.cs` al entrar como las páginas al rechazar a quien no corresponde. Si estuviera en los dos lados podrían discrepar.
 
@@ -367,11 +367,29 @@ Estilos en `cumplehn.css` con prefijo **`gc-enc`**, verificado con grep antes de
 
 Una corrección de raíz que salió de acá: `LeerRespuesta` y `LeerGuardado` **no cerraban su `SqlDataReader`**. Nunca se notó porque cada método soltaba la conexión enseguida, pero `votarEncuesta` ejecuta más consultas sobre la misma conexión y falló con «ya hay un DataReader abierto». Ahora los dos lo cierran con `using`.
 
+### Registro público de cuentas ciudadanas
+
+`Registro.aspx` con `?tipo=ciudadano` crea la cuenta de verdad, contra `RegistrarCiudadano` del Web Service y `spRegistrarCiudadano` del script `16_registro.sql`. Era el prerrequisito de las encuestas y de todo el módulo de participación: hasta acá las únicas cuentas que podían opinar eran las diez de prueba del script 06.
+
+**La contraseña se cifra en el backend, no en la base.** Es la diferencia con `spAdminCrearCuentaCandidato`, que la recibe en texto y la cifra con `HASHBYTES('SHA2_256', CONVERT(VARCHAR(200), @clave))`. Ese `CONVERT` pasa por la página de códigos de la base —`Modern_Spanish_CI_AI`, la 1252— mientras que `EncriptarSHA256` trabaja sobre UTF-8. Con una contraseña de solo ASCII los dos coinciden, pero en cuanto lleva una tilde o una eñe dan hashes distintos y la cuenta **se crea bien y el acceso la rechaza siempre**. Como acá la contraseña la elige cualquiera, se cifra en un solo lugar, el mismo que después la valida. Está comprobado con `Contraseña1`: registro y acceso posterior con la misma clave.
+
+**El formulario no pide nombre de usuario.** Pedirlo obliga a inventarlo y a chocar con los ocupados antes de poder registrarse, cuando el correo ya identifica la cuenta y `ValidarLogin` acepta los dos. El login lo deriva el procedimiento con la misma forma que tienen las cuentas sembradas —inicial del nombre más el primer apellido, `jlopez`— pasando por `fnSlug` para las tildes, y le agrega un número si ya está ocupado.
+
+**El alta devuelve la misma `RespuestaLogin` que el acceso**, y con ella `Registro.aspx.cs` abre la sesión. Mandar al formulario de acceso justo después de crear la cuenta sería pedir que se compruebe algo que se acaba de comprobar.
+
+**No escribe en `Auditoria` a propósito.** Esa bitácora registra lo que hace quien administra, y es lo que se lee para revisar decisiones de verificación y moderación. Registrarse no es una acción de administración, y mezclarlo la llenaría de filas que nadie revisa. Cuándo se creó la cuenta ya lo guarda `Usuarios.fechaRegistro`.
+
+**El destino (`?volver=`) se conserva por toda la cadena**, del acceso al registro y del registro de vuelta a la página. Quien quiso comentar y no tenía cuenta terminaba el registro en la portada, buscando otra vez la publicación donde estaba. `Sesion.EsDestinoSeguro` es la comprobación de redirección abierta, y vive en `Sesion` —no copiada en cada página— porque una copia que se quede atrás no se nota: la página sigue funcionando igual, solo deja de estar protegida.
+
+**`Registro.aspx?tipo=candidato` no crea nada.** La candidatura la da de alta la administración con su cuenta (script 10). Una ficha pública que nadie revisó antes de publicarse es lo contrario de lo que sostiene la neutralidad del sitio, así que el formulario recoge los datos y remite al contacto.
+
+Decir «ese correo ya está registrado» revela que existe una cuenta con ese correo, y el acceso a propósito no lo revela. Sin un paso de confirmación por correo no hay alternativa: callarlo dejaría a quien ya tiene cuenta sin saber por qué falla. Queda anotado para el anexo OWASP.
+
 ### Pendiente
 
-Alta de cuentas ciudadanas desde el registro público (las de candidatura ya se crean desde el área de administración) y guardado del perfil y de los proyectos desde el panel del candidato (los formularios ya validan del lado del servidor pero todavía no persisten).
+Guardado del perfil y de los proyectos desde el panel del candidato: los formularios ya validan del lado del servidor pero todavía no persisten.
 
-El registro público es **prerrequisito de las encuestas**, no una tarea paralela: sin él, las únicas cuentas que pueden responder son las diez ciudadanas de prueba del script 06 y las de candidatura. El módulo funciona y está verificado, pero hasta entonces no puede recoger participación real.
+**`spAdminCrearCuentaCandidato` arrastra el problema del hash descrito arriba.** Una cuenta de candidatura creada con una contraseña que lleve tilde o eñe no puede entrar nunca. Se arregla igual que en el registro ciudadano — que el backend mande el hash y el procedimiento reciba `CHAR(64)` en lugar de la clave en texto.
 
 De las encuestas quedan tres cosas anotadas y ninguna urgente: que el candidato pueda abrir encuestas sobre sus propias propuestas —marcadas como declaradas y fuera del tablero, porque una encuesta escrita por una parte interesada no mide nada—, un gráfico `analitica.encuestas` que contraste el resultado con la oferta programática, y comentarios sobre la encuesta, que el backend ya acepta y la tarjeta todavía no muestra. **El resultado de las encuestas no debe sobrescribir `Categorias.interesEncuesta`**: aquella cifra viene de la encuesta metodológica del proyecto (n = 150) y esta de una muestra autoseleccionada, así que juntarlas mezclaría dos cosas con validez distinta. Si algún día se muestran en el mismo gráfico, van como series separadas y etiquetadas.
 

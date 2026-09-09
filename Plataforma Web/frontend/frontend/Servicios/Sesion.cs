@@ -24,6 +24,28 @@ namespace frontend.Servicios
         /// </summary>
         public const string RolAdministrador = "Administrador";
         public const string RolCandidato = "Candidato";
+        public const string RolCiudadano = "Ciudadano";
+
+        /// <summary>
+        /// Abre la sesión con los datos que devolvió el backend.
+        ///
+        /// Lo llaman el acceso y el registro, que son las dos maneras de entrar
+        /// a la plataforma. Está acá en lugar de repetido en las dos páginas
+        /// por la misma razón por la que las claves de <c>Session</c> son
+        /// constantes: si una de las dos guardara una clave de menos, el
+        /// síntoma aparecería mucho después y en otra página.
+        /// </summary>
+        public static void Iniciar(webservices.InfoUsuario usuario)
+        {
+            HttpContext ctx = HttpContext.Current;
+            if (ctx == null || ctx.Session == null || usuario == null) return;
+
+            ctx.Session["usuario"] = usuario;
+            ctx.Session[ClaveUsuario] = usuario.codigoUsuario;
+            ctx.Session[ClaveNombre] = usuario.nombre;
+            ctx.Session[ClaveRol] = usuario.rol;
+            ctx.Session[ClaveCandidato] = usuario.candidatoSlug;
+        }
 
         private static object Leer(string clave)
         {
@@ -113,6 +135,30 @@ namespace frontend.Servicios
                 : ctx.Request.Url.PathAndQuery;
 
             return "~/Acceso?volver=" + HttpUtility.UrlEncode(volver);
+        }
+
+        /// <summary>
+        /// Destino al que se puede volver después de entrar o de registrarse.
+        ///
+        /// Acepta únicamente rutas dentro del propio sitio. Sin esta
+        /// comprobación, un enlace con <c>?volver=https://sitio-ajeno</c>
+        /// convertiría el acceso en un redirector hacia cualquier destino, que
+        /// es la vulnerabilidad de redirección abierta que revisa OWASP.
+        ///
+        /// La comprueban el acceso y el registro. Vive acá y no copiada en cada
+        /// página porque una copia que se quede atrás no se nota: la página
+        /// sigue funcionando igual, solo deja de estar protegida.
+        /// </summary>
+        public static bool EsDestinoSeguro(string ruta)
+        {
+            if (string.IsNullOrEmpty(ruta)) return false;
+            if (!ruta.StartsWith("/")) return false;
+
+            // Descarta "//servidor" y "/\servidor", que el navegador interpreta
+            // como direcciones absolutas hacia otro dominio.
+            if (ruta.StartsWith("//") || ruta.StartsWith("/\\")) return false;
+
+            return true;
         }
     }
 }

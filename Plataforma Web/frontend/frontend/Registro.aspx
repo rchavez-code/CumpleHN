@@ -31,14 +31,14 @@
                 <%-- ======================================= Tipo de cuenta --%>
 
                 <div class="gc-pick gc-mb">
-                    <a class="gc-pick__opt <%= ClaseTipo("ciudadano") %>" href="<%= ResolveUrl("~/Registro?tipo=ciudadano") %>">
+                    <a class="gc-pick__opt <%= ClaseTipo("ciudadano") %>" href="<%= UrlConDestino("~/Registro?tipo=ciudadano") %>">
                         <div>
                             <strong>Cuenta ciudadana</strong>
                             <span>Para apoyar publicaciones, comentar, participar en votaciones de percepción y guardar lo que te interesa.</span>
                         </div>
                     </a>
 
-                    <a class="gc-pick__opt <%= ClaseTipo("candidato") %>" href="<%= ResolveUrl("~/Registro?tipo=candidato") %>">
+                    <a class="gc-pick__opt <%= ClaseTipo("candidato") %>" href="<%= UrlConDestino("~/Registro?tipo=candidato") %>">
                         <div>
                             <strong>Cuenta de candidato</strong>
                             <span>Para registrar tu candidatura en la campaña actual y administrar tu perfil, tus proyectos y tus publicaciones.</span>
@@ -115,9 +115,11 @@
 
                         <div class="gc-note gc-note--ambar">
                             <span>
-                                El perfil se publica identificado como declarado por la candidatura. La
-                                plataforma no avala su contenido: lo presenta como afirmación propia hasta
-                                que exista una fuente verificable que lo respalde.
+                                La candidatura no se publica sola: la registra la administración de la
+                                plataforma con estos datos y te entrega la cuenta de acceso. El perfil
+                                aparece identificado como declarado por la candidatura, porque la
+                                plataforma no avala su contenido hasta que exista una fuente verificable
+                                que lo respalde.
                             </span>
                         </div>
                     </asp:PlaceHolder>
@@ -134,7 +136,7 @@
                         Text="Crear cuenta" OnClick="btnCrear_Click" />
 
                     <p class="gc-muted gc-small" style="margin: 0;">
-                        ¿Ya tenés cuenta? <a href="<%= ResolveUrl("~/Acceso") %>">Acceder</a>.
+                        ¿Ya tenés cuenta? <a href="<%= UrlConDestino("~/Acceso") %>">Acceder</a>.
                     </p>
 
                 </div>
