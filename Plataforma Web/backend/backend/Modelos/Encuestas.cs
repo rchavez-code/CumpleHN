@@ -5,9 +5,11 @@ namespace backend.Modelos
     /// <summary>
     /// Encuesta de percepción tal como la ve el sitio público.
     ///
-    /// No lleva las opciones adentro: viajan aparte porque la portada las pide
-    /// otra vez después de cada voto, y devolver la encuesta completa en esa
-    /// segunda llamada sería mandar de nuevo la pregunta que no cambió.
+    /// Lleva sus opciones adentro. La portada dibuja varias encuestas en la
+    /// misma respuesta —dos a la vista y el resto tras un «Ver más»—, así que
+    /// pedirlas por separado serían tantos viajes como encuestas para responder
+    /// siempre lo mismo. Después de responder, en cambio, solo vuelven las
+    /// opciones de la encuesta tocada, que es lo único que cambió.
     /// </summary>
     public class EncuestaPublica
     {
@@ -33,6 +35,9 @@ namespace backend.Modelos
 
         /// <summary>Opción elegida por quien consulta, o cero si todavía no votó.</summary>
         public int miOpcion { get; set; }
+
+        /// <summary>Opciones entre las que se elige, ya con su resultado.</summary>
+        public OpcionEncuesta[] opciones { get; set; }
     }
 
     /// <summary>

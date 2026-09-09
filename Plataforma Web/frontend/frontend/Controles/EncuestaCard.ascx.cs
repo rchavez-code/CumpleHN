@@ -135,16 +135,47 @@ namespace frontend.Controles
             get { return _item != null && _item.Revelado; }
         }
 
-        protected string ClaseOpcion(object dato)
+        /// <summary>
+        /// Cuántos colores tiene la paleta de opciones. Coincide con las clases
+        /// gc-enc__op--c1 a c8 de la hoja de estilos, y con el máximo de
+        /// opciones que acepta el procedimiento de guardado, de modo que
+        /// ninguna encuesta llegue a repetir color.
+        /// </summary>
+        private const int ColoresDisponibles = 8;
+
+        /// <summary>
+        /// Clase de la fila, con su color asignado por posición.
+        ///
+        /// El color va por clase y no por estilo en línea para que la paleta
+        /// viva entera en la hoja de estilos: si algún día hay que revisarla
+        /// por contraste, se revisa en un solo archivo.
+        /// </summary>
+        protected string ClaseOpcion(object dato, int indice)
         {
             OpcionEncuesta o = (OpcionEncuesta)dato;
 
-            string clase = "gc-enc__op";
+            string clase = "gc-enc__op gc-enc__op--c" + ((indice % ColoresDisponibles) + 1);
 
             if (Resuelta) clase += " is-res";
             if (o.MiVoto) clase += " is-mia";
 
             return clase;
+        }
+
+        /// <summary>
+        /// Texto alternativo de la fila. Repite en palabras lo que la barra
+        /// dice en color, porque el color no lo lee un lector de pantalla.
+        /// </summary>
+        protected string TituloOpcion(object dato)
+        {
+            OpcionEncuesta o = (OpcionEncuesta)dato;
+
+            if (!Resuelta) return "Elegir: " + o.Texto;
+
+            string cuenta = Vista.Plural(o.Votos, "respuesta", "respuestas");
+            string propia = o.MiVoto ? ", tu respuesta" : string.Empty;
+
+            return o.Texto + ": " + cuenta + ", " + o.Porcentaje(_item.Votos) + " por ciento" + propia;
         }
 
         /// <summary>
@@ -164,13 +195,19 @@ namespace frontend.Controles
         /// Cada barra lleva su cifra al lado, en columna propia. Ninguna
         /// depende de pasar el mouse por encima, que es la regla que sigue
         /// también el tablero.
+        ///
+        /// Van el conteo y el porcentaje, no uno de los dos. El porcentaje
+        /// solo esconde de cuánta gente sale —el sesenta por ciento de cinco
+        /// respuestas no es el sesenta por ciento de quinientas— y el conteo
+        /// solo obliga a dividir de cabeza para comparar dos opciones.
         /// </summary>
         protected string TextoResultado(object dato)
         {
             if (!Resuelta) return string.Empty;
 
             OpcionEncuesta o = (OpcionEncuesta)dato;
-            return o.Porcentaje(_item.Votos) + " %";
+
+            return Vista.Numero(o.Votos) + " · " + o.Porcentaje(_item.Votos) + " %";
         }
 
         /// <summary>

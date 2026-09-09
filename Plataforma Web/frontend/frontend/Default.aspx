@@ -99,36 +99,63 @@
              es donde cae la vista de quien llega por primera vez, sin que
              desplace al contenido que la plataforma existe para mostrar. --%>
 
-        <asp:PlaceHolder ID="phEncuesta" runat="server" Visible="false">
+        <asp:PlaceHolder ID="phEncuestas" runat="server" Visible="false">
             <div class="gc-sechead" style="margin-top: 42px;">
                 <div>
                     <h2>Tu opinión</h2>
-                    <p class="gc-muted">Una pregunta abierta a la ciudadanía. Los resultados se muestran al responder.</p>
+                    <p class="gc-muted">
+                        Preguntas abiertas a la ciudadanía. Una respuesta por cuenta, y el resultado
+                        se muestra al responder.
+                    </p>
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-lg-7 gc-mb">
-                    <gc:EncuestaCard ID="tarjetaEncuesta" runat="server" />
+            <%-- Las encuestas que pasan de la segunda se dibujan igual, solo que
+                 ocultas: si «Ver más» pidiera otra carga al servidor, desplegar la
+                 lista costaría un viaje para mostrar algo ya consultado. El estado
+                 viaja en el input oculto para sobrevivir al postback de responder,
+                 igual que la pestaña activa del tablero. --%>
+
+            <div id="zonaEncuestas" runat="server" class="gc-encs">
+
+                <div class="row">
+                    <asp:Repeater ID="rptEncuestas" runat="server">
+                        <ItemTemplate>
+                            <div class="<%# ClaseColumnaEncuesta(Container.ItemIndex) %>">
+                                <gc:EncuestaCard runat="server" Item="<%# (Encuesta)Container.DataItem %>" />
+                            </div>
+                        </ItemTemplate>
+                    </asp:Repeater>
                 </div>
-                <div class="col-lg-5 gc-mb">
-                    <div class="gc-card gc-quick" style="height: 100%;">
-                        <span class="gc-quick__ico" aria-hidden="true"><strong>?</strong></span>
-                        <div>
-                            <h3>Por qué preguntamos</h3>
-                            <p>
-                                CumpleHN ordena lo que las candidaturas prometen. Saber qué área considera
-                                prioritaria quien consulta la plataforma permite contrastar esa demanda con
-                                la oferta programática registrada, que es una de las comparaciones del
-                                tablero de analítica.
-                            </p>
-                            <p class="gc-muted gc-small" style="margin-bottom: 0;">
-                                Una respuesta por cuenta. Podés cambiarla mientras la encuesta siga abierta.
-                            </p>
-                        </div>
+
+                <asp:PlaceHolder ID="phVerMas" runat="server" Visible="false">
+                    <div class="gc-encs__mas">
+                        <button type="button" class="gc-btn gc-btn--ghost" id="btnVerMasEncuestas"
+                                data-mas="<%: TextoVerMas %>" data-menos="Ver menos"
+                                aria-expanded="<%: EncuestasDesplegadas ? "true" : "false" %>"
+                                onclick="cumplehnVerMasEncuestas(this)"><%: TextoBotonEncuestas %></button>
                     </div>
-                </div>
+                </asp:PlaceHolder>
+
+                <asp:HiddenField ID="hdnEncuestas" runat="server" Value="0" />
             </div>
+
+            <script type="text/javascript">
+                // Quince líneas para un botón de una sola página no justifican un
+                // archivo aparte con su huella de versión.
+                function cumplehnVerMasEncuestas(boton) {
+                    var zona = document.getElementById('<%= zonaEncuestas.ClientID %>');
+                    var estado = document.getElementById('<%= hdnEncuestas.ClientID %>');
+                    var abierta = zona.className.indexOf('is-abierta') === -1;
+
+                    zona.className = abierta ? 'gc-encs is-abierta' : 'gc-encs';
+                    estado.value = abierta ? '1' : '0';
+
+                    boton.textContent = abierta ? boton.getAttribute('data-menos')
+                                                : boton.getAttribute('data-mas');
+                    boton.setAttribute('aria-expanded', abierta ? 'true' : 'false');
+                }
+            </script>
         </asp:PlaceHolder>
 
         <%-- ================================================= Candidatos --%>

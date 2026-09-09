@@ -301,34 +301,37 @@ namespace frontend.Servicios
         //  Encuestas
         // =============================================================
 
-        public Encuesta ObtenerEncuestaVigente(string campanaSlug, int codigoUsuario)
+        public IList<Encuesta> ObtenerEncuestasVigentes(string campanaSlug, int codigoUsuario)
         {
-            ws.EncuestaPublica d = Ejecutar(
-                c => c.obtenerEncuestaVigente(campanaSlug, codigoUsuario), null);
+            ws.EncuestaPublica[] datos = Ejecutar(
+                c => c.listarEncuestasVigentes(campanaSlug, codigoUsuario),
+                new ws.EncuestaPublica[0]);
 
-            if (d == null) return null;
+            List<Encuesta> lista = new List<Encuesta>();
+            if (datos == null) return lista;
 
-            Encuesta e = new Encuesta
+            foreach (ws.EncuestaPublica d in datos)
             {
-                Id = d.codigoEncuesta,
-                CampanaSlug = d.campanaSlug,
-                Pregunta = d.pregunta,
-                Descripcion = d.descripcion,
-                Categoria = d.categoria,
-                FechaInicio = d.fechaInicio,
-                FechaCierre = d.fechaCierre,
-                Estado = d.estado,
-                Votos = d.votos,
-                MiOpcion = d.miOpcion
-            };
+                lista.Add(new Encuesta
+                {
+                    Id = d.codigoEncuesta,
+                    CampanaSlug = d.campanaSlug,
+                    Pregunta = d.pregunta,
+                    Descripcion = d.descripcion,
+                    Categoria = d.categoria,
+                    FechaInicio = d.fechaInicio,
+                    FechaCierre = d.fechaCierre,
+                    Estado = d.estado,
+                    Votos = d.votos,
+                    MiOpcion = d.miOpcion,
+                    // Las opciones llegan dentro de la encuesta. Después de
+                    // responder vuelven solas, porque ahí sí son lo único que
+                    // cambió.
+                    Opciones = AOpcionesEncuesta(d.opciones)
+                });
+            }
 
-            // Las opciones van en una segunda llamada y no dentro de la
-            // primera porque son lo único que cambia después de responder: la
-            // tarjeta las vuelve a pedir sin arrastrar otra vez la pregunta.
-            e.Opciones = AOpcionesEncuesta(Ejecutar(
-                c => c.listarOpcionesEncuesta(e.Id, codigoUsuario), new ws.OpcionEncuesta[0]));
-
-            return e;
+            return lista;
         }
 
         public ResultadoEncuesta ResponderEncuesta(

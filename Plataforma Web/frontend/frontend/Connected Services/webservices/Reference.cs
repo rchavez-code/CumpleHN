@@ -17,6 +17,13 @@ namespace frontend.webservices
     public interface WebServiceGlobalSoap
     {
         
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoModulo", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin cambiarEstadoModulo(int codigoUsuario, string clave, bool habilitado, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoModulo", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoModuloAsync(int codigoUsuario, string clave, bool habilitado, string motivo);
+        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/preguntarAsistente", ReplyAction="*")]
         [System.ServiceModel.XmlSerializerFormatAttribute()]
         frontend.webservices.RespuestaAsistente preguntarAsistente(int codigoUsuario, string pregunta, string campanaSlug);
@@ -283,12 +290,12 @@ namespace frontend.webservices
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/crearCuentaCandidato", ReplyAction="*")]
         System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> crearCuentaCandidatoAsync(int codigoUsuario, int codigoCandidato, string login, string correo, string clave);
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/obtenerEncuestaVigente", ReplyAction="*")]
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarEncuestasVigentes", ReplyAction="*")]
         [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.EncuestaPublica obtenerEncuestaVigente(string campanaSlug, int codigoUsuario);
+        frontend.webservices.EncuestaPublica[] listarEncuestasVigentes(string campanaSlug, int codigoUsuario);
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/obtenerEncuestaVigente", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.EncuestaPublica> obtenerEncuestaVigenteAsync(string campanaSlug, int codigoUsuario);
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarEncuestasVigentes", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.EncuestaPublica[]> listarEncuestasVigentesAsync(string campanaSlug, int codigoUsuario);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarOpcionesEncuesta", ReplyAction="*")]
         [System.ServiceModel.XmlSerializerFormatAttribute()]
@@ -345,13 +352,6 @@ namespace frontend.webservices
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosAdmin", ReplyAction="*")]
         System.Threading.Tasks.Task<frontend.webservices.ModuloAdmin[]> listarModulosAdminAsync(int codigoUsuario);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoModulo", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.RespuestaAdmin cambiarEstadoModulo(int codigoUsuario, string clave, bool habilitado, string motivo);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoModulo", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoModuloAsync(int codigoUsuario, string clave, bool habilitado, string motivo);
     }
     
     /// <remarks/>
@@ -360,18 +360,12 @@ namespace frontend.webservices
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
-    public partial class RespuestaAsistente
+    public partial class RespuestaAdmin
     {
         
         private bool okField;
         
-        private string respuestaField;
-        
-        private string[] fuentesField;
-        
         private string mensajeField;
-        
-        private int restantesField;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=0)]
@@ -389,34 +383,6 @@ namespace frontend.webservices
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=1)]
-        public string respuesta
-        {
-            get
-            {
-                return this.respuestaField;
-            }
-            set
-            {
-                this.respuestaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayAttribute(Order=2)]
-        public string[] fuentes
-        {
-            get
-            {
-                return this.fuentesField;
-            }
-            set
-            {
-                this.fuentesField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
         public string mensaje
         {
             get
@@ -426,20 +392,6 @@ namespace frontend.webservices
             set
             {
                 this.mensajeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
-        public int restantes
-        {
-            get
-            {
-                return this.restantesField;
-            }
-            set
-            {
-                this.restantesField = value;
             }
         }
     }
@@ -1131,6 +1083,8 @@ namespace frontend.webservices
         
         private int miOpcionField;
         
+        private OpcionEncuesta[] opcionesField;
+        
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=0)]
         public int codigoEncuesta
@@ -1268,6 +1222,20 @@ namespace frontend.webservices
             set
             {
                 this.miOpcionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayAttribute(Order=10)]
+        public OpcionEncuesta[] opciones
+        {
+            get
+            {
+                return this.opcionesField;
+            }
+            set
+            {
+                this.opcionesField = value;
             }
         }
     }
@@ -2368,48 +2336,6 @@ namespace frontend.webservices
             set
             {
                 this.comentariosField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
-    public partial class RespuestaAdmin
-    {
-        
-        private bool okField;
-        
-        private string mensajeField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
-        public bool ok
-        {
-            get
-            {
-                return this.okField;
-            }
-            set
-            {
-                this.okField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
-        public string mensaje
-        {
-            get
-            {
-                return this.mensajeField;
-            }
-            set
-            {
-                this.mensajeField = value;
             }
         }
     }
@@ -6216,6 +6142,96 @@ namespace frontend.webservices
         }
     }
     
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class RespuestaAsistente
+    {
+        
+        private bool okField;
+        
+        private string respuestaField;
+        
+        private string[] fuentesField;
+        
+        private string mensajeField;
+        
+        private int restantesField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public bool ok
+        {
+            get
+            {
+                return this.okField;
+            }
+            set
+            {
+                this.okField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string respuesta
+        {
+            get
+            {
+                return this.respuestaField;
+            }
+            set
+            {
+                this.respuestaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayAttribute(Order=2)]
+        public string[] fuentes
+        {
+            get
+            {
+                return this.fuentesField;
+            }
+            set
+            {
+                this.fuentesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public string mensaje
+        {
+            get
+            {
+                return this.mensajeField;
+            }
+            set
+            {
+                this.mensajeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public int restantes
+        {
+            get
+            {
+                return this.restantesField;
+            }
+            set
+            {
+                this.restantesField = value;
+            }
+        }
+    }
+    
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
     public interface WebServiceGlobalSoapChannel : frontend.webservices.WebServiceGlobalSoap, System.ServiceModel.IClientChannel
     {
@@ -6248,6 +6264,16 @@ namespace frontend.webservices
         public WebServiceGlobalSoapClient(System.ServiceModel.Channels.Binding binding, System.ServiceModel.EndpointAddress remoteAddress) : 
                 base(binding, remoteAddress)
         {
+        }
+        
+        public frontend.webservices.RespuestaAdmin cambiarEstadoModulo(int codigoUsuario, string clave, bool habilitado, string motivo)
+        {
+            return base.Channel.cambiarEstadoModulo(codigoUsuario, clave, habilitado, motivo);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoModuloAsync(int codigoUsuario, string clave, bool habilitado, string motivo)
+        {
+            return base.Channel.cambiarEstadoModuloAsync(codigoUsuario, clave, habilitado, motivo);
         }
         
         public frontend.webservices.RespuestaAsistente preguntarAsistente(int codigoUsuario, string pregunta, string campanaSlug)
@@ -6630,14 +6656,14 @@ namespace frontend.webservices
             return base.Channel.crearCuentaCandidatoAsync(codigoUsuario, codigoCandidato, login, correo, clave);
         }
         
-        public frontend.webservices.EncuestaPublica obtenerEncuestaVigente(string campanaSlug, int codigoUsuario)
+        public frontend.webservices.EncuestaPublica[] listarEncuestasVigentes(string campanaSlug, int codigoUsuario)
         {
-            return base.Channel.obtenerEncuestaVigente(campanaSlug, codigoUsuario);
+            return base.Channel.listarEncuestasVigentes(campanaSlug, codigoUsuario);
         }
         
-        public System.Threading.Tasks.Task<frontend.webservices.EncuestaPublica> obtenerEncuestaVigenteAsync(string campanaSlug, int codigoUsuario)
+        public System.Threading.Tasks.Task<frontend.webservices.EncuestaPublica[]> listarEncuestasVigentesAsync(string campanaSlug, int codigoUsuario)
         {
-            return base.Channel.obtenerEncuestaVigenteAsync(campanaSlug, codigoUsuario);
+            return base.Channel.listarEncuestasVigentesAsync(campanaSlug, codigoUsuario);
         }
         
         public frontend.webservices.OpcionEncuesta[] listarOpcionesEncuesta(int codigoEncuesta, int codigoUsuario)
@@ -6718,16 +6744,6 @@ namespace frontend.webservices
         public System.Threading.Tasks.Task<frontend.webservices.ModuloAdmin[]> listarModulosAdminAsync(int codigoUsuario)
         {
             return base.Channel.listarModulosAdminAsync(codigoUsuario);
-        }
-        
-        public frontend.webservices.RespuestaAdmin cambiarEstadoModulo(int codigoUsuario, string clave, bool habilitado, string motivo)
-        {
-            return base.Channel.cambiarEstadoModulo(codigoUsuario, clave, habilitado, motivo);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoModuloAsync(int codigoUsuario, string clave, bool habilitado, string motivo)
-        {
-            return base.Channel.cambiarEstadoModuloAsync(codigoUsuario, clave, habilitado, motivo);
         }
     }
 }

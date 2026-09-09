@@ -2279,48 +2279,105 @@ namespace backend
         // =============================================================
 
         /// <summary>
-        /// La encuesta abierta de una campaña, o null si no hay ninguna.
+        /// Las encuestas abiertas de una campaña, con sus opciones dentro.
         ///
-        /// Con la campaña vacía usa la destacada, que es como la pide la
-        /// portada. El código de usuario viaja para saber si esa persona ya
-        /// respondió, y con ello si le corresponde ver el resultado.
+        /// Con la campaña vacía usa la destacada, que es como las pide la
+        /// portada. El código de usuario viaja para saber en cuáles respondió
+        /// ya esa persona, y con ello en cuáles le corresponde ver el
+        /// resultado.
+        ///
+        /// Dos consultas y no una por encuesta: la segunda trae las opciones de
+        /// todas juntas y se reparten acá. La portada dibuja varias tarjetas en
+        /// la misma respuesta, así que una llamada por encuesta serían tantos
+        /// viajes como preguntas haya publicadas.
         /// </summary>
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public EncuestaPublica obtenerEncuestaVigente(string campanaSlug, int codigoUsuario)
+        public List<EncuestaPublica> listarEncuestasVigentes(string campanaSlug, int codigoUsuario)
         {
-            EncuestaPublica encuesta = null;
+            List<EncuestaPublica> lista = new List<EncuestaPublica>();
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
-                SqlCommand cmd = new SqlCommand("dbo.spEncuestaVigente", conn);
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand("dbo.spEncuestasVigentes", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@campanaSlug",
                     string.IsNullOrEmpty(campanaSlug) ? (object)DBNull.Value : campanaSlug);
                 cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
 
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lista.Add(new EncuestaPublica
+                        {
+                            codigoEncuesta = Convert.ToInt32(reader["codigoEncuesta"]),
+                            campanaSlug = Texto(reader, "campanaSlug"),
+                            pregunta = Texto(reader, "pregunta"),
+                            descripcion = Texto(reader, "descripcion"),
+                            categoria = Texto(reader, "categoria"),
+                            fechaInicio = Convert.ToDateTime(reader["fechaInicio"]),
+                            fechaCierre = FechaOVacio(reader, "fechaCierre"),
+                            estado = Texto(reader, "estado"),
+                            votos = Convert.ToInt32(reader["votos"]),
+                            miOpcion = Convert.ToInt32(reader["miOpcion"]),
+                            opciones = new OpcionEncuesta[0]
+                        });
+                    }
+                }
 
+                if (lista.Count == 0) return lista;
+
+                RepartirOpciones(conn, campanaSlug, codigoUsuario, lista);
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Reparte entre las encuestas las opciones que llegan en un solo
+        /// resultado, agrupadas por su código.
+        /// </summary>
+        private static void RepartirOpciones(SqlConnection conn, string campanaSlug,
+            int codigoUsuario, List<EncuestaPublica> lista)
+        {
+            Dictionary<int, List<OpcionEncuesta>> porEncuesta =
+                new Dictionary<int, List<OpcionEncuesta>>();
+
+            SqlCommand cmd = new SqlCommand("dbo.spEncuestasVigentesOpciones", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@campanaSlug",
+                string.IsNullOrEmpty(campanaSlug) ? (object)DBNull.Value : campanaSlug);
+            cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
                 while (reader.Read())
                 {
-                    encuesta = new EncuestaPublica
+                    int codigo = Convert.ToInt32(reader["codigoEncuesta"]);
+
+                    if (!porEncuesta.ContainsKey(codigo))
+                        porEncuesta[codigo] = new List<OpcionEncuesta>();
+
+                    porEncuesta[codigo].Add(new OpcionEncuesta
                     {
-                        codigoEncuesta = Convert.ToInt32(reader["codigoEncuesta"]),
-                        campanaSlug = Texto(reader, "campanaSlug"),
-                        pregunta = Texto(reader, "pregunta"),
-                        descripcion = Texto(reader, "descripcion"),
-                        categoria = Texto(reader, "categoria"),
-                        fechaInicio = Convert.ToDateTime(reader["fechaInicio"]),
-                        fechaCierre = FechaOVacio(reader, "fechaCierre"),
-                        estado = Texto(reader, "estado"),
+                        codigoOpcion = Convert.ToInt32(reader["codigoOpcion"]),
+                        texto = Texto(reader, "texto"),
+                        orden = Convert.ToInt32(reader["orden"]),
                         votos = Convert.ToInt32(reader["votos"]),
-                        miOpcion = Convert.ToInt32(reader["miOpcion"])
-                    };
+                        miVoto = Convert.ToBoolean(reader["miVoto"]),
+                        revelar = Convert.ToBoolean(reader["revelar"])
+                    });
                 }
             }
 
-            return encuesta;
+            foreach (EncuestaPublica e in lista)
+            {
+                if (porEncuesta.ContainsKey(e.codigoEncuesta))
+                    e.opciones = porEncuesta[e.codigoEncuesta].ToArray();
+            }
         }
 
         /// <summary>

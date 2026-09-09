@@ -1646,21 +1646,93 @@ a.gc-chip:hover { text-decoration: none; border-color: #d3d8dd; }
    pidió.
    -------------------------------------------------------------------- */
 
-.gc-enc { padding: 20px; }
+/* Paleta de las opciones.
 
-.gc-enc__head { margin-bottom: 15px; }
+   El tablero usa un solo tono para magnitud, y acá se usa una por
+   opción. No es una contradicción: en un gráfico del tablero el color
+   codifica el dato y hay que poder compararlo entre barras, mientras
+   que acá las opciones son categorías nominales de una sola pregunta
+   —Sí, No, Salud, Educación— y el dato lo lleva la cifra escrita al
+   lado de cada una. El color diferencia y da un punto de entrada,
+   nunca es lo único que dice cuánto vale una fila.
+
+   Ocho colores porque ocho es el máximo de opciones que acepta
+   spAdminGuardarEncuesta, así que ninguna encuesta repite color. Los
+   cuatro primeros son los acentos de la guacamaya y los otros cuatro
+   se derivan de ellos. Queda fuera --gc-azul: es el azul de la
+   bandera, identidad y no dato, y junto al turquesa los dos no se
+   separan bajo deuteranopia. */
+
+.gc-enc__op--c1 { --gc-enc-c: #17708a; --gc-enc-cl: #dbedf2; }
+.gc-enc__op--c2 { --gc-enc-c: #c07d12; --gc-enc-cl: #faeed6; }
+.gc-enc__op--c3 { --gc-enc-c: #2c7a58; --gc-enc-cl: #dcefe6; }
+.gc-enc__op--c4 { --gc-enc-c: #c3372c; --gc-enc-cl: #f9e2e0; }
+.gc-enc__op--c5 { --gc-enc-c: #3f7fa8; --gc-enc-cl: #dfeaf3; }
+.gc-enc__op--c6 { --gc-enc-c: #6f7d2b; --gc-enc-cl: #eaeed6; }
+.gc-enc__op--c7 { --gc-enc-c: #a8542f; --gc-enc-cl: #f5e5dc; }
+.gc-enc__op--c8 { --gc-enc-c: #55636f; --gc-enc-cl: #e5e9ec; }
+
+/* La tarjeta es una columna flexible y ocupa todo el alto de su
+   celda, con el pie empujado abajo. Sin eso, dos encuestas lado a
+   lado con preguntas de distinto largo terminan con los pies a
+   alturas distintas y la fila se ve desalineada. */
+.gc-enc {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* La franja de la guacamaya. Es la marca, no un dato, así que vive
+   en el borde de la tarjeta y no dentro de un gráfico. */
+.gc-enc__banda {
+    height: 4px;
+    background: linear-gradient(90deg,
+        var(--gc-escarlata) 0%, var(--gc-escarlata) 25%,
+        var(--gc-ambar) 25%, var(--gc-ambar) 50%,
+        var(--gc-verde) 50%, var(--gc-verde) 75%,
+        var(--gc-turquesa) 75%, var(--gc-turquesa) 100%);
+}
+
+.gc-enc__head {
+    padding: 17px 20px 15px;
+    background: linear-gradient(180deg, var(--gc-turquesa-l) 0%, var(--gc-surface) 100%);
+    border-bottom: 1px solid var(--gc-line-2);
+}
+
+.gc-enc__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 0 7px;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--gc-turquesa);
+}
+
+.gc-enc__punto {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--gc-turquesa);
+    box-shadow: 0 0 0 3px rgba(23, 112, 138, .16);
+}
 
 .gc-enc__q {
-    margin: 2px 0 0;
+    margin: 0;
     font-family: var(--gc-display);
-    font-size: 1.16rem;
-    line-height: 1.32;
+    font-size: 1.2rem;
+    line-height: 1.3;
     color: var(--gc-ink);
 }
 
 .gc-enc__d {
-    margin: 8px 0 0;
-    font-size: .9rem;
+    margin: 9px 0 0;
+    font-size: .89rem;
     line-height: 1.55;
     color: var(--gc-ink-2);
 }
@@ -1670,15 +1742,26 @@ a.gc-chip:hover { text-decoration: none; border-color: #d3d8dd; }
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 11px;
+    margin-top: 12px;
+}
+
+/* El total va en píldora y no en gris suelto: es la cifra que da
+   contexto a todos los porcentajes de abajo. */
+.gc-enc__total {
+    padding: 3px 10px;
+    border-radius: var(--gc-r-pill);
+    background: var(--gc-turquesa);
+    color: #fff;
+    font-size: .74rem;
+    font-weight: 700;
 }
 
 .gc-enc__lista {
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 16px 20px 0;
     display: grid;
-    gap: 7px;
+    gap: 8px;
 }
 
 /* Tres columnas visibles —marca, texto y cifra— más la pista de
@@ -1697,6 +1780,23 @@ a.gc-chip:hover { text-decoration: none; border-color: #d3d8dd; }
     font-size: .92rem;
     text-decoration: none;
     overflow: hidden;
+    transition: border-color .15s ease, background-color .15s ease;
+}
+
+/* Filo de color en el canto izquierdo. Existe para que la tarjeta
+   tenga color antes de que nadie responda: hasta que hay resultado
+   las barras miden cero, y sin este filo la encuesta sin votar se
+   veía como una lista de casillas grises. Va por encima de la pista
+   para que no lo tape la barra al crecer. */
+.gc-enc__op::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    width: 3px;
+    background: var(--gc-enc-c);
 }
 
 /* El hover se excluye del deshabilitado con :not, y no se define
@@ -1705,10 +1805,15 @@ a.gc-chip:hover { text-decoration: none; border-color: #d3d8dd; }
    con la clase aspNetDisabled. Sin el :not, una opción que no se
    puede pulsar respondía al mouse como si sí. */
 a.gc-enc__op:not(.aspNetDisabled):hover {
-    border-color: var(--gc-turquesa);
-    background: var(--gc-turquesa-l);
+    border-color: var(--gc-enc-c);
+    background: var(--gc-enc-cl);
     color: var(--gc-ink);
     text-decoration: none;
+}
+
+a.gc-enc__op:not(.aspNetDisabled):hover .gc-enc__marca {
+    background: var(--gc-enc-c);
+    box-shadow: inset 0 0 0 3px var(--gc-surface);
 }
 
 .gc-enc__op.aspNetDisabled { cursor: default; }
@@ -1719,19 +1824,24 @@ a.gc-enc__op:not(.aspNetDisabled):hover {
     top: 0;
     bottom: 0;
     z-index: 0;
-    background: var(--gc-turquesa-l);
-    transition: width .25s ease;
+    background: var(--gc-enc-cl);
+    transition: width .3s ease;
 }
 
+/* El punto lleva el color de su opción desde el principio, y no el
+   gris de siempre: es la otra mitad de lo que le da color a la
+   encuesta antes de tener resultado. */
 .gc-enc__marca {
     position: relative;
     z-index: 1;
     flex: 0 0 auto;
+    margin-left: 3px;
     width: 15px;
     height: 15px;
-    border: 2px solid var(--gc-faint);
+    border: 2px solid var(--gc-enc-c);
     border-radius: 50%;
     background: var(--gc-surface);
+    transition: background-color .15s ease;
 }
 
 .gc-enc__txt {
@@ -1741,24 +1851,31 @@ a.gc-enc__op:not(.aspNetDisabled):hover {
     min-width: 0;
 }
 
+/* La cifra toma el color de su opción cuando hay resultado. Con la
+   encuesta sin resolver la columna está vacía, así que no hereda
+   nada. */
 .gc-enc__n {
     position: relative;
     z-index: 1;
     flex: 0 0 auto;
-    font-size: .84rem;
+    font-size: .82rem;
     font-weight: 700;
-    color: var(--gc-ink-2);
+    color: var(--gc-enc-c);
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
-/* La opción elegida se identifica por el punto relleno y por el
-   texto en negrita, no solo por el color de la pista: un solo canal
-   de codificación deja fuera a quien no distingue el tono. */
-.gc-enc__op.is-mia { border-color: var(--gc-turquesa); }
+/* La opción elegida se identifica por el punto relleno, por el borde
+   y por la negrita, no solo por el color: un solo canal de
+   codificación deja fuera a quien no distingue el tono. */
+.gc-enc__op.is-mia {
+    border-color: var(--gc-enc-c);
+    box-shadow: inset 0 0 0 1px var(--gc-enc-c);
+}
 
 .gc-enc__op.is-mia .gc-enc__marca {
-    border-color: var(--gc-turquesa);
-    background: var(--gc-turquesa);
+    border-color: var(--gc-enc-c);
+    background: var(--gc-enc-c);
     box-shadow: inset 0 0 0 3px var(--gc-surface);
 }
 
@@ -1769,13 +1886,16 @@ a.gc-enc__op:not(.aspNetDisabled):hover {
 .gc-enc__op.is-res .gc-enc__marca { display: none; }
 .gc-enc__op.is-res.is-mia .gc-enc__marca { display: block; }
 
-.gc-enc__aviso { margin: 13px 0 0; }
+.gc-enc__aviso { margin: 14px 20px 0; }
 
+/* margin-top auto empuja el pie al fondo de la tarjeta, que es lo
+   que empareja las dos de una fila. */
 .gc-enc__pie {
-    margin: 14px 0 0;
-    padding-top: 12px;
+    margin: 15px 0 0;
+    margin-top: auto;
+    padding: 12px 20px 16px;
     border-top: 1px solid var(--gc-line-2);
-    font-size: .78rem;
+    font-size: .77rem;
     line-height: 1.5;
     color: var(--gc-muted);
 }
@@ -1785,7 +1905,6 @@ a.gc-enc__op:not(.aspNetDisabled):hover {
    no carga, y definirla dos veces sería la manera de que las dos
    acaben distintas. */
 .gc-enc--oculta {
-    position: relative;
     outline: 2px dashed var(--gc-ambar);
     outline-offset: 4px;
 }
@@ -1793,7 +1912,7 @@ a.gc-enc__op:not(.aspNetDisabled):hover {
 .gc-enc--oculta::before {
     content: "Oculto al público";
     position: absolute;
-    top: -10px;
+    top: 8px;
     right: 12px;
     z-index: 2;
     padding: 2px 9px;
@@ -1805,6 +1924,28 @@ a.gc-enc__op:not(.aspNetDisabled):hover {
     letter-spacing: .04em;
     text-transform: uppercase;
 }
+
+/* -------------------------------------------- Varias encuestas
+
+   La portada muestra las dos primeras y esconde el resto tras el
+   botón. Las escondidas se dibujan igual en la misma respuesta: si
+   «Ver más» pidiera otra carga al servidor, desplegar la lista
+   costaría un viaje para mostrar algo que ya se había consultado.
+
+   El estado de despliegue viaja en un input oculto de la página,
+   como la pestaña activa del tablero, para sobrevivir al postback
+   de responder una encuesta. */
+
+.gc-encs__extra { display: none; }
+
+.gc-encs.is-abierta .gc-encs__extra { display: block; }
+
+.gc-encs__mas {
+    display: flex;
+    justify-content: center;
+    margin-top: 4px;
+}
+
 
 /* --------------------------------------------------------- 20. Responsive */
 

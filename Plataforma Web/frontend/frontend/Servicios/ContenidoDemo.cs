@@ -403,15 +403,15 @@ namespace frontend.Servicios
         // =============================================================
         //  Encuestas
         //
-        //  Los datos en memoria no incluyen encuestas. Devolver null es lo
-        //  correcto: la portada ya sabe esconder el bloque cuando no hay
+        //  Los datos en memoria no incluyen encuestas. Devolver la lista vacía
+        //  es lo correcto: la portada ya sabe esconder el bloque cuando no hay
         //  ninguna abierta, así que este origen se ve como un sitio sin
         //  encuesta en curso y no como uno roto.
         // =============================================================
 
-        public Encuesta ObtenerEncuestaVigente(string campanaSlug, int codigoUsuario)
+        public IList<Encuesta> ObtenerEncuestasVigentes(string campanaSlug, int codigoUsuario)
         {
-            return null;
+            return new List<Encuesta>();
         }
 
         public ResultadoEncuesta ResponderEncuesta(

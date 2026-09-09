@@ -2,8 +2,15 @@
 
 <section class="gc-card gc-enc <%= ClaseOculta %>" aria-labelledby="<%= ClientID %>_p">
 
+    <%-- La franja de la guacamaya, el mismo cuatro de colores de la marca.
+         Es identidad, no dato: por eso va en el borde y no en un gráfico. --%>
+    <div class="gc-enc__banda" aria-hidden="true"></div>
+
     <div class="gc-enc__head">
-        <p class="gc-eyebrow">Encuesta de la plataforma</p>
+        <p class="gc-enc__eyebrow">
+            <span class="gc-enc__punto" aria-hidden="true"></span>
+            Encuesta de la plataforma
+        </p>
 
         <h3 class="gc-enc__q" id="<%= ClientID %>_p"><%: Item.Pregunta %></h3>
 
@@ -17,7 +24,7 @@
                { %>
             <span class="<%= Item.CategoriaClase %>"><%: Item.Categoria %></span>
             <% } %>
-            <span class="gc-muted gc-small"><%: Item.TotalTexto %></span>
+            <span class="gc-enc__total"><%: Item.TotalTexto %></span>
             <% if (!string.IsNullOrEmpty(Item.CierreTexto))
                { %>
             <span class="gc-faint" aria-hidden="true">·</span>
@@ -34,9 +41,11 @@
         </HeaderTemplate>
         <ItemTemplate>
             <li>
-                <asp:LinkButton runat="server" CssClass='<%# ClaseOpcion(Container.DataItem) %>'
+                <asp:LinkButton runat="server"
+                                CssClass='<%# ClaseOpcion(Container.DataItem, Container.ItemIndex) %>'
                                 CommandName="votar" CommandArgument='<%# Eval("Id") %>'
-                                Enabled='<%# PuedeResponder %>'>
+                                Enabled='<%# PuedeResponder %>'
+                                ToolTip='<%# TituloOpcion(Container.DataItem) %>'>
                     <span class="gc-enc__pista" style='<%# EstiloPista(Container.DataItem) %>' aria-hidden="true"></span>
                     <span class="gc-enc__marca" aria-hidden="true"></span>
                     <span class="gc-enc__txt"><%#: Eval("Texto") %></span>

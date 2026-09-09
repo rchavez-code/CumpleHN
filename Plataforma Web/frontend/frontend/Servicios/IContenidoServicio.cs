@@ -89,15 +89,19 @@ namespace frontend.Servicios
            criterio de las otras dos. */
 
         /// <summary>
-        /// Encuesta abierta de una campaña, con sus opciones ya cargadas.
-        /// Devuelve null cuando no hay ninguna. Con la campaña vacía usa la
-        /// destacada, que es como la pide la portada.
+        /// Encuestas abiertas de una campaña, con sus opciones ya cargadas y
+        /// en una sola llamada. Con la campaña vacía usa la destacada, que es
+        /// como las pide la portada.
         ///
-        /// El código de usuario decide si el reparto de votos viene revelado:
-        /// el resultado se muestra después de responder o al cerrar, y quien lo
-        /// decide es el procedimiento almacenado, no esta capa.
+        /// Solo las abiertas: una cerrada terminó su votación y se consulta
+        /// desde administración. Devuelve todas, y cuántas se muestran a la vez
+        /// lo decide la página.
+        ///
+        /// El código de usuario decide si el reparto de votos viene revelado, y
+        /// se resuelve por encuesta: alguien puede haber respondido una y no la
+        /// otra. Quien lo decide es el procedimiento almacenado, no esta capa.
         /// </summary>
-        Encuesta ObtenerEncuestaVigente(string campanaSlug, int codigoUsuario);
+        IList<Encuesta> ObtenerEncuestasVigentes(string campanaSlug, int codigoUsuario);
 
         /// <summary>
         /// Registra la respuesta de una persona y devuelve la encuesta con el

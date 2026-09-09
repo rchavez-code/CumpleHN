@@ -23,12 +23,17 @@
         encuesta cuya fecha de cierre ya pasó es una mentira
         esperando a ocurrir. Lo resuelve vwEncuestas.
 
-     4. Los resultados se revelan después de votar, o al
-        cerrar. Y lo decide el procedimiento, no la página:
-        mostrar el reparto mientras la votación sigue abierta
-        induce a votar con la mayoría, y una plataforma cuyo
-        propósito es que cada quien pondere por su cuenta no
-        debería empujar hacia ningún lado.
+     4. Los resultados se revelan después de responder. Y lo
+        decide el procedimiento, no la página: mostrar el reparto
+        mientras la votación sigue abierta induce a votar con la
+        mayoría, y una plataforma cuyo propósito es que cada quien
+        pondere por su cuenta no debería empujar hacia ningún
+        lado.
+
+   Varias encuestas pueden estar abiertas a la vez. La portada
+   muestra las dos primeras y deja el resto tras un «Ver más»,
+   pero cuántas se ven es una decisión de presentación: acá se
+   devuelven todas las abiertas.
 
    Convención de los procedimientos de escritura, igual que en
    los scripts 09 y 10: devuelven una fila con ok (BIT) y
@@ -263,37 +268,42 @@ GO
    4. Consulta pública
    ============================================================ */
 
-/* La encuesta que se muestra en la portada.
+/* Las encuestas que se muestran en la portada.
 
-   Devuelve una fila o ninguna. Con la campaña vacía usa la
-   destacada, que es como llega desde la portada. Si hubiera más
-   de una abierta —no debería, el guardado lo impide— se queda
-   con la que empezó más tarde.
+   Devuelve todas las abiertas, de la más reciente a la más
+   antigua. Con la campaña vacía usa la destacada, que es como
+   llega desde la portada.
 
-   A falta de una abierta muestra la última que cerró, durante un
-   mes. Cerrar una encuesta termina la votación, no borra lo que
-   la gente respondió: si desapareciera en el mismo momento del
-   cierre, el resultado solo quedaría a la vista de quien
-   administra, y quien participó nunca llegaría a verlo. Pasado
-   ese mes la portada la suelta, porque un resultado viejo
-   anclado arriba deja de informar y empieza a estorbar.
+   Solo abiertas. Una encuesta cerrada terminó su votación y se
+   consulta desde administración: dejarla en la portada junto a
+   las que sí admiten respuesta obligaría a quien mira a
+   distinguir cuáles puede contestar antes de intentarlo.
 
-   El parámetro del usuario es lo que permite saber si ya votó, y
-   con ello si le corresponde ver el resultado. Con cero es un
-   visitante sin cuenta.                                        */
+   Cuántas se ven a la vez no se decide acá. Este procedimiento
+   las devuelve todas y la portada muestra las dos primeras,
+   porque es una decisión de presentación y puede cambiar sin
+   tocar la base.
+
+   El parámetro del usuario es lo que permite saber si ya votó en
+   cada una, y con ello si le corresponde ver el resultado. Con
+   cero es un visitante sin cuenta.                              */
 
 IF OBJECT_ID('dbo.spEncuestaVigente') IS NOT NULL
     DROP PROCEDURE dbo.spEncuestaVigente;
 GO
 
-CREATE PROCEDURE dbo.spEncuestaVigente
+IF OBJECT_ID('dbo.spEncuestasVigentes') IS NOT NULL
+    DROP PROCEDURE dbo.spEncuestasVigentes;
+GO
+
+CREATE PROCEDURE dbo.spEncuestasVigentes
     @campanaSlug   NVARCHAR(80) = NULL,
     @codigoUsuario INT          = 0
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    SELECT TOP (1)
+    SELECT
         e.codigoEncuesta,
         e.campanaSlug,
         e.pregunta,
@@ -308,17 +318,73 @@ BEGIN
                    AND v.codigoUsuario  = @codigoUsuario), 0) AS miOpcion
     FROM dbo.vwEncuestas e
     WHERE e.opciones > 0
-      AND (e.estado = N'Abierta'
-           OR (e.estado = N'Cerrada'
-               AND e.fechaCierre >= DATEADD(DAY, -30, SYSDATETIME())))
+      AND e.estado = N'Abierta'
       AND (@campanaSlug IS NULL OR e.campanaSlug = @campanaSlug)
       AND (@campanaSlug IS NOT NULL OR EXISTS (
               SELECT 1 FROM dbo.Campanas c
                WHERE c.codigoCampana = e.codigoCampana AND c.esActual = 1))
-    /* La abierta siempre gana a una cerrada, sin importar cuál
-       empezó antes. */
-    ORDER BY CASE WHEN e.estado = N'Abierta' THEN 0 ELSE 1 END,
-             e.fechaInicio DESC;
+    ORDER BY e.fechaInicio DESC, e.codigoEncuesta DESC;
+END
+GO
+
+/* Las opciones de todas las encuestas abiertas, en una sola
+   consulta.
+
+   Existe para que la portada no abra una llamada por encuesta.
+   Con dos a la vista y el resto detrás de «Ver más», todas se
+   dibujan en la misma respuesta, así que pedir sus opciones una
+   por una serían ocho viajes para responder ocho veces la misma
+   pregunta.
+
+   La reserva del resultado se resuelve por encuesta, no para el
+   conjunto: alguien puede haber respondido una y no la otra, y
+   cada tarjeta tiene que reflejar su propio caso.               */
+
+IF OBJECT_ID('dbo.spEncuestasVigentesOpciones') IS NOT NULL
+    DROP PROCEDURE dbo.spEncuestasVigentesOpciones;
+GO
+
+CREATE PROCEDURE dbo.spEncuestasVigentesOpciones
+    @campanaSlug   NVARCHAR(80) = NULL,
+    @codigoUsuario INT          = 0
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    /* Las encuestas en juego y, para cada una, si a esta persona
+       le corresponde ver el reparto. */
+    DECLARE @encuestas TABLE (codigoEncuesta INT, miOpcion INT, revelar BIT);
+
+    INSERT INTO @encuestas (codigoEncuesta, miOpcion, revelar)
+    SELECT
+        e.codigoEncuesta,
+        ISNULL(v.codigoOpcion, 0),
+        CASE WHEN v.codigoOpcion IS NOT NULL THEN 1 ELSE 0 END
+    FROM dbo.vwEncuestas e
+    LEFT JOIN dbo.EncuestaVotos v
+           ON v.codigoEncuesta = e.codigoEncuesta
+          AND v.codigoUsuario  = @codigoUsuario
+    WHERE e.opciones > 0
+      AND e.estado = N'Abierta'
+      AND (@campanaSlug IS NULL OR e.campanaSlug = @campanaSlug)
+      AND (@campanaSlug IS NOT NULL OR EXISTS (
+              SELECT 1 FROM dbo.Campanas c
+               WHERE c.codigoCampana = e.codigoCampana AND c.esActual = 1));
+
+    SELECT
+        o.codigoEncuesta,
+        o.codigoOpcion,
+        o.texto,
+        o.orden,
+        CASE WHEN x.revelar = 1
+             THEN (SELECT COUNT(*) FROM dbo.EncuestaVotos v
+                    WHERE v.codigoOpcion = o.codigoOpcion)
+             ELSE 0 END                                          AS votos,
+        CASE WHEN o.codigoOpcion = x.miOpcion THEN 1 ELSE 0 END  AS miVoto,
+        x.revelar
+    FROM dbo.EncuestaOpciones o
+    INNER JOIN @encuestas x ON x.codigoEncuesta = o.codigoEncuesta
+    ORDER BY o.codigoEncuesta, o.orden, o.codigoOpcion;
 END
 GO
 
@@ -636,23 +702,13 @@ BEGIN
         RETURN;
     END
 
-    /* Solapamiento con otra encuesta activa de la misma campaña.
-       Una encuesta sin fecha de cierre se extiende hasta el
-       final de los tiempos, de ahí el ISNULL. */
-    IF EXISTS (
-        SELECT 1
-        FROM dbo.Encuestas o
-        WHERE o.codigoCampana = @codigoCampana
-          AND o.activo = 1
-          AND o.codigoEncuesta <> ISNULL(@codigoEncuesta, 0)
-          AND @fechaInicio < ISNULL(o.fechaCierre, '9999-12-31')
-          AND o.fechaInicio < ISNULL(@fechaCierre, '9999-12-31'))
-    BEGIN
-        SELECT CAST(0 AS BIT) AS ok,
-               N'Ya hay otra encuesta activa de esta campaña en ese rango de fechas. Cerrá la anterior primero.' AS mensaje,
-               0 AS codigo;
-        RETURN;
-    END
+    /* Varias encuestas pueden estar abiertas a la vez en la misma
+       campaña. Hubo una restricción que lo impedía, con el
+       argumento de que dos compitiendo se reparten la
+       participación: se quitó porque la portada ahora muestra
+       varias, con las dos primeras a la vista y el resto detrás de
+       «Ver más». Lo que era una regla de negocio pasó a ser una
+       decisión de presentación, que es donde le corresponde estar. */
 
     DECLARE @nuevo INT = @codigoEncuesta;
     DECLARE @accion NVARCHAR(40) = N'Edicion';
@@ -808,7 +864,11 @@ BEGIN
          WHERE codigoEncuesta = @codigoEncuesta;
 
         SET @registro = N'Cierre';
-        SET @mensaje  = N'Encuesta cerrada. El resultado queda visible para todo el mundo.';
+        /* El mensaje dice dónde queda el resultado, y no que quede
+           «visible para todo el mundo»: la portada solo muestra las
+           abiertas, así que al cerrarla sale de ahí y se consulta
+           desde esta misma pantalla. */
+        SET @mensaje  = N'Encuesta cerrada. Sale de la portada y su resultado se consulta desde acá.';
     END
     ELSE IF @accion = N'reabrir'
     BEGIN
