@@ -230,6 +230,11 @@ namespace frontend.Controles
                 if (!Sesion.Autenticado)
                     return "Elegí una opción y te pedimos acceso para registrarla. " + aviso;
 
+                // Decirlo acá evita que la persona elija una opción y recién
+                // entonces se entere de que no se le va a registrar.
+                if (!Sesion.CorreoConfirmado)
+                    return "Confirmá tu correo para poder responder. " + aviso;
+
                 if (_item.YaVoto)
                     return "Ya respondiste. Podés cambiar tu respuesta mientras siga abierta. " + aviso;
 

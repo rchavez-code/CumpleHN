@@ -16,6 +16,8 @@ namespace frontend.Servicios
         private const string ClaveNombre = "nombreUsuario";
         private const string ClaveRol = "rol";
         private const string ClaveCandidato = "candidatoSlug";
+        private const string ClaveConfirmado = "correoConfirmado";
+        private const string ClaveAviso = "avisoCuenta";
 
         /// <summary>
         /// Nombres de rol tal como los guarda el catálogo <c>Roles</c> de la
@@ -45,6 +47,53 @@ namespace frontend.Servicios
             ctx.Session[ClaveNombre] = usuario.nombre;
             ctx.Session[ClaveRol] = usuario.rol;
             ctx.Session[ClaveCandidato] = usuario.candidatoSlug;
+            ctx.Session[ClaveConfirmado] = usuario.correoConfirmado;
+        }
+
+        /// <summary>
+        /// Marca la sesión actual como confirmada, después de que el backend lo
+        /// confirmó contra la base. Sin esto habría que cerrar sesión y volver
+        /// a entrar para que el aviso desapareciera.
+        /// </summary>
+        public static void MarcarCorreoConfirmado()
+        {
+            HttpContext ctx = HttpContext.Current;
+            if (ctx == null || ctx.Session == null) return;
+
+            ctx.Session[ClaveConfirmado] = true;
+        }
+
+        /// <summary>
+        /// Guarda un aviso para mostrarlo en la página siguiente.
+        ///
+        /// Hace falta porque el registro termina en un Response.Redirect, y lo
+        /// que el backend contestó —si el correo salió o no— muere con la
+        /// respuesta que se descarta. Sin esto, a quien se registra cuando el
+        /// servidor de correo está caído no le queda ninguna señal de que el
+        /// mensaje no llegó, y se queda esperando un correo que nadie mandó.
+        /// </summary>
+        public static void DejarAviso(string mensaje)
+        {
+            HttpContext ctx = HttpContext.Current;
+            if (ctx == null || ctx.Session == null) return;
+
+            ctx.Session[ClaveAviso] = mensaje;
+        }
+
+        /// <summary>
+        /// Lee el aviso pendiente y lo consume. Es de un solo uso: un aviso que
+        /// sobreviviera a la página que lo muestra reaparecería en cada
+        /// navegación sin que nada nuevo haya pasado.
+        /// </summary>
+        public static string TomarAviso()
+        {
+            HttpContext ctx = HttpContext.Current;
+            if (ctx == null || ctx.Session == null) return null;
+
+            string mensaje = ctx.Session[ClaveAviso] as string;
+            if (mensaje != null) ctx.Session.Remove(ClaveAviso);
+
+            return mensaje;
         }
 
         private static object Leer(string clave)
@@ -85,6 +134,28 @@ namespace frontend.Servicios
         public static string CandidatoSlug
         {
             get { return Convert.ToString(Leer(ClaveCandidato)); }
+        }
+
+        /// <summary>
+        /// Si la cuenta ya confirmó su correo.
+        ///
+        /// Decide qué se le muestra, nunca qué se le permite: quien autoriza
+        /// participar es el Web Service, que lo comprueba contra la base. Acá
+        /// solo sirve para poder avisarle a la persona qué le falta antes de
+        /// que se choque con un rechazo.
+        ///
+        /// Sin sesión devuelve true, para que la plantilla no le muestre el
+        /// aviso de confirmación a quien ni siquiera tiene cuenta.
+        /// </summary>
+        public static bool CorreoConfirmado
+        {
+            get
+            {
+                if (!Autenticado) return true;
+
+                object v = Leer(ClaveConfirmado);
+                return v == null || Convert.ToBoolean(v);
+            }
         }
 
         private static bool EsRol(string rol)

@@ -12,6 +12,12 @@ namespace backend.Modelos
         public string correo { get; set; }
         public string rol { get; set; }
 
+        /* Con el correo sin confirmar la cuenta entra y consulta, pero no
+           participa. Viaja hasta el frontend para que la plantilla pueda
+           avisarlo, nunca para que la página decida: quien autoriza es el
+           Web Service. */
+        public bool correoConfirmado { get; set; }
+
         /* Solo con rol Candidato. Enlaza la cuenta con su ficha pública. */
         public int codigoCandidato { get; set; }
         public string candidatoSlug { get; set; }

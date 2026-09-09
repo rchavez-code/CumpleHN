@@ -23,6 +23,70 @@ namespace frontend
             phNavPerfiles.Visible = Servicios.Modulos.Visible(Servicios.Modulos.Perfiles);
             phNavPropuestas.Visible = Servicios.Modulos.Visible(Servicios.Modulos.Propuestas);
             phNavAnalitica.Visible = Servicios.Modulos.Visible(Servicios.Modulos.Analitica);
+
+            MostrarAvisoConfirmacion();
+        }
+
+        /// <summary>
+        /// Franja de correo sin confirmar.
+        ///
+        /// Lo que la sesión sabe decide qué se muestra, nunca qué se permite:
+        /// la participación la autoriza el Web Service comprobando contra la
+        /// base. Esta franja existe para que la persona sepa qué le falta antes
+        /// de chocarse con el rechazo, no para protegerlo.
+        /// </summary>
+        private void MostrarAvisoConfirmacion()
+        {
+            if (!Servicios.Sesion.Autenticado || Servicios.Sesion.CorreoConfirmado) return;
+
+            // Si el registro dejó algo que decir —sobre todo cuando el correo
+            // no pudo salir— eso es lo que hay que mostrar, y no el texto
+            // genérico. Se consume: reaparecer en cada página sin que nada
+            // nuevo haya pasado sería ruido.
+            string aviso = Servicios.Sesion.TomarAviso();
+
+            litConfirmar.Text = Server.HtmlEncode(string.IsNullOrEmpty(aviso)
+                ? "Te falta confirmar tu correo para poder apoyar publicaciones, "
+                  + "comentar y responder encuestas."
+                : aviso);
+
+            phConfirmar.Visible = true;
+        }
+
+        /// <summary>
+        /// Reenvío del enlace.
+        ///
+        /// Corre después de Page_Load, así que lo que escriba acá pisa el
+        /// aviso genérico que aquel dejó puesto — que es justo lo que se
+        /// quiere. Es el mismo orden del ciclo de vida que en Verificacion.aspx
+        /// hacía falta cuidar, solo que acá juega a favor.
+        /// </summary>
+        protected void lnkReenviar_Click(object sender, EventArgs e)
+        {
+            var cliente = new webservices.WebServiceGlobalSoapClient();
+
+            webservices.RespuestaAdmin r;
+            try
+            {
+                r = cliente.ReenviarConfirmacion(Servicios.Sesion.CodigoUsuario);
+                cliente.Close();
+            }
+            catch (Exception ex)
+            {
+                cliente.Abort();
+                r = new webservices.RespuestaAdmin
+                {
+                    ok = false,
+                    mensaje = "No se pudo contactar al servidor. " + ex.Message
+                };
+            }
+
+            litConfirmar.Text = Server.HtmlEncode(r.mensaje);
+            phConfirmar.Visible = true;
+
+            // El botón desaparece cuando el envío salió bien: volver a pulsarlo
+            // solo se toparía con el intervalo mínimo del procedimiento.
+            lnkReenviar.Visible = !r.ok;
         }
 
         protected string NombreUsuario

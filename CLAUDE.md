@@ -69,7 +69,7 @@ Tres soluciones `.slnx` independientes:
 
 - `Plataforma Web/frontend/` → `frontend.csproj`. IIS Express en el puerto 5080.
 - `Plataforma Web/backend/` → `backend.csproj`. Vacío por ahora, ya referencia `System.Web.Services`.
-- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`, `09_administracion`, `10_catalogos_admin`, `11_modulos`, `12_asistente`, `13_permisos_ia`, `14_encuestas`, `15_datos_encuestas`, `16_registro`.
+- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`, `09_administracion`, `10_catalogos_admin`, `11_modulos`, `12_asistente`, `13_permisos_ia`, `14_encuestas`, `15_datos_encuestas`, `16_registro`, `17_confirmacion`.
 
 Los scripts están en UTF-8 **sin BOM**, así que por línea de comandos hay que pasarle la página de códigos a sqlcmd o las tildes entran corruptas:
 
@@ -384,6 +384,36 @@ Una corrección de raíz que salió de acá: `LeerRespuesta` y `LeerGuardado` **
 **`Registro.aspx?tipo=candidato` no crea nada.** La candidatura la da de alta la administración con su cuenta (script 10). Una ficha pública que nadie revisó antes de publicarse es lo contrario de lo que sostiene la neutralidad del sitio, así que el formulario recoge los datos y remite al contacto.
 
 Decir «ese correo ya está registrado» revela que existe una cuenta con ese correo, y el acceso a propósito no lo revela. Sin un paso de confirmación por correo no hay alternativa: callarlo dejaría a quien ya tiene cuenta sin saber por qué falla. Queda anotado para el anexo OWASP.
+
+### Confirmación de correo
+
+`16_registro.sql` abrió el registro. `17_confirmacion.sql` agrega lo único que la plataforma puede comprobar por su cuenta sobre quien se registra: **que controle el buzón que declaró**.
+
+**Lo que esto no resuelve, y hay que declararlo en vez de dejarlo implícito.** Son tres preguntas distintas y solo dos tienen respuesta técnica: si controla el buzón (sí, con el enlace), si es el mismo buzón disfrazado (sí, normalizando), y si es una **persona distinta** de las otras cuentas (**no**, sin una autoridad externa que verifique). Después de este script la plataforma puede afirmar que cada cuenta controla un buzón distinto, no que detrás de cada cuenta hay una persona distinta. Un buzón real de un dominio que no esté en la lista sigue sirviendo para abrir otra.
+
+El **SMS se evaluó y se descartó por costo**, no por debilidad: desde marzo de 2025 CONATEL exige registro biométrico con DNI, foto y huellas para comprar o conservar una línea, así que controlar un +504 se acerca mucho más a la identidad que un correo — y además la plataforma **nunca vería el DNI**, heredaría la verificación del operador. Son 0.3296 USD por mensaje a Honduras vía Twilio, unos 50 USD por la muestra de 150 y unos 45 mensajes con el crédito de prueba. El argumento va al Marco Teórico como trabajo futuro. El límite de chips por persona **no se pudo verificar con fuente**, así que no debe afirmarse.
+
+**`activo` y `correoConfirmado` son cosas distintas y no se mezclan.** `activo = 0` ya significa «dada de baja por la administración», y `ValidarLogin` lo exige. Una cuenta sin confirmar que naciera inactiva sería rechazada en el acceso con el mensaje genérico, y la persona no tendría manera de saber que solo le falta abrir un enlace. Nace activa y sin confirmar: entra, consulta, y lo único que no puede es participar.
+
+**La puerta es un solo helper.** `MotivoSinParticipacion` reemplazó a `UsuarioActivo` y lo consultan las cuatro acciones que escriben en nombre de alguien: valorar, comentar, responder encuesta y preguntarle al asistente. Devuelve el **motivo** y no un booleano porque las dos causas piden cosas distintas — el texto único anterior dejaba a quien solo tenía que abrir un enlace sin saber qué hacer. El texto de «cuenta ausente» lo pone quien llama, porque comentar y preguntarle al asistente no se nombran igual. Está verificado llamando al ASMX directamente: la puerta está en el servicio, no en la página.
+
+**El token no se guarda en claro.** Lo genera el backend con `RNGCryptoServiceProvider` y a la base solo llega su SHA-256, la misma decisión que con la contraseña. Un token desconocido, uno vencido y uno ya usado devuelven **el mismo mensaje**, por lo mismo que el acceso no dice si falló el usuario o la contraseña.
+
+**Un solo catálogo, `DominiosCorreo`, hace los dos trabajos de la normalización**: qué dominio es alias de cuál, a cuál se le quitan los puntos, a cuál la etiqueta `+`, y cuál es desechable. Quitar puntos es regla de Gmail y no de todos — aplicarla a ciegas fundiría dos buzones distintos de otro servidor en uno, y el síntoma sería decirle a alguien que su correo ya está registrado cuando no lo está. Está en tabla y no en código para poder ampliar la lista de desechables sin recompilar.
+
+**El correo se guarda dos veces a propósito.** `correo` tal como se tecleó, que es al que se escribe, y `correoNormalizado`, que lleva la restricción única. Mandarle el mensaje a la forma normalizada sería escribirle a una dirección que la persona nunca escribió. `UQ_Usuarios_correo` se conserva junto a la nueva: no es redundante, cubre el caso de que el catálogo de dominios cambie de reglas más adelante.
+
+**El envío no puede perder la cuenta.** La cuenta y el token se crean en una transacción, el envío va después. Si el SMTP falla, la cuenta existe, la franja ofrece reenviar y el motivo queda en `ConfirmacionesCorreo.error` — una bitácora que solo guarda los envíos buenos no sirve para revisar los malos. El mensaje del backend viaja al redirect con `Sesion.DejarAviso`/`TomarAviso`, que es de un solo uso: sin eso, quien se registra con el correo caído se queda esperando un mensaje que nadie mandó.
+
+**El tope de reenvío no es la fricción anti-bot que se descartó.** El destinatario lo eligió quien se registró, así que reenviar sin límite es una manera de llenarle el buzón a un tercero. Intervalo mínimo de 90 segundos y cinco por día, exigidos por `spSolicitarConfirmacion` y no por el formulario.
+
+**Las cuentas anteriores nacen confirmadas**, y las de candidatura también: las crea la administración, que entrega la contraseña en mano. La migración se guarda de repetirse mirando si `ConfirmacionesCorreo` ya existe — sin esa guarda, volver a correr el script confirmaría de golpe todas las cuentas pendientes.
+
+**Sobre el conteo del tablero no hizo falta filtrar ni declarar nada.** La decisión era contar todo y avisarlo al pie, pero al quedar la participación cerrada para quien no confirmó, no hay votos de cuentas sin confirmar que contar. Poner ese aviso habría sido escribir algo falso.
+
+La franja de aviso usa el prefijo **`gc-franja`**, verificado con grep antes de nombrarlo. Es ámbar y no escarlata a propósito: el escarlata dice que algo falló, y acá no falló nada — falta un paso que la persona todavía puede dar.
+
+Configuración: `ConfirmacionUrlBase` (apunta al **frontend**, porque el backend arma el enlace y no conoce la dirección del sitio público), `ConfirmacionHoras`, `CorreoHost`, `CorreoPuerto`, `CorreoNombre` y `CorreoTimeoutMs` en el Web.config del backend. `CorreoRemitente` y `CorreoClaveApp` en `secrets.config` — la clave **no** es la contraseña de Gmail sino una contraseña de aplicación de dieciséis caracteres, que exige verificación en dos pasos. Sin esos dos valores el backend arranca igual y el registro sigue creando cuentas: lo único que falla es el envío, y queda anotado con su motivo.
 
 ### Pendiente
 

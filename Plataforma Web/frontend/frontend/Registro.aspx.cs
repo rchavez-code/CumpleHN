@@ -201,6 +201,12 @@ namespace frontend
             // que se acaba de comprobar. Se entra directo.
             Sesion.Iniciar(respuesta.usuario);
 
+            // Lo que el backend contestó sobre el envío del correo se guarda
+            // para la página siguiente. Si muriera con este redirect, quien se
+            // registre mientras el servidor de correo está caído se quedaría
+            // esperando un mensaje que nadie mandó.
+            Sesion.DejarAviso(respuesta.mensaje);
+
             // Si llegó al registro desde una publicación en la que quiso
             // participar, vuelve a esa misma página.
             string volver = Request.QueryString["volver"];

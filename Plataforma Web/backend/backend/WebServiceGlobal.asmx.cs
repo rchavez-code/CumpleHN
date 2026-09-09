@@ -89,6 +89,7 @@ namespace backend
                 {
                     string query =
                         "SELECT u.codigoUsuario, u.login, u.nombre, u.correo, r.nombre AS rol, " +
+                        "       u.correoConfirmado, " +
                         "       ISNULL(u.codigoCandidato, 0) AS codigoCandidato, " +
                         "       ISNULL(c.slug, '') AS candidatoSlug " +
                         "FROM dbo.Usuarios u " +
@@ -113,6 +114,7 @@ namespace backend
                             nombre = Texto(reader, "nombre"),
                             correo = Texto(reader, "correo"),
                             rol = Texto(reader, "rol"),
+                            correoConfirmado = Convert.ToBoolean(reader["correoConfirmado"]),
                             codigoCandidato = Convert.ToInt32(reader["codigoCandidato"]),
                             candidatoSlug = Texto(reader, "candidatoSlug")
                         };
@@ -182,6 +184,14 @@ namespace backend
                 return respuesta;
             }
 
+            // El token viaja al buzón de la persona y a la base solo llega su
+            // hash, igual que la contraseña y por la misma razón: quien lea la
+            // tabla no puede confirmar cuentas ajenas con lo que ve.
+            string token = NuevoToken();
+            int confirmacion = 0;
+            string destino = null;
+            string nombreCompleto = null;
+
             try
             {
                 using (SqlConnection conn = new SqlConnection(cadenaConexion))
@@ -192,6 +202,8 @@ namespace backend
                     cmd.Parameters.AddWithValue("@apellidos", apellidos);
                     cmd.Parameters.AddWithValue("@correo", correo);
                     cmd.Parameters.AddWithValue("@claveHash", EncriptarSHA256(clave));
+                    cmd.Parameters.AddWithValue("@tokenHash", EncriptarSHA256(token));
+                    cmd.Parameters.AddWithValue("@horasVigencia", HorasConfirmacion);
 
                     conn.Open();
 
@@ -204,13 +216,18 @@ namespace backend
 
                             if (!respuesta.ok) continue;
 
+                            confirmacion = Convert.ToInt32(reader["codigoConfirmacion"]);
+                            destino = Texto(reader, "correo");
+                            nombreCompleto = Texto(reader, "nombre");
+
                             respuesta.usuario = new InfoUsuario
                             {
                                 codigoUsuario = Convert.ToInt32(reader["codigoUsuario"]),
                                 login = Texto(reader, "login"),
-                                nombre = Texto(reader, "nombre"),
-                                correo = Texto(reader, "correo"),
+                                nombre = nombreCompleto,
+                                correo = destino,
                                 rol = Texto(reader, "rol"),
+                                correoConfirmado = false,
                                 codigoCandidato = 0,
                                 candidatoSlug = string.Empty
                             };
@@ -223,9 +240,204 @@ namespace backend
                 respuesta.ok = false;
                 respuesta.usuario = null;
                 respuesta.mensaje = "No se pudo crear la cuenta: " + ex.Message;
+                return respuesta;
             }
 
+            if (!respuesta.ok) return respuesta;
+
+            // El envío va después de que la cuenta ya existe. Si el servidor de
+            // correo no responde, la cuenta no se pierde: la pantalla ofrece
+            // reenviar y el motivo del fallo queda guardado.
+            respuesta.mensaje = EnviarConfirmacion(confirmacion, destino, nombreCompleto, token)
+                ? "Te enviamos un enlace a " + destino + " para confirmar la cuenta."
+                : "La cuenta quedó creada, pero no pudimos enviarte el correo de confirmación. "
+                  + "Pedí el enlace de nuevo desde tu cuenta.";
+
             return respuesta;
+        }
+
+        /// <summary>
+        /// Confirma la cuenta a la que pertenece el token del enlace.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin ConfirmarCorreo(string token)
+        {
+            RespuestaAdmin r = new RespuestaAdmin();
+            r.ok = false;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(cadenaConexion))
+                {
+                    SqlCommand cmd = new SqlCommand("dbo.spConfirmarCorreo", conn);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@tokenHash", EncriptarSHA256(token ?? string.Empty));
+
+                    conn.Open();
+                    r = LeerRespuesta(cmd);
+                }
+            }
+            catch (Exception ex)
+            {
+                r.ok = false;
+                r.mensaje = "No se pudo confirmar la cuenta: " + ex.Message;
+            }
+
+            return r;
+        }
+
+        /// <summary>
+        /// Genera y manda un enlace nuevo.
+        ///
+        /// El intervalo mínimo y el tope diario los exige el procedimiento, no
+        /// esta capa: el destinatario del mensaje lo eligió quien se registró,
+        /// así que un reenvío sin límite es una manera de llenarle el buzón a
+        /// un tercero.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin ReenviarConfirmacion(int codigoUsuario)
+        {
+            RespuestaAdmin r = new RespuestaAdmin();
+            r.ok = false;
+
+            string token = NuevoToken();
+            int confirmacion = 0;
+            string destino = null;
+            string nombre = null;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(cadenaConexion))
+                {
+                    SqlCommand cmd = new SqlCommand("dbo.spSolicitarConfirmacion", conn);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                    cmd.Parameters.AddWithValue("@tokenHash", EncriptarSHA256(token));
+                    cmd.Parameters.AddWithValue("@horasVigencia", HorasConfirmacion);
+
+                    conn.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            r.ok = Convert.ToBoolean(reader["ok"]);
+                            r.mensaje = Texto(reader, "mensaje");
+
+                            if (!r.ok) continue;
+
+                            confirmacion = Convert.ToInt32(reader["codigoConfirmacion"]);
+                            destino = Texto(reader, "correo");
+                            nombre = Texto(reader, "nombre");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                r.ok = false;
+                r.mensaje = "No se pudo generar el enlace: " + ex.Message;
+                return r;
+            }
+
+            if (!r.ok) return r;
+
+            if (EnviarConfirmacion(confirmacion, destino, nombre, token))
+            {
+                r.mensaje = "Te enviamos un enlace a " + destino + ".";
+            }
+            else
+            {
+                r.ok = false;
+                r.mensaje = "No pudimos enviar el correo. Intentalo en unos minutos.";
+            }
+
+            return r;
+        }
+
+        // ------------------------------------------- Confirmación: apoyo
+
+        /// <summary>Horas que dura el enlace de confirmación.</summary>
+        private static int HorasConfirmacion
+        {
+            get
+            {
+                int n;
+                return int.TryParse(ConfigurationManager.AppSettings["ConfirmacionHoras"], out n) && n > 0
+                     ? n : 48;
+            }
+        }
+
+        /// <summary>
+        /// Token del enlace: 32 bytes del generador criptográfico, en
+        /// hexadecimal. No se deriva del correo ni del código de la cuenta
+        /// porque un token que se puede calcular no protege nada.
+        /// </summary>
+        private static string NuevoToken()
+        {
+            byte[] bytes = new byte[32];
+
+            using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider())
+            {
+                rng.GetBytes(bytes);
+            }
+
+            StringBuilder sb = new StringBuilder(64);
+            foreach (byte b in bytes) sb.Append(b.ToString("x2"));
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Manda el mensaje y deja anotado cómo salió, incluso cuando falla.
+        /// Una bitácora que solo guarda los envíos buenos no sirve para revisar
+        /// los malos, que son los únicos que hay que revisar.
+        /// </summary>
+        private static bool EnviarConfirmacion(int codigoConfirmacion, string destino,
+                                               string nombre, string token)
+        {
+            string baseUrl = ConfigurationManager.AppSettings["ConfirmacionUrlBase"];
+
+            string error;
+            bool ok;
+
+            if (string.IsNullOrEmpty(baseUrl))
+            {
+                ok = false;
+                error = "Falta ConfirmacionUrlBase en el Web.config del backend.";
+            }
+            else
+            {
+                string enlace = baseUrl.TrimEnd('/') + "/Confirmar?t=" + token;
+
+                ok = CorreoSaliente.Enviar(
+                    destino,
+                    "Confirmá tu cuenta de CumpleHN",
+                    CorreoSaliente.CuerpoConfirmacion(nombre, enlace, HorasConfirmacion),
+                    out error);
+            }
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(cadenaConexion))
+                {
+                    SqlCommand cmd = new SqlCommand("dbo.spConfirmacionEnvio", conn);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@codigoConfirmacion", codigoConfirmacion);
+                    cmd.Parameters.AddWithValue("@enviado", ok);
+                    cmd.Parameters.AddWithValue("@error", (object)error ?? DBNull.Value);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch
+            {
+                // Que no se pueda anotar el resultado no cambia el resultado.
+            }
+
+            return ok;
         }
 
         // =============================================================
@@ -799,15 +1011,46 @@ namespace backend
             return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
         }
 
-        /// <summary>Confirma que la cuenta existe y está activa.</summary>
-        private static bool UsuarioActivo(SqlConnection conn, int codigoUsuario)
+        /// <summary>
+        /// Devuelve por qué la cuenta no puede participar, o null si sí puede.
+        ///
+        /// Es la única puerta de la participación y la consultan las cuatro
+        /// acciones que escriben en nombre de alguien: valorar, comentar,
+        /// responder una encuesta y preguntarle al asistente. Está en un solo
+        /// lugar por lo mismo que la comprobación de rol: si cada método la
+        /// resolviera por su cuenta, bastaría con que uno nuevo se olvidara
+        /// para dejar la puerta abierta, y nada en la pantalla lo delataría.
+        ///
+        /// Devuelve el motivo y no un booleano porque las dos causas piden
+        /// cosas distintas. A quien tiene la cuenta dada de baja no hay nada
+        /// que decirle, pero a quien solo le falta abrir un enlace, un «no
+        /// tenés cuenta activa» lo deja sin saber qué hacer — que fue el
+        /// problema de la versión anterior, con un texto único para las dos.
+        ///
+        /// El texto de la cuenta ausente lo pone quien llama, porque comentar,
+        /// valorar y preguntarle al asistente no se nombran igual. El de la
+        /// confirmación pendiente es uno solo: la explicación de qué hacer no
+        /// cambia según lo que se intentaba.
+        /// </summary>
+        private static string MotivoSinParticipacion(SqlConnection conn, int codigoUsuario,
+                                                     string sinCuenta)
         {
-            if (codigoUsuario <= 0) return false;
+            if (codigoUsuario <= 0) return sinCuenta;
 
             SqlCommand cmd = new SqlCommand(
-                "SELECT COUNT(*) FROM dbo.Usuarios WHERE codigoUsuario = @u AND activo = 1", conn);
+                "SELECT correoConfirmado FROM dbo.Usuarios " +
+                "WHERE codigoUsuario = @u AND activo = 1", conn);
             cmd.Parameters.AddWithValue("@u", codigoUsuario);
-            return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+
+            object v = cmd.ExecuteScalar();
+
+            if (v == null || v == DBNull.Value) return sinCuenta;
+
+            if (!Convert.ToBoolean(v))
+                return "Confirmá tu correo para participar. "
+                     + "Podés pedir el enlace de nuevo desde el aviso de tu cuenta.";
+
+            return null;
         }
 
         /// <summary>
@@ -903,9 +1146,11 @@ namespace backend
                         return r;
                     }
 
-                    if (!UsuarioActivo(conn, codigoUsuario))
+                    string motivo = MotivoSinParticipacion(conn, codigoUsuario,
+                        "Necesitás una cuenta activa para participar.");
+                    if (motivo != null)
                     {
-                        r.mensaje = "Necesitás una cuenta activa para participar.";
+                        r.mensaje = motivo;
                         return r;
                     }
 
@@ -1069,9 +1314,11 @@ namespace backend
                         return r;
                     }
 
-                    if (!UsuarioActivo(conn, codigoUsuario))
+                    string motivo = MotivoSinParticipacion(conn, codigoUsuario,
+                        "Necesitás una cuenta activa para comentar.");
+                    if (motivo != null)
                     {
-                        r.mensaje = "Necesitás una cuenta activa para comentar.";
+                        r.mensaje = motivo;
                         return r;
                     }
 
@@ -2513,9 +2760,11 @@ namespace backend
                         return r;
                     }
 
-                    if (!UsuarioActivo(conn, codigoUsuario))
+                    string motivo = MotivoSinParticipacion(conn, codigoUsuario,
+                        "Necesitás una cuenta activa para participar.");
+                    if (motivo != null)
                     {
-                        r.mensaje = "Necesitás una cuenta activa para participar.";
+                        r.mensaje = motivo;
                         return r;
                     }
 
@@ -2940,9 +3189,11 @@ namespace backend
                     return r;
                 }
 
-                if (!UsuarioActivo(conn, codigoUsuario))
+                string motivo = MotivoSinParticipacion(conn, codigoUsuario,
+                    "Para preguntarle al asistente hay que iniciar sesión.");
+                if (motivo != null)
                 {
-                    r.mensaje = "Para preguntarle al asistente hay que iniciar sesión.";
+                    r.mensaje = motivo;
                     return r;
                 }
 

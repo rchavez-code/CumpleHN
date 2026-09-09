@@ -84,6 +84,24 @@
             </div>
         </header>
 
+        <%-- ==================================== Correo sin confirmar
+
+             Va en la plantilla y no en cada página porque la persona puede
+             intentar participar desde cualquier parte del sitio, y enterarse
+             solo al recibir el rechazo sería enterarse tarde. --%>
+
+        <asp:PlaceHolder ID="phConfirmar" runat="server" Visible="false">
+            <div class="gc-franja">
+                <div class="container gc-franja__in">
+                    <span class="gc-franja__txt">
+                        <asp:Literal ID="litConfirmar" runat="server" />
+                    </span>
+                    <asp:LinkButton ID="lnkReenviar" runat="server" CssClass="gc-franja__b"
+                        Text="Reenviar el enlace" OnClick="lnkReenviar_Click" />
+                </div>
+            </div>
+        </asp:PlaceHolder>
+
         <asp:ContentPlaceHolder ID="MainContent" runat="server" />
 
         <footer class="gc-footer">

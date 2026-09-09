@@ -80,6 +80,21 @@ namespace frontend
         protected global::System.Web.UI.WebControls.PlaceHolder phNavAnalitica;
 
         /// <summary>
+        /// phConfirmar control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phConfirmar;
+
+        /// <summary>
+        /// litConfirmar control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litConfirmar;
+
+        /// <summary>
+        /// lnkReenviar control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.LinkButton lnkReenviar;
+
+        /// <summary>
         /// MainContent control.
         /// </summary>
         /// <remarks>
