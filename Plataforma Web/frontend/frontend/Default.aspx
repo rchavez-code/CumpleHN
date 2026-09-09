@@ -104,8 +104,8 @@
                 <div>
                     <h2>Tu opinión</h2>
                     <p class="gc-muted">
-                        Preguntas abiertas a la ciudadanía. Una respuesta por cuenta, y el resultado
-                        se muestra al responder.
+                        Preguntas abiertas a la ciudadanía. Una respuesta por cuenta, y podés
+                        cambiarla mientras la encuesta siga abierta.
                     </p>
                 </div>
             </div>
