@@ -11,8 +11,14 @@ namespace frontend
     /// visitante, sin necesidad de cuenta, y la contraparte de lo que el propio
     /// candidato administra desde su panel privado.
     /// </summary>
-    public partial class CandidatoPagina : Page
+    public partial class CandidatoPagina : PaginaDeModulo
     {
+        /// <summary>Módulo al que pertenece esta página.</summary>
+        protected override string ModuloRequerido
+        {
+            get { return Modulos.Perfiles; }
+        }
+
         private const string TabPropuestas = "propuestas";
 
         private Candidato _candidato;

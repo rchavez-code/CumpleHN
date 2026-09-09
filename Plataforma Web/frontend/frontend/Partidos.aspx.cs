@@ -10,8 +10,14 @@ namespace frontend
     /// <summary>
     /// Listado de partidos políticos con candidaturas en la plataforma.
     /// </summary>
-    public partial class PartidosPagina : Page
+    public partial class PartidosPagina : PaginaDeModulo
     {
+        /// <summary>Módulo al que pertenece esta página.</summary>
+        protected override string ModuloRequerido
+        {
+            get { return Modulos.Perfiles; }
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             // Se enlaza en cada carga porque las tarjetas llevan botones de

@@ -92,6 +92,18 @@ namespace frontend.Controles
 
         protected override void OnPreRender(EventArgs e)
         {
+            // Con la participación apagada, los contadores siguen a la vista y
+            // los botones de votar desaparecen. Lo que ya se registró es un
+            // dato de la plataforma: esconderlo sería reescribir el pasado, y
+            // el tablero seguiría contándolo.
+            if (!Modulos.Visible(Modulos.Interaccion))
+            {
+                lnkMeGusta.Enabled = false;
+                lnkNoMeGusta.Enabled = false;
+                lnkMeGusta.ToolTip = "La participación está temporalmente cerrada";
+                lnkNoMeGusta.ToolTip = lnkMeGusta.ToolTip;
+            }
+
             bool comoEnlace = !string.IsNullOrEmpty(UrlComentarios);
 
             lnkComentar.Visible = !comoEnlace;

@@ -17,6 +17,14 @@ namespace frontend.Servicios
         private const string ClaveRol = "rol";
         private const string ClaveCandidato = "candidatoSlug";
 
+        /// <summary>
+        /// Nombres de rol tal como los guarda el catálogo <c>Roles</c> de la
+        /// base de datos. Son constantes acá para que ninguna comparación
+        /// dependa de una cadena escrita a mano dentro de una página.
+        /// </summary>
+        public const string RolAdministrador = "Administrador";
+        public const string RolCandidato = "Candidato";
+
         private static object Leer(string clave)
         {
             HttpContext ctx = HttpContext.Current;
@@ -57,9 +65,28 @@ namespace frontend.Servicios
             get { return Convert.ToString(Leer(ClaveCandidato)); }
         }
 
+        private static bool EsRol(string rol)
+        {
+            return string.Equals(Rol, rol, StringComparison.OrdinalIgnoreCase);
+        }
+
         public static bool EsCandidato
         {
-            get { return string.Equals(Rol, "Candidato", StringComparison.OrdinalIgnoreCase); }
+            get { return EsRol(RolCandidato); }
+        }
+
+        /// <summary>
+        /// Administrador de la plataforma: verifica contenido, modera
+        /// publicaciones y administra los catálogos.
+        ///
+        /// Esta propiedad decide qué se le muestra a quién. Nunca alcanza por sí
+        /// sola para autorizar una acción que escriba: la sesión vive en el
+        /// frontend, así que el backend tiene que confirmar el rol contra la
+        /// base antes de modificar nada.
+        /// </summary>
+        public static bool EsAdministrador
+        {
+            get { return EsRol(RolAdministrador); }
         }
 
         /// <summary>

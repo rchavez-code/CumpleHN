@@ -85,6 +85,22 @@ namespace frontend.Modelos
             }
         }
 
+        /// <summary>
+        /// Nivel de verificación a partir del nombre que guarda el catálogo
+        /// NivelesVerificacion. Lo necesitan las pantallas de administración,
+        /// que reciben el nivel como texto y no como enumeración.
+        /// </summary>
+        public static NivelVerificacion NivelDe(string nombre)
+        {
+            if (string.Equals(nombre, "Verificado", StringComparison.OrdinalIgnoreCase))
+                return NivelVerificacion.Verificado;
+
+            if (string.Equals(nombre, "En revisión", StringComparison.OrdinalIgnoreCase))
+                return NivelVerificacion.EnRevision;
+
+            return NivelVerificacion.Declarado;
+        }
+
         // ----------------------------------------------------- Campañas
 
         public static string TextoEstadoCampana(EstadoCampana estado)
@@ -117,6 +133,15 @@ namespace frontend.Modelos
         public static string FechaCorta(DateTime f)
         {
             return f.ToString("d MMM yyyy", Hn);
+        }
+
+        /// <summary>
+        /// Fecha con hora. La bitácora la necesita: dos acciones del mismo día
+        /// sobre el mismo contenido se distinguen por la hora.
+        /// </summary>
+        public static string FechaHora(DateTime f)
+        {
+            return f.ToString("d MMM yyyy, HH:mm", Hn);
         }
 
         public static string Numero(int n)

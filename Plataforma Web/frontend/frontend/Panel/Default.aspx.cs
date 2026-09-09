@@ -10,26 +10,17 @@ namespace frontend.Panel
     /// Resumen del panel del candidato. Responde de un vistazo qué falta por
     /// completar y qué se ha registrado hasta el momento.
     /// </summary>
-    public partial class PanelDefault : Page
+    public partial class PanelDefault : PaginaPanel
     {
-        private Candidato _candidato;
         private Campana _campana;
         private IList<Propuesta> _propuestas;
         private IList<Publicacion> _publicaciones;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            _candidato = Contenido.Datos.ObtenerCandidatoAutenticado();
-
-            if (_candidato == null)
-            {
-                Response.Redirect("~/Acceso");
-                return;
-            }
-
-            _campana = Contenido.Datos.ObtenerCampana(_candidato.CampanaSlug);
-            _propuestas = Contenido.Datos.ObtenerPropuestas(_candidato.Slug);
-            _publicaciones = Contenido.Datos.ObtenerPublicaciones(_candidato.Slug);
+            _campana = Contenido.Datos.ObtenerCampana(CandidatoActual.CampanaSlug);
+            _propuestas = Contenido.Datos.ObtenerPropuestas(CandidatoActual.Slug);
+            _publicaciones = Contenido.Datos.ObtenerPublicaciones(CandidatoActual.Slug);
 
             CargarProyectos();
         }
@@ -59,7 +50,7 @@ namespace frontend.Panel
 
         protected int PerfilCompleto
         {
-            get { return _candidato.PerfilCompleto; }
+            get { return CandidatoActual.PerfilCompleto; }
         }
 
         protected string MensajePerfil
@@ -111,17 +102,17 @@ namespace frontend.Panel
 
         protected string VerificacionTexto
         {
-            get { return _candidato.VerificacionTexto; }
+            get { return CandidatoActual.VerificacionTexto; }
         }
 
         protected string VerificacionClase
         {
-            get { return _candidato.VerificacionClase; }
+            get { return CandidatoActual.VerificacionClase; }
         }
 
         protected string Cargo
         {
-            get { return _candidato.Cargo; }
+            get { return CandidatoActual.Cargo; }
         }
 
         protected string NombreCampana
@@ -141,7 +132,7 @@ namespace frontend.Panel
 
         protected string UrlPerfilPublico
         {
-            get { return ResolveUrl(_candidato.Url); }
+            get { return ResolveUrl(CandidatoActual.Url); }
         }
     }
 }

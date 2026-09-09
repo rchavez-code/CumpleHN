@@ -776,6 +776,45 @@ body.gc-esperando .gc-cuerpo { opacity: .45; pointer-events: none; }
     padding: 6px 12px;
 }
 
+/* La sugerencia dejó de ser un enlace y pasó a ser un botón cuando la
+   conversación dejó de ir por postback. Un botón no hereda la tipografía de
+   la página, y el :hover de cumplehn.css está escrito como a.gc-chip, así
+   que las dos cosas se reponen acá. */
+.gc-ia__sug button.gc-chip {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.gc-ia__sug button.gc-chip:hover { border-color: #d3d8dd; }
+
+/* El hilo empieza vacío y solo ocupa lugar cuando tiene algo. Un espacio
+   reservado de antemano se lee como un bloque roto. */
+.gc-ia__hilo:not(:empty) { margin-bottom: 18px; }
+
+.gc-ia__estado { flex: 1 1 auto; min-width: 0; }
+
+/* El asistente puede responder con tabla cuando compara varias entidades
+   por las mismas cifras. Reusa .gc-table, que es la misma que llevan las
+   tablas equivalentes de los gráficos, para que no aparezca un segundo
+   estilo de tabla en la misma página.
+
+   La caja con desplazamiento es obligatoria: la burbuja tiene ancho
+   limitado y una tabla de cinco columnas se sale. Desplazar la tabla es
+   preferible a que empuje el ancho de la conversación. */
+.gc-ia__tabla { overflow-x: auto; margin: 12px 0; }
+.gc-msg__b .gc-table { font-size: .82rem; }
+.gc-msg__b .gc-table th,
+.gc-msg__b .gc-table td { padding: 7px 10px; }
+
+.gc-msg__b ul,
+.gc-msg__b ol { margin: 8px 0 8px 20px; padding: 0; }
+.gc-msg__b li { margin-bottom: 4px; }
+
+/* Con tabla adentro, la burbuja necesita más ancho del que le basta a un
+   párrafo. Solo la del asistente: la de la persona es siempre texto. */
+.gc-msg--ia .gc-msg__b { max-width: 92%; }
+
 .gc-msg { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 15px; }
 .gc-msg--yo { flex-direction: row-reverse; }
 
@@ -865,4 +904,35 @@ body.gc-esperando .gc-cuerpo { opacity: .45; pointer-events: none; }
 
     .gc-dona-caja { gap: 16px; }
     .gc-dona-caja svg { width: 128px; }
+}
+
+/* ============================================================
+   Bloque oculto al público
+
+   Solo lo ve quien administra. La marca existe porque sin ella
+   confundiría lo que ve él con lo que ve el resto, y ese es el
+   error que vuelve inútil un interruptor: creer que algo está
+   publicado cuando no lo está.
+   ============================================================ */
+
+.gc-oculto {
+    position: relative;
+    outline: 2px dashed var(--gc-ambar);
+    outline-offset: 4px;
+}
+
+.gc-oculto::before {
+    content: "Oculto al público";
+    position: absolute;
+    top: -10px;
+    right: 12px;
+    z-index: 2;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--gc-ambar);
+    color: #fff;
+    font-size: .64rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
 }

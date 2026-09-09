@@ -11,9 +11,10 @@ namespace frontend.Panel
     /// pública porque el panel tiene su propia estructura: barra lateral de
     /// navegación, barra superior con acciones y área de contenido.
     ///
-    /// Pendiente: la protección de esta carpeta se resuelve cuando exista
-    /// autenticación. Mientras tanto el candidato lo provee el servicio de
-    /// contenido de demostración.
+    /// La plantilla no protege nada: eso lo resuelve <see cref="PaginaPanel"/>,
+    /// de la que heredan todas las páginas de esta carpeta. Una plantilla no
+    /// puede ser el control de acceso porque se aplica después de que la página
+    /// ya empezó su ciclo de vida.
     /// </summary>
     public partial class PanelMaster : MasterPage
     {
@@ -24,15 +25,20 @@ namespace frontend.Panel
         }
 
         /// <summary>
-        /// Candidato dueño del panel. Sustituye a la sesión mientras la
-        /// autenticación no está implementada.
+        /// Candidatura dueña del panel. La resuelve la página, que ya la tuvo
+        /// que obtener para autorizar el acceso: pedirla de nuevo sería una
+        /// segunda llamada al Web Service por cada carga.
         /// </summary>
         protected Candidato Actual
         {
             get
             {
                 if (_candidato == null)
-                    _candidato = Contenido.Datos.ObtenerCandidatoAutenticado();
+                {
+                    PaginaPanel pagina = Page as PaginaPanel;
+                    if (pagina != null)
+                        _candidato = pagina.CandidatoActual;
+                }
 
                 return _candidato;
             }

@@ -28,6 +28,94 @@ namespace frontend
             // su modelo presente cuando se procesa el clic.
             CargarCandidatos();
             CargarCampanas();
+            CargarEncuestas();
+        }
+
+        /// <summary>
+        /// Cuántas encuestas se ven sin desplegar. Es una decisión de
+        /// presentación y vive acá, no en la base: el procedimiento devuelve
+        /// todas las abiertas.
+        /// </summary>
+        private const int EncuestasALaVista = 2;
+
+        private int _totalEncuestas;
+
+        /// <summary>
+        /// Encuestas abiertas de la campaña destacada.
+        ///
+        /// El bloque entero desaparece cuando no hay ninguna, igual que el de
+        /// la campaña destacada: una sección que anuncia preguntas y no las
+        /// tiene es peor que no estar.
+        ///
+        /// La comprobación del módulo usa <c>Visible</c> y no
+        /// <c>Habilitado</c>, para que quien administra siga viendo las
+        /// encuestas apagadas —marcadas como ocultas— y pueda revisarlas antes
+        /// de publicarlas.
+        /// </summary>
+        private void CargarEncuestas()
+        {
+            if (!Modulos.Visible(Modulos.Encuestas))
+            {
+                phEncuestas.Visible = false;
+                return;
+            }
+
+            string slug = _actual != null ? _actual.Slug : null;
+
+            IList<Encuesta> encuestas =
+                Contenido.Datos.ObtenerEncuestasVigentes(slug, Sesion.CodigoUsuario);
+
+            _totalEncuestas = encuestas.Count;
+
+            phEncuestas.Visible = _totalEncuestas > 0;
+            if (_totalEncuestas == 0) return;
+
+            // Se enlaza en cada carga, también en los postbacks: sin modelo, el
+            // clic sobre una opción llega sin saber a qué encuesta pertenece.
+            rptEncuestas.DataSource = encuestas;
+            rptEncuestas.DataBind();
+
+            phVerMas.Visible = _totalEncuestas > EncuestasALaVista;
+
+            // El despliegue lo recuerda el input oculto, no el servidor: así
+            // sobrevive al postback de responder una encuesta sin gastar una
+            // consulta en recordarlo.
+            zonaEncuestas.Attributes["class"] =
+                EncuestasDesplegadas ? "gc-encs is-abierta" : "gc-encs";
+        }
+
+        /// <summary>
+        /// Columna de cada tarjeta. A partir de la tercera lleva la clase que
+        /// la esconde hasta que alguien pulse «Ver más».
+        /// </summary>
+        protected string ClaseColumnaEncuesta(int indice)
+        {
+            string clase = "col-12 gc-mb";
+
+            if (indice >= EncuestasALaVista) clase += " gc-encs__extra";
+
+            return clase;
+        }
+
+        protected bool EncuestasDesplegadas
+        {
+            get { return hdnEncuestas.Value == "1"; }
+        }
+
+        protected string TextoVerMas
+        {
+            get
+            {
+                int ocultas = _totalEncuestas - EncuestasALaVista;
+                if (ocultas < 1) return "Ver más";
+
+                return "Ver " + Vista.Plural(ocultas, "encuesta más", "encuestas más");
+            }
+        }
+
+        protected string TextoBotonEncuestas
+        {
+            get { return EncuestasDesplegadas ? "Ver menos" : TextoVerMas; }
         }
 
         private void CargarCandidatos()

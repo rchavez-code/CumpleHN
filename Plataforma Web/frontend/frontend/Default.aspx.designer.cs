@@ -27,6 +27,31 @@ namespace frontend
         protected global::System.Web.UI.WebControls.PlaceHolder phActual;
 
         /// <summary>
+        /// phEncuestas control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phEncuestas;
+
+        /// <summary>
+        /// zonaEncuestas control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl zonaEncuestas;
+
+        /// <summary>
+        /// rptEncuestas control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Repeater rptEncuestas;
+
+        /// <summary>
+        /// phVerMas control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phVerMas;
+
+        /// <summary>
+        /// hdnEncuestas control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.HiddenField hdnEncuestas;
+
+        /// <summary>
         /// rptCandidatos control.
         /// </summary>
         protected global::System.Web.UI.WebControls.Repeater rptCandidatos;

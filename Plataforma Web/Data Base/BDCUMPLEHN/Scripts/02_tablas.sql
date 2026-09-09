@@ -280,6 +280,49 @@ CREATE TABLE dbo.Publicaciones
 );
 GO
 
+/* Baja lógica de las publicaciones.
+
+   Una publicación inadecuada se retira, no se borra. Un DELETE
+   se llevaría por delante sus valoraciones y sus comentarios, y
+   dejaría al tablero de analítica contando totales que ya no
+   cuadran con las filas que quedan. Retirada, la fila sigue
+   existiendo con el motivo y el responsable del retiro, que es
+   lo que permite auditar la moderación.
+
+   Va como ALTER y no dentro del CREATE TABLE de arriba porque
+   ese CREATE solo corre en una base nueva: en la que ya existe
+   estas columnas se agregan acá.
+
+   La consulta pública filtra activo = 1. Solo el área de
+   administración ve las retiradas. */
+
+IF COL_LENGTH('dbo.Publicaciones', 'activo') IS NULL
+    ALTER TABLE dbo.Publicaciones
+        ADD activo BIT NOT NULL CONSTRAINT DF_Publicaciones_activo DEFAULT (1);
+GO
+
+IF COL_LENGTH('dbo.Publicaciones', 'motivoBaja') IS NULL
+    ALTER TABLE dbo.Publicaciones ADD motivoBaja NVARCHAR(300) NULL;
+GO
+
+IF COL_LENGTH('dbo.Publicaciones', 'fechaBaja') IS NULL
+    ALTER TABLE dbo.Publicaciones ADD fechaBaja DATETIME2(0) NULL;
+GO
+
+/* Quién la retiró. Sin llave foránea a Usuarios no habría manera
+   de responder por una moderación. */
+IF COL_LENGTH('dbo.Publicaciones', 'codigoUsuarioBaja') IS NULL
+BEGIN
+    ALTER TABLE dbo.Publicaciones ADD codigoUsuarioBaja INT NULL;
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Publicaciones_UsuarioBaja')
+    ALTER TABLE dbo.Publicaciones
+        ADD CONSTRAINT FK_Publicaciones_UsuarioBaja
+            FOREIGN KEY (codigoUsuarioBaja) REFERENCES dbo.Usuarios (codigoUsuario);
+GO
+
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Publicaciones_campana')
 CREATE INDEX IX_Publicaciones_campana ON dbo.Publicaciones (codigoCampana, fecha DESC);
 GO

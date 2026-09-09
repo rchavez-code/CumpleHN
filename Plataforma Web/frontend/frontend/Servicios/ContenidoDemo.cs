@@ -229,6 +229,29 @@ namespace frontend.Servicios
         }
 
         // =============================================================
+        //  Asistente
+        // =============================================================
+
+        /// <summary>
+        /// El asistente no tiene versión de demostración, y es a propósito.
+        ///
+        /// Esta clase existe para trabajar el diseño sin levantar el backend.
+        /// Devolver acá una respuesta inventada sería exactamente lo que el
+        /// asistente tiene prohibido hacer, y además haría creer que funciona
+        /// mientras se revisa la maqueta. Dice lo que pasa y ya.
+        /// </summary>
+        public RespuestaAsistente PreguntarAsistente(
+            int codigoUsuario, string pregunta, string campanaSlug)
+        {
+            return new RespuestaAsistente
+            {
+                Ok = false,
+                Mensaje = "El asistente necesita el backend en marcha. "
+                        + "Los datos de demostración no lo incluyen."
+            };
+        }
+
+        // =============================================================
         //  Catálogos
         // =============================================================
 
@@ -237,6 +260,223 @@ namespace frontend.Servicios
         /// Gobierno (ONU, 2000). El orden refleja el interés medido en la
         /// encuesta del proyecto: seguridad, salud y educación al frente.
         /// </summary>
+
+        // =============================================================
+        //  Administración
+        //
+        //  El origen de demostración no la implementa. Administrar significa
+        //  escribir, y estos datos viven en memoria: se pierden al reciclar el
+        //  proceso, así que una verificación hecha acá sería una verificación
+        //  que se deshace sola. Peor que no poder hacerla.
+        //
+        //  Las consultas devuelven vacío y las acciones lo dicen en su mensaje,
+        //  para que la pantalla explique la situación en vez de fallar.
+        // =============================================================
+
+        public IList<ItemVerificacion> ObtenerBandejaVerificacion(
+            int codigoUsuario, string tipoObjeto, string campanaSlug, bool soloPendientes)
+        {
+            return new List<ItemVerificacion>();
+        }
+
+        public Resultado CambiarVerificacion(
+            int codigoUsuario, string tipoObjeto, int codigoObjeto,
+            int codigoVerificacion, string motivo)
+        {
+            return SinAdministracion();
+        }
+
+        public IList<PublicacionModerada> ObtenerPublicacionesModeracion(
+            int codigoUsuario, string campanaSlug, string estado)
+        {
+            return new List<PublicacionModerada>();
+        }
+
+        public Resultado ModerarPublicacion(
+            int codigoUsuario, int codigoPublicacion, bool activa, string motivo)
+        {
+            return SinAdministracion();
+        }
+
+        public IList<RegistroAuditoria> ObtenerAuditoria(int codigoUsuario, string accion, int limite)
+        {
+            return new List<RegistroAuditoria>();
+        }
+
+        public IList<OpcionCatalogo> ObtenerNivelesVerificacion()
+        {
+            return new List<OpcionCatalogo>
+            {
+                new OpcionCatalogo { Codigo = 1, Nombre = NivelesVerificacion.Declarado },
+                new OpcionCatalogo { Codigo = 2, Nombre = NivelesVerificacion.EnRevision },
+                new OpcionCatalogo { Codigo = 3, Nombre = NivelesVerificacion.Verificado }
+            };
+        }
+
+
+        // ------------------------------------------------- Catálogos admin
+
+        public IList<PartidoAdmin> ObtenerPartidosAdmin(int codigoUsuario, bool soloActivos)
+        {
+            return new List<PartidoAdmin>();
+        }
+
+        public ResultadoGuardado GuardarPartido(
+            int codigoUsuario, int codigoPartido, string nombre, string siglas, string descripcion)
+        {
+            return SinAdministracionGuardado();
+        }
+
+        public Resultado CambiarEstadoPartido(
+            int codigoUsuario, int codigoPartido, bool activo, string motivo)
+        {
+            return SinAdministracion();
+        }
+
+        public IList<CampanaAdmin> ObtenerCampanasAdmin(int codigoUsuario)
+        {
+            return new List<CampanaAdmin>();
+        }
+
+        public ResultadoGuardado GuardarCampana(
+            int codigoUsuario, int codigoCampana, string nombre, string resumen,
+            string descripcion, string alcance, DateTime fechaInicio, DateTime fechaEleccion,
+            string estado, bool esActual)
+        {
+            return SinAdministracionGuardado();
+        }
+
+        public IList<CandidatoAdmin> ObtenerCandidatosAdmin(
+            int codigoUsuario, string campanaSlug, bool soloActivos)
+        {
+            return new List<CandidatoAdmin>();
+        }
+
+        public ResultadoGuardado GuardarCandidato(
+            int codigoUsuario, int codigoCandidato, string nombres, string apellidos,
+            int codigoCampana, int codigoCargo, int codigoPartido, int codigoDepartamento,
+            string municipio, string titular)
+        {
+            return SinAdministracionGuardado();
+        }
+
+        public Resultado CambiarEstadoCandidato(
+            int codigoUsuario, int codigoCandidato, bool activo, string motivo)
+        {
+            return SinAdministracion();
+        }
+
+        public Resultado CrearCuentaCandidato(
+            int codigoUsuario, int codigoCandidato, string login, string correo, string clave)
+        {
+            return SinAdministracion();
+        }
+
+        public IList<OpcionCatalogo> ObtenerCargosConCodigo()
+        {
+            return new List<OpcionCatalogo>();
+        }
+
+        public IList<OpcionCatalogo> ObtenerDepartamentosConCodigo()
+        {
+            return new List<OpcionCatalogo>();
+        }
+
+        public IList<OpcionCatalogo> ObtenerCategoriasConCodigo()
+        {
+            return new List<OpcionCatalogo>();
+        }
+
+        private static ResultadoGuardado SinAdministracionGuardado()
+        {
+            Resultado r = SinAdministracion();
+            return new ResultadoGuardado { Ok = r.Ok, Mensaje = r.Mensaje, Codigo = 0 };
+        }
+
+
+        // ------------------------------------------------------- Módulos
+
+        /// <summary>
+        /// Sin base de datos no hay catálogo de módulos, y una lista vacía deja
+        /// todo visible: es lo que corresponde para trabajar en el diseño.
+        /// </summary>
+        // =============================================================
+        //  Encuestas
+        //
+        //  Los datos en memoria no incluyen encuestas. Devolver la lista vacía
+        //  es lo correcto: la portada ya sabe esconder el bloque cuando no hay
+        //  ninguna abierta, así que este origen se ve como un sitio sin
+        //  encuesta en curso y no como uno roto.
+        // =============================================================
+
+        public IList<Encuesta> ObtenerEncuestasVigentes(string campanaSlug, int codigoUsuario)
+        {
+            return new List<Encuesta>();
+        }
+
+        public ResultadoEncuesta ResponderEncuesta(
+            int codigoEncuesta, int codigoOpcion, int codigoUsuario)
+        {
+            return new ResultadoEncuesta
+            {
+                Ok = false,
+                Mensaje = "Las encuestas necesitan la base de datos. "
+                        + "Este origen de datos es solo de demostración."
+            };
+        }
+
+        public IList<EncuestaAdmin> ObtenerEncuestasAdmin(
+            int codigoUsuario, string campanaSlug, string estado)
+        {
+            return new List<EncuestaAdmin>();
+        }
+
+        public IList<OpcionEncuesta> ObtenerOpcionesEncuestaAdmin(
+            int codigoUsuario, int codigoEncuesta)
+        {
+            return new List<OpcionEncuesta>();
+        }
+
+        public ResultadoGuardado GuardarEncuesta(
+            int codigoUsuario, int codigoEncuesta, int codigoCampana,
+            string pregunta, string descripcion, int codigoCategoria,
+            DateTime fechaInicio, string fechaCierre, string opciones)
+        {
+            return SinAdministracionGuardado();
+        }
+
+        public Resultado CambiarEstadoEncuesta(
+            int codigoUsuario, int codigoEncuesta, string accion, string motivo)
+        {
+            return SinAdministracion();
+        }
+
+        public IList<EstadoModulo> ObtenerModulosVisibles()
+        {
+            return new List<EstadoModulo>();
+        }
+
+        public IList<ModuloAdmin> ObtenerModulosAdmin(int codigoUsuario)
+        {
+            return new List<ModuloAdmin>();
+        }
+
+        public Resultado CambiarEstadoModulo(
+            int codigoUsuario, string clave, bool habilitado, string motivo)
+        {
+            return SinAdministracion();
+        }
+
+        private static Resultado SinAdministracion()
+        {
+            return new Resultado
+            {
+                Ok = false,
+                Mensaje = "La administración necesita la base de datos. " +
+                          "Este origen de datos es solo de demostración."
+            };
+        }
+
         public IList<string> ObtenerCategorias()
         {
             return new List<string>

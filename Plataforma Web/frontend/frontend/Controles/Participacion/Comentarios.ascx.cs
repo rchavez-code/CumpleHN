@@ -41,10 +41,15 @@ namespace frontend.Controles
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // El hilo se lee siempre. Lo que la administración puede cerrar es
+            // la posibilidad de agregar comentarios nuevos, no la de leer los
+            // que ya existen.
+            bool abierta = Modulos.Visible(Modulos.Interaccion);
             bool autenticado = Sesion.Autenticado;
 
-            phFormulario.Visible = autenticado;
-            phInvitacion.Visible = !autenticado;
+            phFormulario.Visible = abierta && autenticado;
+            phInvitacion.Visible = abierta && !autenticado;
+            phCerrado.Visible = !abierta;
 
             if (!IsPostBack) Cargar();
         }

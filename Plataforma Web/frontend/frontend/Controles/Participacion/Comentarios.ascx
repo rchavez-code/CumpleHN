@@ -21,6 +21,14 @@
 
     <%-- ============================ Invitación a crear una cuenta --%>
 
+    <%-- La participación quedó cerrada por la administración. El hilo se sigue
+         leyendo: cerrar la participación no borra lo que ya se dijo. --%>
+    <asp:PlaceHolder ID="phCerrado" runat="server" Visible="false">
+        <div class="gc-gate">
+            <span>La participación está temporalmente cerrada. Los comentarios registrados siguen visibles.</span>
+        </div>
+    </asp:PlaceHolder>
+
     <asp:PlaceHolder ID="phInvitacion" runat="server" Visible="false">
         <div class="gc-gate">
             <span>Para comentar necesitás una cuenta. Leer los comentarios es libre.</span>

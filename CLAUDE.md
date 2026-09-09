@@ -69,7 +69,7 @@ Tres soluciones `.slnx` independientes:
 
 - `Plataforma Web/frontend/` → `frontend.csproj`. IIS Express en el puerto 5080.
 - `Plataforma Web/backend/` → `backend.csproj`. Vacío por ahora, ya referencia `System.Web.Services`.
-- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`.
+- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`, `09_administracion`, `10_catalogos_admin`, `11_modulos`.
 
 Los scripts están en UTF-8 **sin BOM**, así que por línea de comandos hay que pasarle la página de códigos a sqlcmd o las tildes entran corruptas:
 
@@ -84,6 +84,25 @@ Dentro del frontend:
 - `Servicios/` — `IContenidoServicio` es el contrato único por el que las páginas obtienen datos. Hoy lo implementa `ContenidoDemo` (datos en memoria). **Al conectar el ASMX se cambia una sola línea en `Contenido.cs` y ninguna página se toca.**
 - `Controles/` — controles reutilizables (`CampanaCard`, `CandidatoCard`, `PropuestaCard`, `PublicacionCard`), registrados en `Web.config` para que ninguna página los declare.
 - `Panel/` — área privada del candidato, con su propia plantilla `Panel.Master`.
+- `Admin/` — área privada del administrador de la plataforma, con su propia plantilla `Admin.Master`.
+
+### Roles y control de acceso
+
+Dos roles en el catálogo `Roles`: **Administrador** y **Candidato**. Quien se registra sin candidatura queda como ciudadano y participa en las páginas públicas, sin área privada.
+
+Cada rol entra a su propia área. La correspondencia rol → área vive **solo** en `Autorizacion.InicioDe`, que usan tanto `Acceso.aspx.cs` al entrar como las páginas al rechazar a quien no corresponde. Si estuviera en los dos lados podrían discrepar.
+
+La protección **no puede** hacerse con `<authorization>` del Web.config: ese mecanismo se apoya en la autenticación de formularios de ASP.NET, y CumpleHN guarda la sesión en `Session` después de validar contra el Web Service. Se resuelve en código, en clases base de página de `Servicios/Autorizacion.cs`:
+
+- `PaginaSegura` comprueba el rol en `OnPreInit`, el primer paso del ciclo de vida, antes de que exista un solo control. Sin sesión manda a `~/Acceso` conservando el destino. Con sesión pero con otro rol devuelve a su propia área, que no es lo mismo: pedirle acceso a quien ya entró es un rodeo sin salida.
+- `PaginaPanel` exige rol Candidato y además expone `CandidatoActual` ya resuelto y **nunca nulo**. Todas las páginas de `Panel/` heredan de ella.
+- `PaginaAdmin` exige rol Administrador. Todas las páginas de `Admin/` heredan de ella.
+
+**La protección va en la clase base, no en cada página.** Antes cada página del panel repetía el mismo bloque de comprobación, así que una página nueva que olvidara copiarlo quedaba abierta — que es el fallo de control de acceso del A01 de OWASP. Con la clase base, olvidarse significa no compilar contra `CandidatoActual`.
+
+Las plantillas `Panel.Master` y `Admin.Master` **no protegen nada**: una plantilla se aplica después de que la página ya empezó su ciclo de vida. `Panel.Master` toma la candidatura de la página en lugar de volver a pedirla, para no gastar una segunda llamada al Web Service por carga.
+
+Del lado del backend, `EsAdministrador(conn, codigoUsuario)` confirma rol y cuenta activa contra la base. **Toda acción de administración tiene que pasar por ahí antes de escribir.** Lo que el frontend sabe de su sesión decide qué botones muestra, nunca qué se permite: quien llame al Web Service directamente envía el código de usuario que quiera.
 
 ### Decisiones de modelo que no se deben romper
 
@@ -194,6 +213,8 @@ Estructura de `Analitica.aspx`: encabezado + filtros + KPI siempre visibles, y c
 
 Los estilos del tablero viven en `Content/cumplehn-analitica.css`, enlazado desde el `HeadContent` de la página y no desde el bundle, porque ninguna otra página los necesita.
 
+**Todo archivo estático se enlaza con `Recursos.Url("~/…")`, que le pega la fecha de modificación como `?v=`.** Las tres plantillas (`Site.Master`, `Admin.Master`, `Panel.Master`) enlazan así `bootstrap.css` y `cumplehn.css`, en lugar del `<webopt:bundlereference path="~/Content/css" />` que usaban antes. Ese paquete, con las optimizaciones apagadas —que es como corre en desarrollo—, no combina ni versiona nada: escribe un enlace por archivo con la ruta pelada, y el navegador sirve para siempre la copia que ya tenía. Es la tercera vez que el proyecto pierde tiempo con esto, y la peor: una tanda entera de rediseño de la tarjeta de encuestas se veía con los estilos anteriores, así que parecía que el trabajo no se había hecho. `Bundle.config` se eliminó, porque un archivo que parece gobernar las hojas de estilo y no las gobierna es peor que no tenerlo.
+
 Las pestañas son un **control segmentado** (pista gris con la activa en superficie blanca elevada), no una fila de títulos subrayados: con cuatro etiquetas largas, el subrayado solo no comunicaba que fueran opciones intercambiables. La activa lleva además un punto de color, para no depender solo de la elevación en alto contraste o al imprimir.
 
 Reglas de los gráficos, aplicadas a mano porque no hay node para correr el validador de paleta:
@@ -208,10 +229,156 @@ Reglas de los gráficos, aplicadas a mano porque no hay node para correr el vali
 8. El SVG (dona y actividad diaria) **se genera en el servidor**. Los tooltips son elementos `<title>` nativos: no necesitan JavaScript y los lee el lector de pantalla.
 9. La cuadrícula de departamentos **no es un mapa** y la página lo dice. Trazar fronteras aproximadas a mano produciría un mapa falso, y la pregunta que el indicador responde es cuáles tienen cobertura, no dónde quedan.
 
-El asistente de IA de `Analitica.aspx` es una **maqueta declarada como tal en pantalla**: las respuestas se arman con las cifras reales del tablero en pantalla y citan el procedimiento del que sale cada cifra, pero las preguntas se reconocen por palabras clave, no con un modelo de lenguaje. Cuando no reconoce una pregunta lo dice, en lugar de inventar. Al conectar el modelo se conserva la forma de la respuesta con sus fuentes, que es lo que la encuesta dejó como condición de confianza (77.4 %).
+El asistente de IA de `Analitica.aspx` ya está conectado a un modelo de lenguaje. Conserva la forma de respuesta que tenía la maqueta —cuerpo redactado más lista de fuentes—, y esa continuidad es deliberada: es lo que la encuesta dejó como condición de confianza (77.4 %). Se detalla más abajo, en «Módulo del asistente».
+
+### Módulo de administración
+
+Las dos facultades del rol Administrador: verificar contenido y moderar publicaciones. Mismo reparto de responsabilidades que la analítica — la base calcula y valida, el Web Service transporta, los modelos interpretan, la página dibuja.
+
+**Retirar una publicación es baja lógica, nunca `DELETE`.** `Publicaciones` lleva `activo`, `motivoBaja`, `fechaBaja` y `codigoUsuarioBaja`. Un borrado real se llevaría las valoraciones y los comentarios de la publicación, y el tablero quedaría contando totales que no cuadran con las filas que quedan. El filtro `activo = 1` va en **dos lugares y solo dos**: la vista `vwAnaliticaPublicaciones` (de ahí se propaga a valoraciones y comentarios, que se unen a ella) y la constante `SelectPublicacion` del Web Service, que comparten todas las consultas públicas. Poner el filtro en cada método sería la manera de que una consulta nueva se olvide.
+
+**Ninguna acción de administración queda sin registro.** La tabla `Auditoria` guarda quién, qué, sobre qué objeto, cuándo y con qué motivo, con el mismo par polimórfico `(codigoTipoObjeto, codigoObjeto)` de `Valoraciones` y `Comentarios`. A diferencia de aquellas, la fila se conserva aunque el objeto desaparezca: una bitácora que se borra sola no sirve como bitácora. No hay pantalla ni método para editarla o borrarla, y no debe haberlos.
+
+**El motivo es obligatorio** al marcar como verificado y en las dos direcciones de la moderación. Ahí es donde queda anotada la fuente que respalda la decisión. Lo exige el procedimiento almacenado, no la página: una validación que solo vive en el formulario se salta llamando al servicio.
+
+**El rol se comprueba dos veces**, en el Web Service (`EsAdministrador`) y dentro de cada procedimiento de escritura (`fnEsAdministrador`). No es descuido: el control de acceso no debe depender de un solo punto, y la comprobación de la base queda documentada en el Manual Técnico del capítulo IX. Está verificado que llamar al ASMX directamente con el código de un ciudadano o de un candidato no permite verificar ni moderar.
+
+Procedimientos de `09_administracion.sql`: `spAdminBandejaVerificacion`, `spAdminCambiarVerificacion`, `spAdminPublicaciones`, `spAdminModerarPublicacion` y `spAdminAuditoria`, más la función `fnEsAdministrador`. Los de escritura devuelven una fila con `ok` y `mensaje` que el Web Service transporta tal cual, para que el texto del rechazo viva en un solo lugar.
+
+La bandeja de verificación es **una sola cola** con candidaturas, propuestas y publicaciones juntas, ordenada por lo más antiguo sin verificar. Quien revisa trabaja por antigüedad, no por tipo.
+
+**Cuidado con el ciclo de vida en las páginas con panel de decisión.** `Page_Load` corre **antes** que el evento del botón. Preseleccionar ahí el valor de un desplegable pisa lo que la persona acaba de elegir, y se guarda siempre el valor anterior. Pasó en `Verificacion.aspx`: el nivel se preselecciona solo cuando `!IsPostBack` o al elegir otro contenido, nunca en el postback que guarda.
+
+### Catálogos administrados
+
+Alta y edición de partidos, campañas y candidaturas, más la creación de la cuenta de acceso de una candidatura (`10_catalogos_admin.sql`). Mismas reglas del script 09: `fnEsAdministrador` en cada escritura, bitácora en cada acción, y una fila con `ok` y `mensaje` de vuelta.
+
+**Los slugs los genera `fnSlug`, y solo al dar de alta.** Un slug es la dirección pública de la ficha: regenerarlo al editar rompería todo enlace ya compartido. Además los slugs existentes no siempre coinciden con lo que la función derivaría del nombre — la campaña «Elecciones Generales 2029» tiene el slug `generales-2029` —, así que corregir un nombre mal escrito mudaría la ficha de dirección. Los tres procedimientos de guardado comprueban la unicidad del slug **solo en el alta**.
+
+**Nada se borra.** `Partidos` y `Candidatos` se desactivan con su columna `activo`, y las campañas se cierran con su `estado`. Un partido con candidaturas activas no se puede desactivar: escondería de la consulta pública a gente que sí se presentó por él. Al retirar una candidatura, **su cuenta de acceso se desactiva con ella** — una candidatura retirada que todavía puede publicar sería una puerta abierta sin ficha detrás.
+
+**`Candidatos` conserva las columnas de texto `partido` y `partidoSiglas` junto a `codigoPartido`.** Están desnormalizadas desde antes y las consultas del Web Service las leen. `spAdminGuardarCandidato` las sincroniza desde `Partidos` en la misma operación, y `spAdminGuardarPartido` las actualiza en todas sus candidaturas al renombrarse. Como esos procedimientos son los únicos que escriben, no pueden quedar en desacuerdo.
+
+Las contraseñas de las cuentas nuevas se cifran con `HASHBYTES('SHA2_256', CONVERT(VARCHAR(200), @clave))` en hexadecimal minúscula, que produce exactamente el mismo hash que `EncriptarSHA256` del backend y que el script de datos demo. Está verificado con un acceso real. La contraseña no aparece en la respuesta ni en la bitácora: quien la crea es quien la entrega.
+
+**`SET QUOTED_IDENTIFIER ON` al inicio de los scripts 09 y 10.** Un procedimiento guarda para siempre el valor que esa opción tenía al crearse, y **sqlcmd la trae apagada** (a diferencia de SSMS). Con la opción apagada, cualquier escritura sobre una tabla con índice filtrado falla con el error 1934 — `Campanas` tiene `UQ_Campanas_unicaActual`, el índice que garantiza una sola campaña destacada. Sin esa línea, los procedimientos compilan bien y fallan solo al ejecutarse.
+
+### Interruptores de módulos
+
+La administración puede ocultar del sitio público un módulo entero o un gráfico concreto del tablero (`11_modulos.sql`). **Ocultar no es dar de baja**: el contenido sigue en la base, y el rol Administrador lo sigue viendo con un aviso — así se puede preparar algo antes de publicarlo, o retirar lo que no está listo sin perder la capacidad de revisarlo.
+
+**Un solo mecanismo para dos niveles de detalle.** `Modulos` tiene una fila por cada cosa apagable, y `clavePadre` expresa la jerarquía: apagar `analitica` apaga sus doce gráficos aunque cada uno tenga su interruptor encendido. La resolución vive en `vwModulosEfectivos`, que distingue `habilitado` (el interruptor propio) de `visible` (ya con el padre aplicado). Si cada página lo calculara por su cuenta, bastaría con que una lo hiciera distinto para que el tablero se contradijera.
+
+**Solo se registran elementos que el código consulta de verdad.** No hay interruptor para «consulta ciudadana con filtros» de los seis módulos comprometidos: no es una página sino una capacidad repartida por el sitio, y apagarla no tendría efecto verificable. Un interruptor que no apaga nada es peor que no tenerlo, porque en la pantalla se ve igual que los que sí funcionan.
+
+**Ocultar el enlace del menú nunca alcanza.** La dirección se puede escribir a mano. Cada página pública hereda de `PaginaDeModulo`, que comprueba su módulo en `OnPreInit`, y el Web Service comprueba `ModuloVisible` antes de aceptar una valoración o un comentario: cerrar la participación desde el frontend se saltaría llamando al ASMX directamente.
+
+**Al cerrar la participación, lo ya registrado sigue visible** y solo se impide participar de nuevo. Los contadores se muestran, los botones quedan deshabilitados con su explicación, y el hilo de comentarios se lee. Esconder lo que ya se dijo sería reescribir el pasado, y además el tablero lo seguiría contando.
+
+`Servicios/Modulos.cs` consulta el estado **una vez por petición** (caché en `HttpContext.Items`). Sin eso, una página con doce gráficos abriría doce llamadas al Web Service para responder doce veces la misma pregunta. Ante una clave desconocida o un backend caído devuelve visible: un error de comunicación no debe vaciar la plataforma.
+
+Los bloques del tablero se marcan con `runat="server"` sobre su propio `div` en lugar de envolverse en un `PlaceHolder` — son divs anidados y envolverlos habría sido frágil. En las dos parejas de columnas el atributo va en el `col-*`, no en la tarjeta, para que no quede media fila vacía. El bloque que solo ve el administrador lleva la clase **`.gc-oculto`** (borde ámbar punteado y etiqueta «Oculto al público»): sin esa marca, quien administra confundiría lo que ve él con lo que ve el resto, que es el error que vuelve inútil un interruptor.
+
+### Módulo del asistente
+
+Mismo reparto de responsabilidades que la analítica, con una capa más: **la base calcula y además decide qué puede leerse**, el Web Service transporta y comprueba, el modelo redacta, la página dibuja. El modelo **nunca escribe SQL**. Recibe cuatro herramientas y cada una es un procedimiento almacenado con parámetros tipados, así que lo único que conoce de la plataforma es la fila que ese procedimiento le devuelve.
+
+Las herramientas son `consultar_tablero` (los diez `spAnalitica*`), `buscar_propuestas`, `ficha_candidato` y `catalogos`. Agregar una capacidad nueva es agregar un procedimiento con su `GRANT`, **nunca una consulta suelta**.
+
+**Lo que el asistente puede saber lo deciden las columnas, no los permisos.** Ningún procedimiento del script 12 proyecta con `*`. Quedan fuera a propósito el correo y el teléfono de las candidaturas, toda columna de `Usuarios`, y la participación individual: `Valoraciones` vincula a una persona con su preferencia política, que es el dato que más daño haría filtrado. `Comentarios` queda fuera además porque su texto lo escribe cualquier ciudadano, y leerlo sería dejar que un comentario le dé instrucciones al modelo.
+
+**El login `cumplehn_ia` es la segunda capa** (`13_permisos_ia.sql`). No pertenece a `db_datareader` ni tiene permiso sobre ninguna tabla: solo `EXECUTE` sobre los procedimientos concedidos, y llega a las tablas por **encadenamiento de propiedad**. Por eso los `DENY` sobre `Usuarios`, `Valoraciones`, `Comentarios`, `Auditoria`, `ConsultasIA` y las dos vistas que llevan `codigoUsuario` bloquean la consulta directa sin romper los procedimientos. Está verificado con `EXECUTE AS`, y ya sirvió: atrapó una versión que resolvía la campaña con dos `SELECT` sueltos.
+
+`AsistenteDatos` es **el único punto que abre esa conexión**, por la misma razón por la que el control de acceso vive en `PaginaSegura` y no repetido en cada página. Si se abriera en cada método que la necesita, bastaría con que uno nuevo se olvidara para perder la garantía, y el síntoma sería que todo funciona.
+
+**Las fuentes se arman con las herramientas que se ejecutaron**, no con las que el modelo diga haber usado. Un modelo puede describir mal su propio trabajo, el registro de llamadas no.
+
+Y **describen lo que la herramienta devolvió, no el procedimiento que la resolvió**: «7 candidaturas y 11 propuestas registradas en la plataforma», no «spAnaliticaResumen». Nombrar el procedimiento es cierto pero no le sirve a nadie para verificar nada, que es justamente lo que la encuesta pedía. La traza técnica no se pierde: los nombres de las herramientas siguen guardándose en `ConsultasIA`, que es donde hacen falta. Cuando el modelo responde sin consultar la base —un pedido de ranking, por ejemplo— la fuente lo dice, porque callarlo dejaría una respuesta sin respaldo con el mismo aspecto que una respaldada.
+
+**Todo lo que entra por herramientas es dato, nunca instrucción.** El prompt lo declara y el resultado viaja delimitado. Del lado del navegador, la respuesta **no se inserta con `innerHTML`**: se analiza con `DOMParser`, que no ejecuta nada, y el árbol se reconstruye nodo por nodo con una lista blanca de etiquetas (`p`, `br`, `strong`, `em`, listas y tabla) **sin copiar ni un solo atributo**. La garantía está en los atributos y no en la lista de etiquetas: sin `onerror`, `href` ni `src`, ninguna etiqueta puede ejecutar nada aunque se permita. Las clases de la tabla las pone el script, nunca el modelo.
+
+Una etiqueta fuera de la lista se descarta ella sola y su texto sigue subiendo. Perder media frase porque el modelo la envolvió en algo raro sería peor que perder el formato. **El prompt pide las mismas etiquetas que la lista blanca acepta, pero la que manda es la lista**: un prompt es una instrucción, no una garantía.
+
+**Tres comprobaciones antes de gastar un token**, todas en el Web Service: módulo visible, cuenta activa y cuota diaria (`spIACuotaDisponible`, 20 por persona y día). El frontend decide qué muestra, nunca qué se permite. `ConsultasIA` registra cada pregunta con su respuesta, herramientas, tokens y tiempo, responda o falle — una bitácora que solo guarda los casos buenos no sirve para revisar los malos. La escribe el backend con su conexión normal, no el asistente.
+
+La conversación **no va por postback**: la consulta tarda de diez a veinte segundos y eso congelaría la página y perdería la pestaña activa. Va contra `Asistente.ashx`, que vive en el frontend y no expone el backend al navegador — abrir CORS sobre el método que gasta dinero sería dejarlo al alcance de cualquier sitio.
+
+El modelo y el esfuerzo son ajustes del `Web.config` (`AsistenteModelo`, `AsistenteEsfuerzo`), no del código. En desarrollo va `claude-sonnet-5`, que cuesta alrededor de la tercera parte que Opus 5. La elección definitiva se decide comparando lo guardado en `ConsultasIA`, y lo que hay que mirar no es si la respuesta suena bien sino si sostiene las tres reglas que hacen defendible el módulo: negarse a rankear candidaturas, decir el nivel de verificación sin que se lo pidan, y responder que no sabe en vez de completar.
+
+La clave de la API y la cadena de `cumplehn_ia` viven en `secrets.config`, fuera de git, enganchado con el atributo `file` de `appSettings` — que complementa en vez de reemplazar y se ignora en silencio si falta, así el backend arranca en una máquina recién clonada. `secrets.config.ejemplo` sí se versiona.
+
+El SDK `Anthropic` arrastra trece dependencias y exige `LangVersion 9.0`, porque declara sus propiedades con establecedores `init`. Las redirecciones de enlace usan la versión del **ensamblado** dentro de cada paquete, que no coincide con la del paquete: `System.Memory` 4.6.3 contiene el ensamblado 4.0.5.0. Sin ellas el sitio compila y falla al ejecutarse.
+
+**Costo medido:** unos 11.000 tokens de entrada y 470 de salida por consulta, alrededor de $0.027 con Sonnet 5 y $0.077 con Opus 5. Casi toda la entrada es que `consultar_tablero` devuelve los diez indicadores aunque la pregunta necesite uno — dejarle al modelo elegir cuáles pedir es la optimización pendiente, y es mejor idea que bajar de modelo.
+
+### Módulo de encuestas de percepción
+
+La tercera pata del módulo de participación ciudadana. El FO-GR-013 aprobado describe ese módulo como «comentarios, valoraciones **o votaciones de percepción**»: las dos primeras están en el script 05, esta es la tercera. No es alcance nuevo, así que no hay que reabrir la descripción aprobada con el asesor.
+
+**Solo el rol Administrador crea encuestas** (`Admin/Encuestas.aspx`). El candidato no: quien redacta las opciones controla el marco, y una encuesta escrita por una parte interesada dentro de una plataforma que se declara neutral sería un instrumento de campaña. El ciudadano tampoco, porque no hay moderación previa para preguntas escritas por cualquiera. El contenido de la pregunta queda **a criterio del administrador**.
+
+**No se reusan las `Valoraciones`.** Aquella tabla guarda −1 o 1, y una encuesta es una opción entre N. Forzarla ahí ensuciaría el gráfico de signo de la participación, que hoy significa una sola cosa. Tres tablas nuevas en `14_encuestas.sql`: `Encuestas`, `EncuestaOpciones` y `EncuestaVotos`.
+
+Reglas que no se deben romper:
+
+1. **Un voto por persona y encuesta**, garantizado por `UQ_EncuestaVotos_unoPorUsuario` y no solo por el código, igual que `UQ_Valoraciones_unaPorUsuario`. Cambiar de opción mientras sigue abierta actualiza la fila, nunca agrega otra. Elegir la misma opción de nuevo no hace nada: a diferencia del me gusta, retirar el voto dejaría a la persona sin ver un resultado que ya vio.
+2. **`EncuestaVotos` referencia el par `(codigoEncuesta, codigoOpcion)` con llave foránea compuesta**, apoyada en `UQ_EncuestaOpciones_par`. Esa restricción única parece redundante con la llave primaria y no lo es: sin ella un voto podría guardar una opción de otra encuesta y nada lo impediría.
+3. **Los conteos no se guardan.** Se derivan con `COUNT` sobre `EncuestaVotos`. Una columna `votos` en la opción es la misma contradicción que se eliminó de `Publicaciones`.
+4. **El estado se deriva de las fechas**, en `vwEncuestas`: Retirada, Programada, Cerrada o Abierta. No hay columna de estado — una que dijera «abierta» sobre una encuesta cuya fecha de cierre ya pasó es una mentira esperando a ocurrir.
+5. **Nada se borra.** Retirar es baja lógica con `activo`, `motivoBaja`, `fechaBaja` y `codigoUsuarioBaja`, como en `Publicaciones`. Un `DELETE` se llevaría los votos.
+6. **Las opciones solo se pueden cambiar mientras la encuesta no tenga votos.** Con votos, la pregunta y las fechas se corrigen y las opciones no: cambiarlas dejaría respuestas apuntando a algo que nadie respondió. Lo impide `spAdminGuardarEncuesta`, no el formulario.
+7. **Varias encuestas pueden estar abiertas a la vez.** Hubo una restricción que lo impedía, con el argumento de que dos compitiendo se reparten la participación. Se quitó al pasar la portada a mostrar varias: era una regla de negocio haciendo el trabajo de una decisión de presentación.
+
+**El resultado se muestra siempre, se haya respondido o no.** Hubo una versión que lo reservaba hasta después de votar, con una columna `revelar`, para no empujar a nadie hacia la opción que iba ganando. Se quitó a pedido de Roy: esconder el resultado hasta que participes convierte el dato en un peaje, y la plataforma existe para mostrar evidencia. Lo que queda de aquella decisión es el aviso del pie de la tarjeta, que dice a quién describe el resultado — el sesgo de arrastre no desaparece porque se muestre el reparto, pero quien lee sabe de qué muestra sale.
+
+Del usuario solo se usa **qué eligió en cada encuesta**, para marcar su respuesta. `spEncuestasVigentesOpciones` lo resuelve con un `LEFT JOIN` a sus votos.
+
+**Cada opción muestra el conteo y el porcentaje, no uno de los dos.** El porcentaje solo esconde de cuánta gente sale —el sesenta por ciento de cinco respuestas no es el sesenta por ciento de quinientas— y el conteo solo obliga a dividir de cabeza para comparar dos opciones.
+
+**Cerrar y retirar no son lo mismo.** La cerrada terminó su votación y su resultado se consulta desde administración. La retirada, además, sale del alcance de cualquier consulta pública. Las dos acciones exigen motivo, y lo exige `spAdminEstadoEncuesta`.
+
+**La portada solo muestra las abiertas.** Dejar una cerrada junto a las que sí admiten respuesta obligaría a quien mira a distinguir cuáles puede contestar antes de intentarlo. Hubo una versión que las mantenía un mes y se descartó por eso.
+
+**El instante de cierre se trunca al segundo, no se redondea.** `DATETIME2(0)` redondea al segundo más cercano, así que guardar `SYSDATETIME()` directo puede dejar la fecha de cierre medio segundo en el futuro, y durante esa fracción `vwEncuestas` sigue diciendo «Abierta». La pantalla que acababa de confirmar el cierre mostraba «Abierta» en la misma respuesta. Se corta con `CONVERT(VARCHAR(19), SYSDATETIME(), 126)`.
+
+**La tarjeta declara de qué no es evidencia.** El pie de `EncuestaCard` dice que participa quien decide hacerlo, así que el resultado describe a quienes respondieron y no a la población hondureña. Es la misma clase de aviso que el de la cuadrícula de departamentos del tablero: sin él quedaría una cifra con apariencia de encuesta representativa, que es justo lo que este proyecto no debería producir.
+
+Una sola llamada trae las encuestas con sus opciones dentro (`listarEncuestasVigentes`): la portada dibuja varias tarjetas en la misma respuesta, así que pedir las opciones por encuesta serían tantos viajes como preguntas publicadas. Después de responder vuelven solo las de la encuesta tocada, que es lo único que cambió.
+
+En el frontend, la tarjeta vive en `Controles/EncuestaCard.ascx` y se coloca en `Default.aspx`, entre la campaña destacada y las candidaturas. **Las mismas filas sirven para elegir y para leer el resultado**, con un solo repetidor: si las opciones se movieran al votar se perdería la relación entre lo que se eligió y lo que salió. La opción propia se identifica por el punto relleno, el borde y la negrita además del color, porque un solo canal de codificación deja fuera a quien no distingue el tono.
+
+**Cada encuesta ocupa una fila entera**, y en pantalla ancha el cuerpo de la tarjeta se parte en dos columnas: la pregunta a la izquierda y las opciones a la derecha. A una sola columna, con el contenedor en 1140 px, cada opción quedaba de mil píxeles con la etiqueta y su cifra en extremos opuestos y nada en medio. Debajo de 992 vuelve a una columna, que es donde también se apilan las columnas de Bootstrap.
+
+**La portada muestra dos encuestas y esconde el resto tras «Ver más».** Las escondidas se dibujan igual en la misma respuesta y el botón solo les quita el `display: none`: si pidiera otra carga al servidor, desplegar la lista costaría un viaje para mostrar algo ya consultado. El estado del despliegue viaja en un input oculto —igual que la pestaña activa del tablero— para sobrevivir al postback de responder una encuesta. **Cuántas se ven es constante de la página** (`EncuestasALaVista`), no de la base: el procedimiento devuelve todas las abiertas.
+
+**Cada opción lleva su color, de una paleta de ocho** (`gc-enc__op--c1` a `c8`, tantos como el máximo de opciones, así que ninguna encuesta repite). No contradice la regla del tablero de usar un solo tono para magnitud: allá el color codifica el dato y hay que compararlo entre barras, mientras que acá las opciones son categorías nominales de una sola pregunta y el dato lo lleva la cifra escrita al lado. Queda fuera `--gc-azul`, que es identidad y no dato. El color va por clase y no por estilo en línea para que la paleta se pueda revisar entera en un archivo.
+
+El filo de color en el canto izquierdo y el punto coloreado existen para que la tarjeta tenga color aunque una encuesta todavía no tenga respuestas y todas las barras midan cero.
+
+**El círculo de selección desaparece cuando la encuesta ya no admite respuestas** (`is-cerrada`). Ese círculo es lo que dice «esto se puede elegir», así que dejarlo en una encuesta cerrada sería una invitación falsa. El de la opción propia se queda, que ahí sí informa.
+
+Estilos en `cumplehn.css` con prefijo **`gc-enc`**, verificado con grep antes de nombrarlos. `.gc-enc--oculta` **no reusa** `.gc-oculto` del tablero: aquella vive en `cumplehn-analitica.css`, que la portada no carga, y definirla dos veces sería la manera de que acaben distintas. El hover se excluye con `:not(.aspNetDisabled)`, porque ASP.NET rinde un LinkButton apagado como un `<a>` sin href y no como un `<span>`. La tarjeta es una columna flexible con el pie empujado por `margin-top: auto`, que es lo que empareja dos encuestas de distinto largo en la misma fila.
+
+**Interruptor propio `encuestas` en `Modulos`**, y `ModuloVisible` comprobado en el Web Service antes de aceptar un voto: cerrar solo la página se saltaría llamando al ASMX directamente. Está verificado con una llamada directa. `Encuesta` se registró en `TiposObjeto`, lo que deja las encuestas listas para recibir valoraciones y comentarios cuando se quiera — el backend ya las acepta en `TipoValido` y `ExisteObjeto`, que es la única de las cinco ramas que además filtra por `activo`.
+
+**`EncuestaVotos` lleva `DENY SELECT` para `cumplehn_ia`**, junto con `Encuestas`. El login no pertenece a `db_datareader` y no tiene permiso sobre ninguna tabla, así que ya quedaban fuera de alcance, pero un voto vincula a una persona con una preferencia política y ese es el dato que más daño haría filtrado. No se concede `EXECUTE` sobre ningún procedimiento del script 14: cuando el asistente responda sobre encuestas será con un procedimiento propio que devuelva solo agregados.
+
+`15_datos_encuestas.sql` deja una encuesta de demostración con sus votos repartidos entre las cuentas ciudadanas del script 06. Es prescindible, y **da el alta llamando al procedimiento en lugar de con un INSERT**, para que el script de datos pase por las mismas validaciones que la pantalla.
+
+Una corrección de raíz que salió de acá: `LeerRespuesta` y `LeerGuardado` **no cerraban su `SqlDataReader`**. Nunca se notó porque cada método soltaba la conexión enseguida, pero `votarEncuesta` ejecuta más consultas sobre la misma conexión y falló con «ya hay un DataReader abierto». Ahora los dos lo cierran con `using`.
 
 ### Pendiente
 
-Alta de usuarios desde el registro, guardado del perfil y de los proyectos (los formularios ya validan del lado del servidor pero todavía no persisten), moderación de comentarios, registro de evidencias para poder mover los estados de cumplimiento, y conectar el asistente a la API de un modelo de lenguaje.
+Alta de cuentas ciudadanas desde el registro público (las de candidatura ya se crean desde el área de administración) y guardado del perfil y de los proyectos desde el panel del candidato (los formularios ya validan del lado del servidor pero todavía no persisten).
+
+El registro público es **prerrequisito de las encuestas**, no una tarea paralela: sin él, las únicas cuentas que pueden responder son las diez ciudadanas de prueba del script 06 y las de candidatura. El módulo funciona y está verificado, pero hasta entonces no puede recoger participación real.
+
+De las encuestas quedan tres cosas anotadas y ninguna urgente: que el candidato pueda abrir encuestas sobre sus propias propuestas —marcadas como declaradas y fuera del tablero, porque una encuesta escrita por una parte interesada no mide nada—, un gráfico `analitica.encuestas` que contraste el resultado con la oferta programática, y comentarios sobre la encuesta, que el backend ya acepta y la tarjeta todavía no muestra. **El resultado de las encuestas no debe sobrescribir `Categorias.interesEncuesta`**: aquella cifra viene de la encuesta metodológica del proyecto (n = 150) y esta de una muestra autoseleccionada, así que juntarlas mezclaría dos cosas con validez distinta. Si algún día se muestran en el mismo gráfico, van como series separadas y etiquetadas.
+
+Del asistente quedan tres decisiones anotadas y ninguna urgente: que una consulta fallida no consuma cuota, un techo diario para toda la plataforma además del tope por persona, y que `consultar_tablero` deje elegir indicadores. Gráficos y PDF generados por el modelo **se descartaron a propósito**: la página ya dibuja los doce gráficos en el servidor y el backend puede armar un informe sin gastar un token, mientras que un gráfico dibujado por el modelo podría contradecir al del tablero.
+
+Las cuatro etapas del área de administración están hechas: roles y control de acceso, verificación y moderación, catálogos con sus cuentas, e interruptores de módulos. Cada facultad tiene su procedimiento almacenado, su método en el Web Service, su sección en `Admin/` y su registro en bitácora, y el permiso se comprueba en las dos capas.
+
+Mientras una sección no exista, aparece **deshabilitada** en el menú de `Admin/` en lugar de mostrar una pantalla que no guarda.
 
 **Deuda de seguridad conocida, para el anexo OWASP:** el `codigoUsuario` de las valoraciones y los comentarios lo envía el frontend desde su sesión, y el Web Service solo comprueba que la cuenta exista y esté activa. Quien llame al servicio directamente puede opinar en nombre de otro usuario. Se resuelve cuando el backend valide un token de sesión en lugar de confiar en el código recibido. Sigue pendiente también el salt en las contraseñas.

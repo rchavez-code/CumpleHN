@@ -9,8 +9,14 @@ namespace frontend
     /// <summary>
     /// Listado de campañas electorales agrupadas por estado.
     /// </summary>
-    public partial class Campanas : Page
+    public partial class Campanas : PaginaDeModulo
     {
+        /// <summary>Módulo al que pertenece esta página.</summary>
+        protected override string ModuloRequerido
+        {
+            get { return Modulos.Campanas; }
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             IList<Campana> todas = Contenido.Datos.ObtenerCampanas();

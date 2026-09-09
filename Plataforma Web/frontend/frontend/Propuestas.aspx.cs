@@ -13,8 +13,14 @@ namespace frontend
     /// campaña. Los filtros viajan en la dirección para que el resultado se
     /// pueda compartir.
     /// </summary>
-    public partial class PropuestasPagina : Page
+    public partial class PropuestasPagina : PaginaDeModulo
     {
+        /// <summary>Módulo al que pertenece esta página.</summary>
+        protected override string ModuloRequerido
+        {
+            get { return Modulos.Propuestas; }
+        }
+
         private string _q;
         private string _categoria;
         private string _campana;

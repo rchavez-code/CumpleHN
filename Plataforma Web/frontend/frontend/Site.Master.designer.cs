@@ -51,6 +51,35 @@ namespace frontend
         protected global::System.Web.UI.WebControls.PlaceHolder phPanel;
 
         /// <summary>
+        /// phAdmin control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.PlaceHolder phAdmin;
+
+        /// <summary>
+        /// phNavCampanas control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phNavCampanas;
+
+        /// <summary>
+        /// phNavPerfiles control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phNavPerfiles;
+
+        /// <summary>
+        /// phNavPropuestas control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phNavPropuestas;
+
+        /// <summary>
+        /// phNavAnalitica control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phNavAnalitica;
+
+        /// <summary>
         /// MainContent control.
         /// </summary>
         /// <remarks>

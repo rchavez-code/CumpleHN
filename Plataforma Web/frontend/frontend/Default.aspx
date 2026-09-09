@@ -93,6 +93,71 @@
             </div>
         </asp:PlaceHolder>
 
+        <%-- ================================================== Encuesta --%>
+
+        <%-- Va después de la campaña destacada y antes de las candidaturas:
+             es donde cae la vista de quien llega por primera vez, sin que
+             desplace al contenido que la plataforma existe para mostrar. --%>
+
+        <asp:PlaceHolder ID="phEncuestas" runat="server" Visible="false">
+            <div class="gc-sechead" style="margin-top: 42px;">
+                <div>
+                    <h2>Tu opinión</h2>
+                    <p class="gc-muted">
+                        Preguntas abiertas a la ciudadanía. Una respuesta por cuenta, y podés
+                        cambiarla mientras la encuesta siga abierta.
+                    </p>
+                </div>
+            </div>
+
+            <%-- Las encuestas que pasan de la segunda se dibujan igual, solo que
+                 ocultas: si «Ver más» pidiera otra carga al servidor, desplegar la
+                 lista costaría un viaje para mostrar algo ya consultado. El estado
+                 viaja en el input oculto para sobrevivir al postback de responder,
+                 igual que la pestaña activa del tablero. --%>
+
+            <div id="zonaEncuestas" runat="server" class="gc-encs">
+
+                <div class="row">
+                    <asp:Repeater ID="rptEncuestas" runat="server">
+                        <ItemTemplate>
+                            <div class="<%# ClaseColumnaEncuesta(Container.ItemIndex) %>">
+                                <gc:EncuestaCard runat="server" Item="<%# (Encuesta)Container.DataItem %>" />
+                            </div>
+                        </ItemTemplate>
+                    </asp:Repeater>
+                </div>
+
+                <asp:PlaceHolder ID="phVerMas" runat="server" Visible="false">
+                    <div class="gc-encs__mas">
+                        <button type="button" class="gc-btn gc-btn--ghost" id="btnVerMasEncuestas"
+                                data-mas="<%: TextoVerMas %>" data-menos="Ver menos"
+                                aria-expanded="<%: EncuestasDesplegadas ? "true" : "false" %>"
+                                onclick="cumplehnVerMasEncuestas(this)"><%: TextoBotonEncuestas %></button>
+                    </div>
+                </asp:PlaceHolder>
+
+                <asp:HiddenField ID="hdnEncuestas" runat="server" Value="0" />
+            </div>
+
+            <script type="text/javascript">
+                // Quince líneas para un botón de una sola página no justifican un
+                // archivo aparte con su huella de versión.
+                function cumplehnVerMasEncuestas(boton) {
+                    var zona = document.getElementById('<%= zonaEncuestas.ClientID %>');
+                    var estado = document.getElementById('<%= hdnEncuestas.ClientID %>');
+                    var abierta = zona.className.indexOf('is-abierta') === -1;
+
+                    zona.className = abierta ? 'gc-encs is-abierta' : 'gc-encs';
+                    estado.value = abierta ? '1' : '0';
+
+                    boton.textContent = abierta ? boton.getAttribute('data-menos')
+                                                : boton.getAttribute('data-mas');
+                    boton.setAttribute('aria-expanded', abierta ? 'true' : 'false');
+                }
+            </script>
+        </asp:PlaceHolder>
+
         <%-- ================================================= Candidatos --%>
 
         <div class="gc-sechead" style="margin-top: 42px;">

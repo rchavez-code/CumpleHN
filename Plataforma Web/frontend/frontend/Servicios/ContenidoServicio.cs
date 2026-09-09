@@ -298,6 +298,87 @@ namespace frontend.Servicios
         }
 
         // =============================================================
+        //  Encuestas
+        // =============================================================
+
+        public IList<Encuesta> ObtenerEncuestasVigentes(string campanaSlug, int codigoUsuario)
+        {
+            ws.EncuestaPublica[] datos = Ejecutar(
+                c => c.listarEncuestasVigentes(campanaSlug, codigoUsuario),
+                new ws.EncuestaPublica[0]);
+
+            List<Encuesta> lista = new List<Encuesta>();
+            if (datos == null) return lista;
+
+            foreach (ws.EncuestaPublica d in datos)
+            {
+                lista.Add(new Encuesta
+                {
+                    Id = d.codigoEncuesta,
+                    CampanaSlug = d.campanaSlug,
+                    Pregunta = d.pregunta,
+                    Descripcion = d.descripcion,
+                    Categoria = d.categoria,
+                    FechaInicio = d.fechaInicio,
+                    FechaCierre = d.fechaCierre,
+                    Estado = d.estado,
+                    Votos = d.votos,
+                    MiOpcion = d.miOpcion,
+                    // Las opciones llegan dentro de la encuesta. Después de
+                    // responder vuelven solas, porque ahí sí son lo único que
+                    // cambió.
+                    Opciones = AOpcionesEncuesta(d.opciones)
+                });
+            }
+
+            return lista;
+        }
+
+        public ResultadoEncuesta ResponderEncuesta(
+            int codigoEncuesta, int codigoOpcion, int codigoUsuario)
+        {
+            ws.RespuestaEncuesta d = Ejecutar(
+                c => c.votarEncuesta(codigoEncuesta, codigoOpcion, codigoUsuario), null);
+
+            if (d == null)
+            {
+                return new ResultadoEncuesta
+                {
+                    Ok = false,
+                    Mensaje = "No se pudo contactar al servidor. Intentá de nuevo."
+                };
+            }
+
+            return new ResultadoEncuesta
+            {
+                Ok = d.ok,
+                Mensaje = d.mensaje,
+                Votos = d.votos,
+                Opciones = AOpcionesEncuesta(d.opciones)
+            };
+        }
+
+        private static IList<OpcionEncuesta> AOpcionesEncuesta(ws.OpcionEncuesta[] datos)
+        {
+            List<OpcionEncuesta> lista = new List<OpcionEncuesta>();
+            if (datos == null) return lista;
+
+            foreach (ws.OpcionEncuesta d in datos)
+            {
+                lista.Add(new OpcionEncuesta
+                {
+                    Id = d.codigoOpcion,
+                    Texto = d.texto,
+                    Orden = d.orden,
+                    Votos = d.votos,
+                    MiVoto = d.miVoto
+                });
+            }
+
+            return lista;
+        }
+
+        // =============================================================
         //  Analítica
         // =============================================================
 
@@ -653,6 +734,530 @@ namespace frontend.Servicios
             if (string.Equals(valor, "Municipal", StringComparison.OrdinalIgnoreCase)) return NivelGobierno.Municipal;
             if (string.Equals(valor, "Departamental", StringComparison.OrdinalIgnoreCase)) return NivelGobierno.Departamental;
             return NivelGobierno.Nacional;
+        }
+
+
+        // =============================================================
+        //  Administración
+        //
+        //  El código de usuario viaja como parámetro y el backend confirma el
+        //  rol contra la base. Si la cuenta no lo tiene, las consultas vuelven
+        //  vacías y las acciones en falso: el frontend no decide el permiso.
+        // =============================================================
+
+        public IList<ItemVerificacion> ObtenerBandejaVerificacion(
+            int codigoUsuario, string tipoObjeto, string campanaSlug, bool soloPendientes)
+        {
+            ws.ItemVerificacion[] datos = Ejecutar(
+                c => c.listarBandejaVerificacion(codigoUsuario, tipoObjeto, campanaSlug, soloPendientes),
+                new ws.ItemVerificacion[0]);
+
+            List<ItemVerificacion> lista = new List<ItemVerificacion>();
+            if (datos == null) return lista;
+
+            foreach (ws.ItemVerificacion d in datos)
+            {
+                lista.Add(new ItemVerificacion
+                {
+                    TipoObjeto = d.tipoObjeto,
+                    CodigoObjeto = d.codigoObjeto,
+                    Titulo = d.titulo,
+                    Resumen = d.resumen,
+                    Slug = d.slug,
+                    Candidato = d.candidato,
+                    CandidatoSlug = d.candidatoSlug,
+                    CampanaSlug = d.campanaSlug,
+                    CodigoVerificacion = d.codigoVerificacion,
+                    Verificacion = d.verificacion,
+                    VerificacionOrden = d.verificacionOrden,
+                    Fecha = d.fecha
+                });
+            }
+
+            return lista;
+        }
+
+        public Resultado CambiarVerificacion(
+            int codigoUsuario, string tipoObjeto, int codigoObjeto,
+            int codigoVerificacion, string motivo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.cambiarVerificacion(codigoUsuario, tipoObjeto, codigoObjeto,
+                                           codigoVerificacion, motivo), null);
+
+            return ARespuesta(d);
+        }
+
+        public IList<PublicacionModerada> ObtenerPublicacionesModeracion(
+            int codigoUsuario, string campanaSlug, string estado)
+        {
+            ws.PublicacionModerada[] datos = Ejecutar(
+                c => c.listarPublicacionesModeracion(codigoUsuario, campanaSlug, estado),
+                new ws.PublicacionModerada[0]);
+
+            List<PublicacionModerada> lista = new List<PublicacionModerada>();
+            if (datos == null) return lista;
+
+            foreach (ws.PublicacionModerada d in datos)
+            {
+                lista.Add(new PublicacionModerada
+                {
+                    CodigoPublicacion = d.codigoPublicacion,
+                    Texto = d.texto,
+                    Fecha = d.fecha,
+                    Activa = d.activo,
+                    MotivoBaja = d.motivoBaja,
+                    RetiradaPor = d.retiradaPor,
+                    Candidato = d.candidato,
+                    CandidatoSlug = d.candidatoSlug,
+                    CampanaSlug = d.campanaSlug,
+                    Categoria = d.categoria,
+                    Verificacion = d.verificacion,
+                    MeGusta = d.meGusta,
+                    NoMeGusta = d.noMeGusta,
+                    Comentarios = d.comentarios
+                });
+            }
+
+            return lista;
+        }
+
+        public Resultado ModerarPublicacion(
+            int codigoUsuario, int codigoPublicacion, bool activa, string motivo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.moderarPublicacion(codigoUsuario, codigoPublicacion, activa, motivo), null);
+
+            return ARespuesta(d);
+        }
+
+        public IList<RegistroAuditoria> ObtenerAuditoria(int codigoUsuario, string accion, int limite)
+        {
+            ws.RegistroAuditoria[] datos = Ejecutar(
+                c => c.listarAuditoria(codigoUsuario, accion, limite),
+                new ws.RegistroAuditoria[0]);
+
+            List<RegistroAuditoria> lista = new List<RegistroAuditoria>();
+            if (datos == null) return lista;
+
+            foreach (ws.RegistroAuditoria d in datos)
+            {
+                lista.Add(new RegistroAuditoria
+                {
+                    Codigo = d.codigoAuditoria,
+                    Fecha = d.fecha,
+                    Usuario = d.usuario,
+                    Accion = d.accion,
+                    TipoObjeto = d.tipoObjeto,
+                    CodigoObjeto = d.codigoObjeto,
+                    Detalle = d.detalle,
+                    Motivo = d.motivo
+                });
+            }
+
+            return lista;
+        }
+
+        public IList<OpcionCatalogo> ObtenerNivelesVerificacion()
+        {
+            ws.Catalogo[] datos = Ejecutar(c => c.listarNivelesVerificacion(), new ws.Catalogo[0]);
+
+            List<OpcionCatalogo> lista = new List<OpcionCatalogo>();
+            if (datos == null) return lista;
+
+            foreach (ws.Catalogo d in datos)
+            {
+                lista.Add(new OpcionCatalogo { Codigo = d.codigo, Nombre = d.nombre });
+            }
+
+            return lista;
+        }
+
+
+        // ------------------------------------------------- Catálogos admin
+
+        public IList<PartidoAdmin> ObtenerPartidosAdmin(int codigoUsuario, bool soloActivos)
+        {
+            ws.PartidoAdmin[] datos = Ejecutar(
+                c => c.listarPartidosAdmin(codigoUsuario, soloActivos), new ws.PartidoAdmin[0]);
+
+            List<PartidoAdmin> lista = new List<PartidoAdmin>();
+            if (datos == null) return lista;
+
+            foreach (ws.PartidoAdmin d in datos)
+            {
+                lista.Add(new PartidoAdmin
+                {
+                    Codigo = d.codigoPartido,
+                    Slug = d.slug,
+                    Nombre = d.nombre,
+                    Siglas = d.siglas,
+                    Descripcion = d.descripcion,
+                    Activo = d.activo,
+                    Candidaturas = d.candidaturas
+                });
+            }
+
+            return lista;
+        }
+
+        public ResultadoGuardado GuardarPartido(
+            int codigoUsuario, int codigoPartido, string nombre, string siglas, string descripcion)
+        {
+            ws.RespuestaGuardado d = Ejecutar(
+                c => c.guardarPartido(codigoUsuario, codigoPartido, nombre, siglas, descripcion), null);
+
+            return AGuardado(d);
+        }
+
+        public Resultado CambiarEstadoPartido(
+            int codigoUsuario, int codigoPartido, bool activo, string motivo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.cambiarEstadoPartido(codigoUsuario, codigoPartido, activo, motivo), null);
+
+            return ARespuesta(d);
+        }
+
+        public IList<CampanaAdmin> ObtenerCampanasAdmin(int codigoUsuario)
+        {
+            ws.CampanaAdmin[] datos = Ejecutar(
+                c => c.listarCampanasAdmin(codigoUsuario), new ws.CampanaAdmin[0]);
+
+            List<CampanaAdmin> lista = new List<CampanaAdmin>();
+            if (datos == null) return lista;
+
+            foreach (ws.CampanaAdmin d in datos)
+            {
+                lista.Add(new CampanaAdmin
+                {
+                    Codigo = d.codigoCampana,
+                    Slug = d.slug,
+                    Nombre = d.nombre,
+                    Resumen = d.resumen,
+                    Descripcion = d.descripcion,
+                    Alcance = d.alcance,
+                    FechaInicio = d.fechaInicio,
+                    FechaEleccion = d.fechaEleccion,
+                    Estado = d.estado,
+                    EsActual = d.esActual,
+                    Candidaturas = d.candidaturas,
+                    Propuestas = d.propuestas
+                });
+            }
+
+            return lista;
+        }
+
+        public ResultadoGuardado GuardarCampana(
+            int codigoUsuario, int codigoCampana, string nombre, string resumen,
+            string descripcion, string alcance, DateTime fechaInicio, DateTime fechaEleccion,
+            string estado, bool esActual)
+        {
+            ws.RespuestaGuardado d = Ejecutar(
+                c => c.guardarCampana(codigoUsuario, codigoCampana, nombre, resumen, descripcion,
+                                      alcance, fechaInicio, fechaEleccion, estado, esActual), null);
+
+            return AGuardado(d);
+        }
+
+        public IList<CandidatoAdmin> ObtenerCandidatosAdmin(
+            int codigoUsuario, string campanaSlug, bool soloActivos)
+        {
+            ws.CandidatoAdmin[] datos = Ejecutar(
+                c => c.listarCandidatosAdmin(codigoUsuario, campanaSlug, soloActivos),
+                new ws.CandidatoAdmin[0]);
+
+            List<CandidatoAdmin> lista = new List<CandidatoAdmin>();
+            if (datos == null) return lista;
+
+            foreach (ws.CandidatoAdmin d in datos)
+            {
+                lista.Add(new CandidatoAdmin
+                {
+                    Codigo = d.codigoCandidato,
+                    Slug = d.slug,
+                    Nombres = d.nombres,
+                    Apellidos = d.apellidos,
+                    NombreCompleto = d.nombreCompleto,
+                    CodigoCampana = d.codigoCampana,
+                    CampanaSlug = d.campanaSlug,
+                    Campana = d.campana,
+                    CodigoPartido = d.codigoPartido,
+                    Partido = d.partido,
+                    CodigoCargo = d.codigoCargo,
+                    Cargo = d.cargo,
+                    CodigoDepartamento = d.codigoDepartamento,
+                    Departamento = d.departamento,
+                    Municipio = d.municipio,
+                    Titular = d.titular,
+                    Verificacion = d.verificacion,
+                    Activo = d.activo,
+                    FechaRegistro = d.fechaRegistro,
+                    Login = d.login,
+                    Propuestas = d.propuestas
+                });
+            }
+
+            return lista;
+        }
+
+        public ResultadoGuardado GuardarCandidato(
+            int codigoUsuario, int codigoCandidato, string nombres, string apellidos,
+            int codigoCampana, int codigoCargo, int codigoPartido, int codigoDepartamento,
+            string municipio, string titular)
+        {
+            ws.RespuestaGuardado d = Ejecutar(
+                c => c.guardarCandidato(codigoUsuario, codigoCandidato, nombres, apellidos,
+                                        codigoCampana, codigoCargo, codigoPartido,
+                                        codigoDepartamento, municipio, titular), null);
+
+            return AGuardado(d);
+        }
+
+        public Resultado CambiarEstadoCandidato(
+            int codigoUsuario, int codigoCandidato, bool activo, string motivo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.cambiarEstadoCandidato(codigoUsuario, codigoCandidato, activo, motivo), null);
+
+            return ARespuesta(d);
+        }
+
+        public Resultado CrearCuentaCandidato(
+            int codigoUsuario, int codigoCandidato, string login, string correo, string clave)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.crearCuentaCandidato(codigoUsuario, codigoCandidato, login, correo, clave), null);
+
+            return ARespuesta(d);
+        }
+
+        // ------------------------------------------------- Encuestas admin
+
+        public IList<EncuestaAdmin> ObtenerEncuestasAdmin(
+            int codigoUsuario, string campanaSlug, string estado)
+        {
+            ws.EncuestaAdmin[] datos = Ejecutar(
+                c => c.listarEncuestasAdmin(codigoUsuario, campanaSlug, estado),
+                new ws.EncuestaAdmin[0]);
+
+            List<EncuestaAdmin> lista = new List<EncuestaAdmin>();
+            if (datos == null) return lista;
+
+            foreach (ws.EncuestaAdmin d in datos)
+            {
+                lista.Add(new EncuestaAdmin
+                {
+                    Codigo = d.codigoEncuesta,
+                    CodigoCampana = d.codigoCampana,
+                    CampanaSlug = d.campanaSlug,
+                    Campana = d.campana,
+                    Pregunta = d.pregunta,
+                    Descripcion = d.descripcion,
+                    CodigoCategoria = d.codigoCategoria,
+                    Categoria = d.categoria,
+                    FechaInicio = d.fechaInicio,
+                    FechaCierre = d.fechaCierre,
+                    Activo = d.activo,
+                    MotivoBaja = d.motivoBaja,
+                    Estado = d.estado,
+                    Opciones = d.opciones,
+                    Votos = d.votos
+                });
+            }
+
+            return lista;
+        }
+
+        public IList<OpcionEncuesta> ObtenerOpcionesEncuestaAdmin(
+            int codigoUsuario, int codigoEncuesta)
+        {
+            return AOpcionesEncuesta(Ejecutar(
+                c => c.listarOpcionesEncuestaAdmin(codigoUsuario, codigoEncuesta),
+                new ws.OpcionEncuesta[0]));
+        }
+
+        public ResultadoGuardado GuardarEncuesta(
+            int codigoUsuario, int codigoEncuesta, int codigoCampana,
+            string pregunta, string descripcion, int codigoCategoria,
+            DateTime fechaInicio, string fechaCierre, string opciones)
+        {
+            ws.RespuestaGuardado d = Ejecutar(
+                c => c.guardarEncuesta(codigoUsuario, codigoEncuesta, codigoCampana,
+                                       pregunta, descripcion, codigoCategoria,
+                                       fechaInicio, fechaCierre, opciones), null);
+
+            return AGuardado(d);
+        }
+
+        public Resultado CambiarEstadoEncuesta(
+            int codigoUsuario, int codigoEncuesta, string accion, string motivo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.cambiarEstadoEncuesta(codigoUsuario, codigoEncuesta, accion, motivo), null);
+
+            return ARespuesta(d);
+        }
+
+        public IList<OpcionCatalogo> ObtenerCargosConCodigo()
+        {
+            return AOpciones(Ejecutar(c => c.listarCargos(), new ws.Catalogo[0]));
+        }
+
+        public IList<OpcionCatalogo> ObtenerDepartamentosConCodigo()
+        {
+            return AOpciones(Ejecutar(c => c.listarDepartamentos(), new ws.Catalogo[0]));
+        }
+
+        public IList<OpcionCatalogo> ObtenerCategoriasConCodigo()
+        {
+            return AOpciones(Ejecutar(c => c.listarCategorias(), new ws.Catalogo[0]));
+        }
+
+        private static IList<OpcionCatalogo> AOpciones(ws.Catalogo[] datos)
+        {
+            List<OpcionCatalogo> lista = new List<OpcionCatalogo>();
+            if (datos == null) return lista;
+
+            foreach (ws.Catalogo d in datos)
+            {
+                lista.Add(new OpcionCatalogo { Codigo = d.codigo, Nombre = d.nombre });
+            }
+
+            return lista;
+        }
+
+        private static ResultadoGuardado AGuardado(ws.RespuestaGuardado d)
+        {
+            if (d == null)
+            {
+                return new ResultadoGuardado
+                {
+                    Ok = false,
+                    Mensaje = "No se pudo contactar al servidor. Intentá de nuevo.",
+                    Codigo = 0
+                };
+            }
+
+            return new ResultadoGuardado { Ok = d.ok, Mensaje = d.mensaje, Codigo = d.codigo };
+        }
+
+
+        // ------------------------------------------------------- Módulos
+
+        public IList<EstadoModulo> ObtenerModulosVisibles()
+        {
+            ws.EstadoModulo[] datos = Ejecutar(
+                c => c.listarModulosVisibles(), new ws.EstadoModulo[0]);
+
+            List<EstadoModulo> lista = new List<EstadoModulo>();
+            if (datos == null) return lista;
+
+            foreach (ws.EstadoModulo d in datos)
+            {
+                lista.Add(new EstadoModulo { Clave = d.clave, Visible = d.visible });
+            }
+
+            return lista;
+        }
+
+        public IList<ModuloAdmin> ObtenerModulosAdmin(int codigoUsuario)
+        {
+            ws.ModuloAdmin[] datos = Ejecutar(
+                c => c.listarModulosAdmin(codigoUsuario), new ws.ModuloAdmin[0]);
+
+            List<ModuloAdmin> lista = new List<ModuloAdmin>();
+            if (datos == null) return lista;
+
+            foreach (ws.ModuloAdmin d in datos)
+            {
+                lista.Add(new ModuloAdmin
+                {
+                    Codigo = d.codigoModulo,
+                    Clave = d.clave,
+                    Nombre = d.nombre,
+                    Descripcion = d.descripcion,
+                    Grupo = d.grupo,
+                    ClavePadre = d.clavePadre,
+                    Habilitado = d.habilitado,
+                    Visible = d.visible,
+                    ApagadoPorPadre = d.apagadoPorPadre,
+                    FechaCambio = d.fechaCambio,
+                    CambiadoPor = d.cambiadoPor
+                });
+            }
+
+            return lista;
+        }
+
+        public Resultado CambiarEstadoModulo(
+            int codigoUsuario, string clave, bool habilitado, string motivo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.cambiarEstadoModulo(codigoUsuario, clave, habilitado, motivo), null);
+
+            return ARespuesta(d);
+        }
+
+        // =============================================================
+        //  Asistente
+        // =============================================================
+
+        /// <summary>
+        /// Le pasa la pregunta al backend, que es quien tiene la clave del
+        /// modelo y quien comprueba sesión, cuota y módulo.
+        ///
+        /// Es la llamada más lenta del proyecto, entre diez y veinte
+        /// segundos, y por eso la página la hace desde script y no en un
+        /// postback. Acá no se hace nada especial por eso: el que espera es
+        /// el hilo que atiende la petición asíncrona, no la carga de la
+        /// página.
+        /// </summary>
+        public RespuestaAsistente PreguntarAsistente(
+            int codigoUsuario, string pregunta, string campanaSlug)
+        {
+            ws.RespuestaAsistente d = Ejecutar(
+                c => c.preguntarAsistente(codigoUsuario, pregunta, campanaSlug), null);
+
+            // Nulo es que el backend no respondió. Se distingue del rechazo,
+            // que sí trae su propio motivo desde el servicio.
+            if (d == null)
+                return new RespuestaAsistente
+                {
+                    Ok = false,
+                    Mensaje = "No se pudo comunicar con el servicio. "
+                            + "Los gráficos del tablero siguen disponibles."
+                };
+
+            return new RespuestaAsistente
+            {
+                Ok = d.ok,
+                Respuesta = d.respuesta ?? string.Empty,
+                Mensaje = d.mensaje ?? string.Empty,
+                Restantes = d.restantes,
+                Fuentes = d.fuentes == null
+                        ? new List<string>()
+                        : new List<string>(d.fuentes)
+            };
+        }
+
+        /// <summary>
+        /// Convierte la respuesta del servicio, distinguiendo el rechazo de la
+        /// acción (que trae su propio mensaje) de la caída del backend.
+        /// </summary>
+        private static Resultado ARespuesta(ws.RespuestaAdmin d)
+        {
+            if (d == null)
+            {
+                return new Resultado
+                {
+                    Ok = false,
+                    Mensaje = "No se pudo contactar al servidor. Intentá de nuevo."
+                };
+            }
+
+            return new Resultado { Ok = d.ok, Mensaje = d.mensaje };
         }
 
         private static NivelVerificacion AVerificacion(string valor)

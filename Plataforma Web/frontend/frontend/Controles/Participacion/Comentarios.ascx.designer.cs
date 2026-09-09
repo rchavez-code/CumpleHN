@@ -32,6 +32,11 @@ namespace frontend.Controles
         protected global::System.Web.UI.WebControls.PlaceHolder phInvitacion;
 
         /// <summary>
+        /// phCerrado control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phCerrado;
+
+        /// <summary>
         /// phMensaje control.
         /// </summary>
         protected global::System.Web.UI.WebControls.PlaceHolder phMensaje;

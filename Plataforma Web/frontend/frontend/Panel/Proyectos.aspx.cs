@@ -11,9 +11,8 @@ namespace frontend.Panel
     /// <summary>
     /// Administración de los proyectos de campaña del candidato.
     /// </summary>
-    public partial class Proyectos : Page
+    public partial class Proyectos : PaginaPanel
     {
-        private Candidato _candidato;
         private string _q;
         private string _categoria;
         private int _total;
@@ -21,14 +20,6 @@ namespace frontend.Panel
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            _candidato = Contenido.Datos.ObtenerCandidatoAutenticado();
-
-            if (_candidato == null)
-            {
-                Response.Redirect("~/Acceso");
-                return;
-            }
-
             _q = (Request.QueryString["q"] ?? string.Empty).Trim();
             _categoria = Request.QueryString["cat"] ?? string.Empty;
 
@@ -55,7 +46,7 @@ namespace frontend.Panel
 
         private void CargarProyectos()
         {
-            IList<Propuesta> todos = Contenido.Datos.ObtenerPropuestas(_candidato.Slug);
+            IList<Propuesta> todos = Contenido.Datos.ObtenerPropuestas(CandidatoActual.Slug);
             _hayAlguno = todos.Count > 0;
 
             List<Propuesta> filtrados = new List<Propuesta>();

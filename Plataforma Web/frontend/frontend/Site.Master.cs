@@ -15,6 +15,14 @@ namespace frontend
             phAnonimo.Visible = !autenticado;
             phSesion.Visible = autenticado;
             phPanel.Visible = autenticado && Servicios.Sesion.EsCandidato;
+            phAdmin.Visible = autenticado && Servicios.Sesion.EsAdministrador;
+
+            // El menú refleja lo que la administración dejó visible. Para el
+            // administrador se muestra todo, porque él sí puede entrar.
+            phNavCampanas.Visible = Servicios.Modulos.Visible(Servicios.Modulos.Campanas);
+            phNavPerfiles.Visible = Servicios.Modulos.Visible(Servicios.Modulos.Perfiles);
+            phNavPropuestas.Visible = Servicios.Modulos.Visible(Servicios.Modulos.Propuestas);
+            phNavAnalitica.Visible = Servicios.Modulos.Visible(Servicios.Modulos.Analitica);
         }
 
         protected string NombreUsuario

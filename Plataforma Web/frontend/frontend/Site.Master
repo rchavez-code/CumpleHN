@@ -9,7 +9,11 @@
     <title><%: Page.Title %> · CumpleHN</title>
     <meta name="description" content="CumpleHN organiza las propuestas y el cumplimiento de los candidatos políticos en Honduras para que cada persona decida con evidencia." />
 
-    <webopt:bundlereference runat="server" path="~/Content/css" />
+    <%-- Enlaces explicitos y no el paquete ~/Content/css: con las
+         optimizaciones apagadas ese paquete escribe la ruta pelada, sin
+         version, y el navegador sirve la hoja cacheada. Ver Recursos.Url. --%>
+    <link href="<%= Recursos.Url("~/Content/bootstrap.css") %>" rel="stylesheet" />
+    <link href="<%= Recursos.Url("~/Content/cumplehn.css") %>" rel="stylesheet" />
     <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 
     <asp:ContentPlaceHolder ID="HeadContent" runat="server" />
@@ -40,11 +44,23 @@
 
                 <ul class="gc-nav" id="gcNav">
                     <li><a class="<%= ClaseNav("Default") %>" href="<%= ResolveUrl("~/") %>">Inicio</a></li>
-                    <li><a class="<%= ClaseNav("Campanas", "Campana") %>" href="<%= ResolveUrl("~/Campanas") %>">Campañas</a></li>
-                    <li><a class="<%= ClaseNav("Candidatos", "Candidato") %>" href="<%= ResolveUrl("~/Candidatos") %>">Candidatos</a></li>
-                    <li><a class="<%= ClaseNav("Partidos", "Partido") %>" href="<%= ResolveUrl("~/Partidos") %>">Partidos</a></li>
-                    <li><a class="<%= ClaseNav("Propuestas", "Propuesta") %>" href="<%= ResolveUrl("~/Propuestas") %>">Propuestas</a></li>
-                    <li><a class="<%= ClaseNav("Analitica") %>" href="<%= ResolveUrl("~/Analitica") %>">Analítica</a></li>
+                    <%-- Cada enlace desaparece cuando la administración oculta su
+                         módulo. Ocultar el enlace no basta por sí solo: la página
+                         también comprueba su módulo, porque la dirección se puede
+                         escribir a mano. --%>
+                    <asp:PlaceHolder ID="phNavCampanas" runat="server">
+                        <li><a class="<%= ClaseNav("Campanas", "Campana") %>" href="<%= ResolveUrl("~/Campanas") %>">Campañas</a></li>
+                    </asp:PlaceHolder>
+                    <asp:PlaceHolder ID="phNavPerfiles" runat="server">
+                        <li><a class="<%= ClaseNav("Candidatos", "Candidato") %>" href="<%= ResolveUrl("~/Candidatos") %>">Candidatos</a></li>
+                        <li><a class="<%= ClaseNav("Partidos", "Partido") %>" href="<%= ResolveUrl("~/Partidos") %>">Partidos</a></li>
+                    </asp:PlaceHolder>
+                    <asp:PlaceHolder ID="phNavPropuestas" runat="server">
+                        <li><a class="<%= ClaseNav("Propuestas", "Propuesta") %>" href="<%= ResolveUrl("~/Propuestas") %>">Propuestas</a></li>
+                    </asp:PlaceHolder>
+                    <asp:PlaceHolder ID="phNavAnalitica" runat="server">
+                        <li><a class="<%= ClaseNav("Analitica") %>" href="<%= ResolveUrl("~/Analitica") %>">Analítica</a></li>
+                    </asp:PlaceHolder>
                 </ul>
 
                 <div class="gc-header__actions">
@@ -57,6 +73,9 @@
                         <span class="gc-avatar gc-avatar--sm" title="<%: NombreUsuario %>" aria-hidden="true"><%: InicialesUsuario %></span>
                         <asp:PlaceHolder ID="phPanel" runat="server" Visible="false">
                             <a class="gc-btn gc-btn--ghost gc-btn--sm" href="<%= ResolveUrl("~/Panel/") %>">Mi panel</a>
+                        </asp:PlaceHolder>
+                        <asp:PlaceHolder ID="phAdmin" runat="server" Visible="false">
+                            <a class="gc-btn gc-btn--ghost gc-btn--sm" href="<%= ResolveUrl("~/Admin/") %>">Administración</a>
                         </asp:PlaceHolder>
                         <a class="gc-btn gc-btn--quiet gc-btn--sm" href="<%= ResolveUrl("~/Acceso?salir=1") %>">Salir</a>
                     </asp:PlaceHolder>

@@ -15,29 +15,20 @@ namespace frontend.Panel
     /// intermedios) los asigna la plataforma cuando existe evidencia, porque de
     /// lo contrario la candidatura se calificaría a sí misma.
     /// </summary>
-    public partial class Proyecto : Page
+    public partial class Proyecto : PaginaPanel
     {
-        private Candidato _candidato;
         private Propuesta _propuesta;
         private bool _esNuevo;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            _candidato = Contenido.Datos.ObtenerCandidatoAutenticado();
-
-            if (_candidato == null)
-            {
-                Response.Redirect("~/Acceso");
-                return;
-            }
-
             int id;
             if (int.TryParse(Request.QueryString["id"], out id))
             {
                 _propuesta = Contenido.Datos.ObtenerPropuesta(id);
 
                 // Nadie edita el proyecto de otra candidatura.
-                if (_propuesta != null && _propuesta.CandidatoSlug != _candidato.Slug)
+                if (_propuesta != null && _propuesta.CandidatoSlug != CandidatoActual.Slug)
                 {
                     Response.Redirect("~/Panel/Proyectos");
                     return;

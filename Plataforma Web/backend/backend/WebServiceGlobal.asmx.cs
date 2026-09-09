@@ -8,6 +8,7 @@ using System.Text;
 using System.Web.Script.Services;
 using System.Web.Services;
 using backend.Modelos;
+using backend.Servicios;
 
 namespace backend
 {
@@ -33,6 +34,12 @@ namespace backend
         {
             get { return ConfigurationManager.ConnectionStrings["CnxCumpleHN"].ConnectionString; }
         }
+
+        /// <summary>
+        /// Nombre del rol de administración, tal como lo guarda el catálogo
+        /// dbo.Roles. Cambiarlo en la base obliga a cambiarlo acá.
+        /// </summary>
+        private const string RolAdministrador = "Administrador";
 
         // =============================================================
         //  Seguridad
@@ -356,7 +363,7 @@ namespace backend
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
-                string filtro = string.IsNullOrEmpty(campanaSlug) ? "" : "WHERE ca.slug = @campana ";
+                string filtro = string.IsNullOrEmpty(campanaSlug) ? "" : "AND ca.slug = @campana ";
 
                 SqlCommand cmd = new SqlCommand(
                     SelectPropuesta + filtro + "ORDER BY p.fechaRegistro DESC", conn);
@@ -425,7 +432,11 @@ namespace backend
             "INNER JOIN dbo.Cargos cg ON cg.codigoCargo = k.codigoCargo " +
             "INNER JOIN dbo.NivelesVerificacion nv ON nv.codigoVerificacion = b.codigoVerificacion " +
             "LEFT JOIN dbo.Categorias cat ON cat.codigoCategoria = b.codigoCategoria " +
-            "LEFT JOIN dbo.Propuestas p ON p.codigoPropuesta = b.codigoPropuesta ";
+            "LEFT JOIN dbo.Propuestas p ON p.codigoPropuesta = b.codigoPropuesta " +
+            /* La consulta pública nunca ve una publicación retirada por
+               moderación. El filtro va en el SELECT compartido y no en cada
+               método, para que agregar una consulta nueva no pueda olvidarlo. */
+            "WHERE b.activo = 1 ";
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
@@ -465,7 +476,7 @@ namespace backend
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
                 SqlCommand cmd = new SqlCommand(
-                    SelectPublicacion + "WHERE k.slug = @slug ORDER BY b.fecha DESC", conn);
+                    SelectPublicacion + "AND k.slug = @slug ORDER BY b.fecha DESC", conn);
                 cmd.Parameters.AddWithValue("@slug", candidatoSlug);
                 conn.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
@@ -606,7 +617,8 @@ namespace backend
             return tipoObjeto == "Publicacion"
                 || tipoObjeto == "Candidato"
                 || tipoObjeto == "Partido"
-                || tipoObjeto == "Propuesta";
+                || tipoObjeto == "Propuesta"
+                || tipoObjeto == "Encuesta";
         }
 
         /// <summary>
@@ -633,12 +645,64 @@ namespace backend
                 case "Propuesta":
                     query = "SELECT COUNT(*) FROM dbo.Propuestas WHERE codigoPropuesta = @codigo";
                     break;
+                case "Encuesta":
+                    // La única de las cinco que filtra por activo: una encuesta
+                    // retirada sale del sitio público, y comentar algo que ya
+                    // no se ve dejaría el hilo colgando de la nada.
+                    query = "SELECT COUNT(*) FROM dbo.Encuestas WHERE codigoEncuesta = @codigo AND activo = 1";
+                    break;
                 default:
                     return false;
             }
 
             SqlCommand cmd = new SqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@codigo", codigoObjeto);
+            return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+        }
+
+        /// <summary>
+        /// Confirma que la cuenta existe, está activa y tiene el rol de
+        /// administrador.
+        ///
+        /// Es el punto por el que tiene que pasar toda acción de administración
+        /// antes de escribir. El frontend decide qué botones muestra a partir de
+        /// su sesión, pero esa sesión no es una credencial: quien llame a este
+        /// servicio directamente puede enviar el código de usuario que quiera.
+        /// El rol se confirma acá, contra la base, o no se confirma.
+        ///
+        /// Comprobar el rol no cierra del todo la deuda conocida del anexo
+        /// OWASP: mientras el código de usuario venga en el parámetro en lugar
+        /// de un token de sesión firmado, alguien que conozca el código del
+        /// administrador puede suplantarlo. Lo que esta comprobación garantiza
+        /// es que ninguna cuenta sin el rol pueda administrar.
+        /// </summary>
+        private static bool EsAdministrador(SqlConnection conn, int codigoUsuario)
+        {
+            if (codigoUsuario <= 0) return false;
+
+            SqlCommand cmd = new SqlCommand(
+                "SELECT COUNT(*) " +
+                "FROM dbo.Usuarios u " +
+                "INNER JOIN dbo.Roles r ON r.codigoRol = u.codigoRol " +
+                "WHERE u.codigoUsuario = @u AND u.activo = 1 AND r.nombre = @rol", conn);
+            cmd.Parameters.AddWithValue("@u", codigoUsuario);
+            cmd.Parameters.AddWithValue("@rol", RolAdministrador);
+            return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+        }
+
+        /// <summary>
+        /// Confirma que un módulo está visible en el sitio.
+        ///
+        /// Hace falta acá y no solo en el frontend: si la comprobación viviera
+        /// únicamente en la página, cerrar la participación se saltaría
+        /// llamando a este servicio directamente, que es la misma razón por la
+        /// que el rol se confirma contra la base.
+        /// </summary>
+        private static bool ModuloVisible(SqlConnection conn, string clave)
+        {
+            SqlCommand cmd = new SqlCommand(
+                "SELECT COUNT(*) FROM dbo.vwModulosEfectivos WHERE clave = @c AND visible = 1", conn);
+            cmd.Parameters.AddWithValue("@c", clave);
             return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
         }
 
@@ -739,6 +803,12 @@ namespace backend
                 using (SqlConnection conn = new SqlConnection(cadenaConexion))
                 {
                     conn.Open();
+
+                    if (!ModuloVisible(conn, "interaccion"))
+                    {
+                        r.mensaje = "La participación está temporalmente cerrada.";
+                        return r;
+                    }
 
                     if (!UsuarioActivo(conn, codigoUsuario))
                     {
@@ -900,6 +970,12 @@ namespace backend
                 {
                     conn.Open();
 
+                    if (!ModuloVisible(conn, "interaccion"))
+                    {
+                        r.mensaje = "La participación está temporalmente cerrada.";
+                        return r;
+                    }
+
                     if (!UsuarioActivo(conn, codigoUsuario))
                     {
                         r.mensaje = "Necesitás una cuenta activa para comentar.";
@@ -1045,7 +1121,7 @@ namespace backend
         // ------------------------------------------------- Armado de comandos
 
         /// <summary>Cadena sin espacios sobrantes. Nulo se vuelve vacío.</summary>
-        private static string Limpio(string texto)
+        internal static string Limpio(string texto)
         {
             return texto == null ? string.Empty : texto.Trim();
         }
@@ -1117,7 +1193,7 @@ namespace backend
 
         // ------------------------------------------------------- Indicadores
 
-        private static OpcionFiltro[] LeerOpciones(SqlConnection conn)
+        internal static OpcionFiltro[] LeerOpciones(SqlConnection conn)
         {
             List<OpcionFiltro> lista = new List<OpcionFiltro>();
 
@@ -1140,7 +1216,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static ResumenAnalitica LeerResumen(SqlConnection conn, FiltroAnalitica f)
+        internal static ResumenAnalitica LeerResumen(SqlConnection conn, FiltroAnalitica f)
         {
             ResumenAnalitica r = new ResumenAnalitica();
 
@@ -1174,7 +1250,7 @@ namespace backend
             return r;
         }
 
-        private static FilaCategoria[] LeerCategorias(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaCategoria[] LeerCategorias(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaCategoria> lista = new List<FilaCategoria>();
 
@@ -1199,7 +1275,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static FilaEstado[] LeerEstados(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaEstado[] LeerEstados(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaEstado> lista = new List<FilaEstado>();
 
@@ -1223,7 +1299,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static FilaVerificacion[] LeerVerificacion(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaVerificacion[] LeerVerificacion(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaVerificacion> lista = new List<FilaVerificacion>();
 
@@ -1246,7 +1322,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static FilaParticipacion[] LeerParticipacion(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaParticipacion[] LeerParticipacion(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaParticipacion> lista = new List<FilaParticipacion>();
 
@@ -1270,7 +1346,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static FilaCandidato[] LeerCandidatos(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaCandidato[] LeerCandidatos(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaCandidato> lista = new List<FilaCandidato>();
 
@@ -1302,7 +1378,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static FilaPartido[] LeerPartidos(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaPartido[] LeerPartidos(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaPartido> lista = new List<FilaPartido>();
 
@@ -1332,7 +1408,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static FilaDepartamento[] LeerTerritorio(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaDepartamento[] LeerTerritorio(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaDepartamento> lista = new List<FilaDepartamento>();
 
@@ -1359,7 +1435,7 @@ namespace backend
             return lista.ToArray();
         }
 
-        private static FilaActividad[] LeerActividad(SqlConnection conn, FiltroAnalitica f)
+        internal static FilaActividad[] LeerActividad(SqlConnection conn, FiltroAnalitica f)
         {
             List<FilaActividad> lista = new List<FilaActividad>();
 
@@ -1568,6 +1644,1146 @@ namespace backend
             };
         }
 
+
+        // =============================================================
+        //  Administración de la plataforma
+        //
+        //  Todo lo de esta sección exige el rol Administrador, incluidas las
+        //  consultas: la bandeja de verificación y la bitácora no son públicas.
+        //
+        //  La comprobación se hace dos veces, acá y dentro de cada
+        //  procedimiento de escritura. No es redundancia por descuido: el
+        //  control de acceso no debe depender de un solo punto, y la
+        //  comprobación de la base queda documentada como parte del modelo.
+        //
+        //  Ninguno de estos métodos escribe SQL propio. Cada uno invoca su
+        //  procedimiento del script 09, que es donde vive la regla y donde el
+        //  Manual Técnico del capítulo IX la puede citar.
+        // =============================================================
+
+        /// <summary>
+        /// Cola de trabajo de la verificación: candidaturas, propuestas y
+        /// publicaciones con su nivel actual.
+        ///
+        /// Con <paramref name="soloPendientes"/> en verdadero deja fuera lo ya
+        /// verificado, que es la vista con la que se trabaja a diario.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<ItemVerificacion> listarBandejaVerificacion(
+            int codigoUsuario, string tipoObjeto, string campanaSlug, bool soloPendientes)
+        {
+            List<ItemVerificacion> lista = new List<ItemVerificacion>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminBandejaVerificacion", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@tipoObjeto", (object)tipoObjeto ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@campanaSlug", (object)campanaSlug ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@soloPendientes", soloPendientes);
+
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new ItemVerificacion
+                    {
+                        tipoObjeto = Texto(reader, "tipoObjeto"),
+                        codigoObjeto = Convert.ToInt32(reader["codigoObjeto"]),
+                        titulo = Texto(reader, "titulo"),
+                        resumen = Texto(reader, "resumen"),
+                        slug = Texto(reader, "slug"),
+                        candidato = Texto(reader, "candidato"),
+                        candidatoSlug = Texto(reader, "candidatoSlug"),
+                        campanaSlug = Texto(reader, "campanaSlug"),
+                        codigoVerificacion = Convert.ToInt32(reader["codigoVerificacion"]),
+                        verificacion = Texto(reader, "verificacion"),
+                        verificacionOrden = Convert.ToInt32(reader["verificacionOrden"]),
+                        fecha = Convert.ToDateTime(reader["fecha"])
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Asigna el nivel de verificación de una candidatura, una propuesta o
+        /// una publicación.
+        ///
+        /// El motivo es donde queda anotada la fuente que respalda la decisión,
+        /// y el procedimiento lo exige al marcar como verificado.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin cambiarVerificacion(
+            int codigoUsuario, string tipoObjeto, int codigoObjeto,
+            int codigoVerificacion, string motivo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("La cuenta no tiene permiso para verificar contenido.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminCambiarVerificacion", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@tipoObjeto", (object)tipoObjeto ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@codigoObjeto", codigoObjeto);
+                cmd.Parameters.AddWithValue("@codigoVerificacion", codigoVerificacion);
+                cmd.Parameters.AddWithValue("@motivo", (object)motivo ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Publicaciones para moderación, incluidas las retiradas.
+        ///
+        /// <paramref name="estado"/> acepta Activas, Retiradas o vacío para
+        /// todas.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<PublicacionModerada> listarPublicacionesModeracion(
+            int codigoUsuario, string campanaSlug, string estado)
+        {
+            List<PublicacionModerada> lista = new List<PublicacionModerada>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminPublicaciones", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@campanaSlug", (object)campanaSlug ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@estado", (object)estado ?? DBNull.Value);
+
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new PublicacionModerada
+                    {
+                        codigoPublicacion = Convert.ToInt32(reader["codigoPublicacion"]),
+                        texto = Texto(reader, "texto"),
+                        fecha = Convert.ToDateTime(reader["fecha"]),
+                        activo = Convert.ToBoolean(reader["activo"]),
+                        motivoBaja = Texto(reader, "motivoBaja"),
+                        retiradaPor = Texto(reader, "retiradaPor"),
+                        candidato = Texto(reader, "candidato"),
+                        candidatoSlug = Texto(reader, "candidatoSlug"),
+                        campanaSlug = Texto(reader, "campanaSlug"),
+                        categoria = Texto(reader, "categoria"),
+                        verificacion = Texto(reader, "verificacion"),
+                        meGusta = Convert.ToInt32(reader["meGusta"]),
+                        noMeGusta = Convert.ToInt32(reader["noMeGusta"]),
+                        comentarios = Convert.ToInt32(reader["comentarios"])
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Retira una publicación de la consulta pública, o la restaura.
+        ///
+        /// Retirar es una baja lógica: la fila se conserva con el motivo y el
+        /// responsable. El motivo es obligatorio en las dos direcciones.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin moderarPublicacion(
+            int codigoUsuario, int codigoPublicacion, bool activo, string motivo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("La cuenta no tiene permiso para moderar publicaciones.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminModerarPublicacion", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoPublicacion", codigoPublicacion);
+                cmd.Parameters.AddWithValue("@activo", activo);
+                cmd.Parameters.AddWithValue("@motivo", (object)motivo ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Bitácora de administración, de lo más reciente a lo más antiguo.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<RegistroAuditoria> listarAuditoria(int codigoUsuario, string accion, int limite)
+        {
+            List<RegistroAuditoria> lista = new List<RegistroAuditoria>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminAuditoria", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@accion", (object)accion ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@limite", limite);
+
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new RegistroAuditoria
+                    {
+                        codigoAuditoria = Convert.ToInt32(reader["codigoAuditoria"]),
+                        fecha = Convert.ToDateTime(reader["fecha"]),
+                        usuario = Texto(reader, "usuario"),
+                        accion = Texto(reader, "accion"),
+                        tipoObjeto = Texto(reader, "tipoObjeto"),
+                        codigoObjeto = Convert.ToInt32(reader["codigoObjeto"]),
+                        detalle = Texto(reader, "detalle"),
+                        motivo = Texto(reader, "motivo")
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Niveles de verificación disponibles, para el desplegable del área de
+        /// administración. Es público: los mismos niveles se muestran como
+        /// etiqueta en todo el sitio.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<Catalogo> listarNivelesVerificacion()
+        {
+            return LeerCatalogo(
+                "SELECT codigoVerificacion AS codigo, nombre, ISNULL(descripcion,'') AS detalle " +
+                "FROM dbo.NivelesVerificacion ORDER BY orden");
+        }
+
+        /// <summary>
+        /// Lee la fila de ok y mensaje que devuelven los procedimientos de
+        /// escritura del script 09.
+        /// </summary>
+        /// <summary>
+        /// Lee la fila de ok y mensaje que devuelven los procedimientos de
+        /// escritura.
+        ///
+        /// El lector se cierra antes de devolver. Mientras cada método hacía
+        /// una sola llamada y soltaba la conexión enseguida, dejarlo abierto no
+        /// se notaba, pero el primer método que quiso ejecutar algo más sobre
+        /// la misma conexión falló con «ya hay un DataReader abierto». Se cierra
+        /// acá y no en cada llamador por la misma razón por la que la
+        /// comprobación de rol vive en un solo lugar.
+        /// </summary>
+        private static RespuestaAdmin LeerRespuesta(SqlCommand cmd)
+        {
+            RespuestaAdmin respuesta = new RespuestaAdmin();
+            respuesta.ok = false;
+            respuesta.mensaje = "No se pudo completar la acción.";
+
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    respuesta.ok = Convert.ToBoolean(reader["ok"]);
+                    respuesta.mensaje = Convert.ToString(reader["mensaje"]);
+                }
+            }
+
+            return respuesta;
+        }
+
+        private static RespuestaAdmin Rechazo(string mensaje)
+        {
+            return new RespuestaAdmin { ok = false, mensaje = mensaje };
+        }
+
+
+        // =============================================================
+        //  Administración de catálogos
+        //
+        //  Partidos, campañas y candidaturas. Mismas reglas que la sección
+        //  anterior: el rol se confirma acá y otra vez dentro de cada
+        //  procedimiento, y ninguna consulta se escribe a mano.
+        // =============================================================
+
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<PartidoAdmin> listarPartidosAdmin(int codigoUsuario, bool soloActivos)
+        {
+            List<PartidoAdmin> lista = new List<PartidoAdmin>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminPartidos", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@soloActivos", soloActivos);
+
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new PartidoAdmin
+                    {
+                        codigoPartido = Convert.ToInt32(reader["codigoPartido"]),
+                        slug = Texto(reader, "slug"),
+                        nombre = Texto(reader, "nombre"),
+                        siglas = Texto(reader, "siglas"),
+                        descripcion = Texto(reader, "descripcion"),
+                        activo = Convert.ToBoolean(reader["activo"]),
+                        candidaturas = Convert.ToInt32(reader["candidaturas"])
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Alta o edición de un partido. Con <paramref name="codigoPartido"/>
+        /// en cero es alta.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaGuardado guardarPartido(
+            int codigoUsuario, int codigoPartido, string nombre, string siglas, string descripcion)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return RechazoGuardado("La cuenta no tiene permiso para administrar partidos.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminGuardarPartido", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoPartido", codigoPartido);
+                cmd.Parameters.AddWithValue("@nombre", (object)nombre ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@siglas", (object)siglas ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@descripcion", (object)descripcion ?? DBNull.Value);
+
+                return LeerGuardado(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Activa o desactiva un partido. No hay borrado: eliminar un partido
+        /// dejaría candidaturas huérfanas y borraría de la historia a quién se
+        /// presentó por él.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin cambiarEstadoPartido(
+            int codigoUsuario, int codigoPartido, bool activo, string motivo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("La cuenta no tiene permiso para administrar partidos.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminEstadoPartido", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoPartido", codigoPartido);
+                cmd.Parameters.AddWithValue("@activo", activo);
+                cmd.Parameters.AddWithValue("@motivo", (object)motivo ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<CampanaAdmin> listarCampanasAdmin(int codigoUsuario)
+        {
+            List<CampanaAdmin> lista = new List<CampanaAdmin>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminCampanas", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new CampanaAdmin
+                    {
+                        codigoCampana = Convert.ToInt32(reader["codigoCampana"]),
+                        slug = Texto(reader, "slug"),
+                        nombre = Texto(reader, "nombre"),
+                        resumen = Texto(reader, "resumen"),
+                        descripcion = Texto(reader, "descripcion"),
+                        alcance = Texto(reader, "alcance"),
+                        fechaInicio = Convert.ToDateTime(reader["fechaInicio"]),
+                        fechaEleccion = Convert.ToDateTime(reader["fechaEleccion"]),
+                        estado = Texto(reader, "estado"),
+                        esActual = Convert.ToBoolean(reader["esActual"]),
+                        candidaturas = Convert.ToInt32(reader["candidaturas"]),
+                        propuestas = Convert.ToInt32(reader["propuestas"])
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaGuardado guardarCampana(
+            int codigoUsuario, int codigoCampana, string nombre, string resumen,
+            string descripcion, string alcance, DateTime fechaInicio, DateTime fechaEleccion,
+            string estado, bool esActual)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return RechazoGuardado("La cuenta no tiene permiso para administrar campañas.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminGuardarCampana", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoCampana", codigoCampana);
+                cmd.Parameters.AddWithValue("@nombre", (object)nombre ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@resumen", (object)resumen ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@descripcion", (object)descripcion ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@alcance", (object)alcance ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@fechaInicio", fechaInicio);
+                cmd.Parameters.AddWithValue("@fechaEleccion", fechaEleccion);
+                cmd.Parameters.AddWithValue("@estado", (object)estado ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@esActual", esActual);
+
+                return LeerGuardado(cmd);
+            }
+        }
+
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<CandidatoAdmin> listarCandidatosAdmin(
+            int codigoUsuario, string campanaSlug, bool soloActivos)
+        {
+            List<CandidatoAdmin> lista = new List<CandidatoAdmin>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminCandidatos", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@campanaSlug", (object)campanaSlug ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@soloActivos", soloActivos);
+
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new CandidatoAdmin
+                    {
+                        codigoCandidato = Convert.ToInt32(reader["codigoCandidato"]),
+                        slug = Texto(reader, "slug"),
+                        nombres = Texto(reader, "nombres"),
+                        apellidos = Texto(reader, "apellidos"),
+                        nombreCompleto = Texto(reader, "nombreCompleto"),
+                        codigoCampana = Convert.ToInt32(reader["codigoCampana"]),
+                        campanaSlug = Texto(reader, "campanaSlug"),
+                        campana = Texto(reader, "campana"),
+                        codigoPartido = Convert.ToInt32(reader["codigoPartido"]),
+                        partido = Texto(reader, "partido"),
+                        codigoCargo = Convert.ToInt32(reader["codigoCargo"]),
+                        cargo = Texto(reader, "cargo"),
+                        codigoDepartamento = Convert.ToInt32(reader["codigoDepartamento"]),
+                        departamento = Texto(reader, "departamento"),
+                        municipio = Texto(reader, "municipio"),
+                        titular = Texto(reader, "titular"),
+                        verificacion = Texto(reader, "verificacion"),
+                        activo = Convert.ToBoolean(reader["activo"]),
+                        fechaRegistro = Convert.ToDateTime(reader["fechaRegistro"]),
+                        login = Texto(reader, "login"),
+                        propuestas = Convert.ToInt32(reader["propuestas"])
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Registra los datos de identificación de una candidatura. El resto
+        /// del perfil lo llena la propia candidatura desde su panel: la
+        /// plataforma la registra, no la redacta.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaGuardado guardarCandidato(
+            int codigoUsuario, int codigoCandidato, string nombres, string apellidos,
+            int codigoCampana, int codigoCargo, int codigoPartido, int codigoDepartamento,
+            string municipio, string titular)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return RechazoGuardado("La cuenta no tiene permiso para administrar candidaturas.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminGuardarCandidato", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoCandidato", codigoCandidato);
+                cmd.Parameters.AddWithValue("@nombres", (object)nombres ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@apellidos", (object)apellidos ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@codigoCampana", codigoCampana);
+                cmd.Parameters.AddWithValue("@codigoCargo", codigoCargo);
+                cmd.Parameters.AddWithValue("@codigoPartido", codigoPartido);
+                cmd.Parameters.AddWithValue("@codigoDepartamento", codigoDepartamento);
+                cmd.Parameters.AddWithValue("@municipio", (object)municipio ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@titular", (object)titular ?? DBNull.Value);
+
+                return LeerGuardado(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Retira una candidatura de la consulta pública, o la reincorpora. La
+        /// cuenta de acceso sigue el mismo estado: una candidatura retirada que
+        /// aún puede publicar sería una puerta abierta sin ficha detrás.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin cambiarEstadoCandidato(
+            int codigoUsuario, int codigoCandidato, bool activo, string motivo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("La cuenta no tiene permiso para administrar candidaturas.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminEstadoCandidato", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoCandidato", codigoCandidato);
+                cmd.Parameters.AddWithValue("@activo", activo);
+                cmd.Parameters.AddWithValue("@motivo", (object)motivo ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Crea la cuenta de acceso de una candidatura.
+        ///
+        /// La contraseña llega en claro por el canal del servicio y se convierte
+        /// a hash dentro del procedimiento. Ni la respuesta ni la bitácora la
+        /// devuelven: quien la crea es quien la entrega.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin crearCuentaCandidato(
+            int codigoUsuario, int codigoCandidato, string login, string correo, string clave)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("La cuenta no tiene permiso para crear cuentas de acceso.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminCrearCuentaCandidato", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoCandidato", codigoCandidato);
+                cmd.Parameters.AddWithValue("@login", (object)login ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@correo", (object)correo ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@clave", (object)clave ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Lee la fila de ok, mensaje y codigo de los procedimientos de
+        /// guardado.
+        /// </summary>
+        private static RespuestaGuardado LeerGuardado(SqlCommand cmd)
+        {
+            RespuestaGuardado respuesta = new RespuestaGuardado();
+            respuesta.ok = false;
+            respuesta.mensaje = "No se pudo completar la acción.";
+            respuesta.codigo = 0;
+
+            // El lector se cierra por la misma razón que en LeerRespuesta.
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    respuesta.ok = Convert.ToBoolean(reader["ok"]);
+                    respuesta.mensaje = Convert.ToString(reader["mensaje"]);
+                    respuesta.codigo = Convert.ToInt32(reader["codigo"]);
+                }
+            }
+
+            return respuesta;
+        }
+
+        private static RespuestaGuardado RechazoGuardado(string mensaje)
+        {
+            return new RespuestaGuardado { ok = false, mensaje = mensaje, codigo = 0 };
+        }
+
+
+        // =============================================================
+        //  Encuestas de percepción
+        //
+        //  La tercera pata del módulo de participación, junto a las
+        //  valoraciones y los comentarios. Igual que en las otras dos
+        //  secciones, este servicio no escribe SQL: cada método invoca su
+        //  procedimiento del script 14, que es donde vive la regla.
+        //
+        //  Consultar es público y participar exige cuenta, el mismo criterio
+        //  del script 05. Por eso las lecturas no comprueban el módulo y el
+        //  voto sí: quien administra tiene que poder revisar una encuesta
+        //  oculta antes de publicarla.
+        // =============================================================
+
+        /// <summary>
+        /// Las encuestas abiertas de una campaña, con sus opciones dentro.
+        ///
+        /// Con la campaña vacía usa la destacada, que es como las pide la
+        /// portada. El código de usuario viaja para saber en cuáles respondió
+        /// ya esa persona, y con ello en cuáles le corresponde ver el
+        /// resultado.
+        ///
+        /// Dos consultas y no una por encuesta: la segunda trae las opciones de
+        /// todas juntas y se reparten acá. La portada dibuja varias tarjetas en
+        /// la misma respuesta, así que una llamada por encuesta serían tantos
+        /// viajes como preguntas haya publicadas.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<EncuestaPublica> listarEncuestasVigentes(string campanaSlug, int codigoUsuario)
+        {
+            List<EncuestaPublica> lista = new List<EncuestaPublica>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand("dbo.spEncuestasVigentes", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@campanaSlug",
+                    string.IsNullOrEmpty(campanaSlug) ? (object)DBNull.Value : campanaSlug);
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lista.Add(new EncuestaPublica
+                        {
+                            codigoEncuesta = Convert.ToInt32(reader["codigoEncuesta"]),
+                            campanaSlug = Texto(reader, "campanaSlug"),
+                            pregunta = Texto(reader, "pregunta"),
+                            descripcion = Texto(reader, "descripcion"),
+                            categoria = Texto(reader, "categoria"),
+                            fechaInicio = Convert.ToDateTime(reader["fechaInicio"]),
+                            fechaCierre = FechaOVacio(reader, "fechaCierre"),
+                            estado = Texto(reader, "estado"),
+                            votos = Convert.ToInt32(reader["votos"]),
+                            miOpcion = Convert.ToInt32(reader["miOpcion"]),
+                            opciones = new OpcionEncuesta[0]
+                        });
+                    }
+                }
+
+                if (lista.Count == 0) return lista;
+
+                RepartirOpciones(conn, campanaSlug, codigoUsuario, lista);
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Reparte entre las encuestas las opciones que llegan en un solo
+        /// resultado, agrupadas por su código.
+        /// </summary>
+        private static void RepartirOpciones(SqlConnection conn, string campanaSlug,
+            int codigoUsuario, List<EncuestaPublica> lista)
+        {
+            Dictionary<int, List<OpcionEncuesta>> porEncuesta =
+                new Dictionary<int, List<OpcionEncuesta>>();
+
+            SqlCommand cmd = new SqlCommand("dbo.spEncuestasVigentesOpciones", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@campanaSlug",
+                string.IsNullOrEmpty(campanaSlug) ? (object)DBNull.Value : campanaSlug);
+            cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    int codigo = Convert.ToInt32(reader["codigoEncuesta"]);
+
+                    if (!porEncuesta.ContainsKey(codigo))
+                        porEncuesta[codigo] = new List<OpcionEncuesta>();
+
+                    porEncuesta[codigo].Add(new OpcionEncuesta
+                    {
+                        codigoOpcion = Convert.ToInt32(reader["codigoOpcion"]),
+                        texto = Texto(reader, "texto"),
+                        orden = Convert.ToInt32(reader["orden"]),
+                        votos = Convert.ToInt32(reader["votos"]),
+                        miVoto = Convert.ToBoolean(reader["miVoto"])
+                    });
+                }
+            }
+
+            foreach (EncuestaPublica e in lista)
+            {
+                if (porEncuesta.ContainsKey(e.codigoEncuesta))
+                    e.opciones = porEncuesta[e.codigoEncuesta].ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Opciones de una encuesta con su resultado.
+        ///
+        /// El conteo va completo, se haya respondido o no. El código de usuario
+        /// solo sirve para marcar cuál eligió esa persona.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<OpcionEncuesta> listarOpcionesEncuesta(int codigoEncuesta, int codigoUsuario)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+                return LeerOpciones(conn, "dbo.spEncuestaOpciones", codigoEncuesta, codigoUsuario);
+            }
+        }
+
+        /// <summary>
+        /// Registra la respuesta de una persona y devuelve el resultado ya
+        /// actualizado, para que la página no tenga que pedirlo aparte.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaEncuesta votarEncuesta(int codigoEncuesta, int codigoOpcion, int codigoUsuario)
+        {
+            RespuestaEncuesta r = new RespuestaEncuesta();
+            r.ok = false;
+            r.opciones = new OpcionEncuesta[0];
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(cadenaConexion))
+                {
+                    conn.Open();
+
+                    if (!ModuloVisible(conn, "encuestas"))
+                    {
+                        r.mensaje = "Las encuestas están temporalmente cerradas.";
+                        return r;
+                    }
+
+                    if (!UsuarioActivo(conn, codigoUsuario))
+                    {
+                        r.mensaje = "Necesitás una cuenta activa para participar.";
+                        return r;
+                    }
+
+                    SqlCommand cmd = new SqlCommand("dbo.spEncuestaVotar", conn);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@codigoEncuesta", codigoEncuesta);
+                    cmd.Parameters.AddWithValue("@codigoOpcion", codigoOpcion);
+                    cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+
+                    RespuestaAdmin voto = LeerRespuesta(cmd);
+
+                    r.ok = voto.ok;
+                    r.mensaje = voto.mensaje;
+
+                    // El resultado se devuelve siempre, también cuando el voto
+                    // se rechazó: si la encuesta cerró mientras la persona la
+                    // tenía abierta, mostrarle el resultado explica el rechazo
+                    // mejor que el mensaje solo.
+                    r.opciones = LeerOpciones(conn, "dbo.spEncuestaOpciones",
+                        codigoEncuesta, codigoUsuario).ToArray();
+
+                    SqlCommand total = new SqlCommand(
+                        "SELECT votos FROM dbo.vwEncuestas WHERE codigoEncuesta = @e", conn);
+                    total.Parameters.AddWithValue("@e", codigoEncuesta);
+
+                    object leido = total.ExecuteScalar();
+                    r.votos = leido == null || leido == DBNull.Value ? 0 : Convert.ToInt32(leido);
+                }
+            }
+            catch (Exception ex)
+            {
+                r.ok = false;
+                r.mensaje = "No se pudo registrar tu respuesta: " + ex.Message;
+            }
+
+            return r;
+        }
+
+        /// <summary>
+        /// Lee las opciones desde el procedimiento que se le indique. Los dos
+        /// —el público y el de administración— devuelven las mismas columnas,
+        /// y se diferencian en si reservan el conteo y en si exigen rol.
+        /// </summary>
+        private static List<OpcionEncuesta> LeerOpciones(
+            SqlConnection conn, string procedimiento, int primerParametro, int segundoParametro)
+        {
+            List<OpcionEncuesta> lista = new List<OpcionEncuesta>();
+
+            SqlCommand cmd = new SqlCommand(procedimiento, conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            if (procedimiento == "dbo.spAdminEncuestaOpciones")
+            {
+                cmd.Parameters.AddWithValue("@codigoUsuario", primerParametro);
+                cmd.Parameters.AddWithValue("@codigoEncuesta", segundoParametro);
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@codigoEncuesta", primerParametro);
+                cmd.Parameters.AddWithValue("@codigoUsuario", segundoParametro);
+            }
+
+            SqlDataReader reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                lista.Add(new OpcionEncuesta
+                {
+                    codigoOpcion = Convert.ToInt32(reader["codigoOpcion"]),
+                    texto = Texto(reader, "texto"),
+                    orden = Convert.ToInt32(reader["orden"]),
+                    votos = Convert.ToInt32(reader["votos"]),
+                    miVoto = Convert.ToBoolean(reader["miVoto"])
+                });
+            }
+            reader.Close();
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Fecha que puede no existir, devuelta como texto. Un DateTime no
+        /// tiene manera de decir «ninguna», y el año uno disfrazado de fecha
+        /// obligaría a cada página a saber que ese valor es en realidad un
+        /// hueco.
+        /// </summary>
+        private static string FechaOVacio(SqlDataReader reader, string columna)
+        {
+            object valor = reader[columna];
+            if (valor == null || valor == DBNull.Value) return string.Empty;
+
+            return Convert.ToDateTime(valor).ToString("yyyy-MM-dd HH:mm");
+        }
+
+        // ------------------------------------------- Administración
+
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<EncuestaAdmin> listarEncuestasAdmin(
+            int codigoUsuario, string campanaSlug, string estado)
+        {
+            List<EncuestaAdmin> lista = new List<EncuestaAdmin>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminEncuestas", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@campanaSlug",
+                    string.IsNullOrEmpty(campanaSlug) ? (object)DBNull.Value : campanaSlug);
+                cmd.Parameters.AddWithValue("@estado",
+                    string.IsNullOrEmpty(estado) ? (object)DBNull.Value : estado);
+
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new EncuestaAdmin
+                    {
+                        codigoEncuesta = Convert.ToInt32(reader["codigoEncuesta"]),
+                        codigoCampana = Convert.ToInt32(reader["codigoCampana"]),
+                        campanaSlug = Texto(reader, "campanaSlug"),
+                        campana = Texto(reader, "campana"),
+                        pregunta = Texto(reader, "pregunta"),
+                        descripcion = Texto(reader, "descripcion"),
+                        codigoCategoria = Convert.ToInt32(reader["codigoCategoria"]),
+                        categoria = Texto(reader, "categoria"),
+                        fechaInicio = Convert.ToDateTime(reader["fechaInicio"]),
+                        fechaCierre = FechaOVacio(reader, "fechaCierre"),
+                        activo = Convert.ToBoolean(reader["activo"]),
+                        motivoBaja = Texto(reader, "motivoBaja"),
+                        estado = Texto(reader, "estado"),
+                        opciones = Convert.ToInt32(reader["opciones"]),
+                        votos = Convert.ToInt32(reader["votos"])
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<OpcionEncuesta> listarOpcionesEncuestaAdmin(int codigoUsuario, int codigoEncuesta)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+                if (!EsAdministrador(conn, codigoUsuario)) return new List<OpcionEncuesta>();
+
+                return LeerOpciones(conn, "dbo.spAdminEncuestaOpciones", codigoUsuario, codigoEncuesta);
+            }
+        }
+
+        /// <summary>
+        /// Alta o edición de una encuesta. Con <paramref name="codigoEncuesta"/>
+        /// en cero es alta.
+        ///
+        /// Las opciones llegan en un solo texto, una por línea, y las separa el
+        /// procedimiento. Va así porque el número de opciones lo decide quien
+        /// escribe la pregunta, y un parámetro por opción obligaría a fijar un
+        /// tope arbitrario en el contrato del servicio.
+        ///
+        /// La fecha de cierre viaja como texto para poder venir vacía. Una
+        /// encuesta sin cierre programado es un caso normal, no un dato que
+        /// falte.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaGuardado guardarEncuesta(
+            int codigoUsuario, int codigoEncuesta, int codigoCampana,
+            string pregunta, string descripcion, int codigoCategoria,
+            DateTime fechaInicio, string fechaCierre, string opciones)
+        {
+            object cierre = DBNull.Value;
+
+            if (!string.IsNullOrEmpty(fechaCierre))
+            {
+                DateTime leida;
+                if (!DateTime.TryParse(fechaCierre,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.None, out leida))
+                {
+                    return RechazoGuardado("La fecha de cierre no se entiende. Usá el formato aaaa-mm-dd.");
+                }
+
+                cierre = leida;
+            }
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return RechazoGuardado("La cuenta no tiene permiso para administrar encuestas.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminGuardarEncuesta", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoEncuesta", codigoEncuesta);
+                cmd.Parameters.AddWithValue("@codigoCampana", codigoCampana);
+                cmd.Parameters.AddWithValue("@pregunta", (object)pregunta ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@descripcion", (object)descripcion ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@codigoCategoria", codigoCategoria);
+                cmd.Parameters.AddWithValue("@fechaInicio", fechaInicio);
+                cmd.Parameters.AddWithValue("@fechaCierre", cierre);
+                cmd.Parameters.AddWithValue("@opciones", (object)opciones ?? DBNull.Value);
+
+                return LeerGuardado(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Cierra, reabre, retira o restaura una encuesta.
+        ///
+        /// Cerrar y retirar no son lo mismo: una encuesta cerrada terminó su
+        /// votación y sigue a la vista con su resultado, una retirada
+        /// desaparece del sitio público. Las dos exigen motivo, y el
+        /// procedimiento es quien lo exige.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin cambiarEstadoEncuesta(
+            int codigoUsuario, int codigoEncuesta, string accion, string motivo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("La cuenta no tiene permiso para administrar encuestas.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminEstadoEncuesta", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoEncuesta", codigoEncuesta);
+                cmd.Parameters.AddWithValue("@accion", (object)accion ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@motivo", (object)motivo ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
+
+        // =============================================================
+        //  Módulos
+        //
+        //  Qué está visible en el sitio público y qué está oculto.
+        // =============================================================
+
+        /// <summary>
+        /// Estado efectivo de cada elemento apagable, para que el sitio sepa
+        /// qué mostrar.
+        ///
+        /// No exige rol a propósito: lo consulta cada página en cada carga,
+        /// también las que ve un visitante anónimo. Saber que el tablero está
+        /// oculto no es información reservada, y pedir credenciales obligaría a
+        /// autenticar a quien solo está consultando.
+        ///
+        /// Devuelve solo la clave y si está visible. El nombre, la descripción
+        /// y quién lo cambió son parte de la administración y viajan por el otro
+        /// método.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<EstadoModulo> listarModulosVisibles()
+        {
+            List<EstadoModulo> lista = new List<EstadoModulo>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                SqlCommand cmd = new SqlCommand("dbo.spModulosVisibles", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                conn.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new EstadoModulo
+                    {
+                        clave = Texto(reader, "clave"),
+                        visible = Convert.ToBoolean(reader["visible"])
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<ModuloAdmin> listarModulosAdmin(int codigoUsuario)
+        {
+            List<ModuloAdmin> lista = new List<ModuloAdmin>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminModulos", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    lista.Add(new ModuloAdmin
+                    {
+                        codigoModulo = Convert.ToInt32(reader["codigoModulo"]),
+                        clave = Texto(reader, "clave"),
+                        nombre = Texto(reader, "nombre"),
+                        descripcion = Texto(reader, "descripcion"),
+                        grupo = Texto(reader, "grupo"),
+                        clavePadre = Texto(reader, "clavePadre"),
+                        habilitado = Convert.ToBoolean(reader["habilitado"]),
+                        visible = Convert.ToBoolean(reader["visible"]),
+                        apagadoPorPadre = Convert.ToBoolean(reader["apagadoPorPadre"]),
+                        fechaCambio = reader["fechaCambio"] == DBNull.Value
+                            ? DateTime.MinValue
+                            : Convert.ToDateTime(reader["fechaCambio"]),
+                        cambiadoPor = Texto(reader, "cambiadoPor")
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Oculta un elemento del sitio público, o lo devuelve a la vista.
+        /// Ocultar exige motivo, encender no: volver al estado normal no
+        /// necesita justificación.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin cambiarEstadoModulo(
+            int codigoUsuario, string clave, bool habilitado, string motivo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("La cuenta no tiene permiso para configurar los módulos.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminCambiarModulo", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@clave", (object)clave ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@habilitado", habilitado);
+                cmd.Parameters.AddWithValue("@motivo", (object)motivo ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
         /// <summary>
         /// Lee una columna de texto tratando NULL como cadena vacía, para que
         /// el frontend nunca reciba nulos que tenga que verificar.
@@ -1576,6 +2792,197 @@ namespace backend
         {
             object valor = reader[columna];
             return valor == DBNull.Value ? string.Empty : Convert.ToString(valor);
+        }
+
+        // =============================================================
+        //  Asistente de consulta en lenguaje natural
+        // =============================================================
+
+        /// <summary>
+        /// Responde una pregunta en lenguaje natural sobre lo registrado en
+        /// la plataforma.
+        ///
+        /// Las tres comprobaciones previas van acá y no en la página. El
+        /// frontend decide qué botones muestra, nunca qué se permite: quien
+        /// llame al servicio directamente manda el código de usuario que
+        /// quiera, y este método es el que cuesta dinero de verdad.
+        ///
+        /// El registro se escribe siempre, responda el modelo o falle. Una
+        /// bitácora que solo guarda los casos buenos no sirve para revisar
+        /// los malos, que son los que hay que revisar.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAsistente preguntarAsistente(int codigoUsuario, string pregunta,
+                                                     string campanaSlug)
+        {
+            RespuestaAsistente r = new RespuestaAsistente();
+            r.fuentes = new string[0];
+            r.mensaje = string.Empty;
+            r.respuesta = string.Empty;
+
+            string texto = Limpio(pregunta);
+
+            if (texto.Length == 0)
+            {
+                r.mensaje = "Escribí una pregunta.";
+                return r;
+            }
+
+            if (texto.Length > 1000) texto = texto.Substring(0, 1000);
+
+            int limiteDiario;
+            if (!int.TryParse(ConfigurationManager.AppSettings["AsistenteCuotaDiaria"],
+                              out limiteDiario) || limiteDiario <= 0)
+                limiteDiario = 20;
+
+            // --- Comprobaciones, con la conexión de siempre ---------------
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!ModuloVisible(conn, "analitica.asistente"))
+                {
+                    r.mensaje = "El asistente está fuera de servicio en este momento.";
+                    return r;
+                }
+
+                if (!UsuarioActivo(conn, codigoUsuario))
+                {
+                    r.mensaje = "Para preguntarle al asistente hay que iniciar sesión.";
+                    return r;
+                }
+
+                SqlCommand cmd = new SqlCommand("dbo.spIACuotaDisponible", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@limiteDiario", limiteDiario);
+
+                using (SqlDataReader lector = cmd.ExecuteReader())
+                {
+                    if (lector.Read())
+                    {
+                        r.restantes = Convert.ToInt32(lector["restantes"]);
+
+                        if (!Convert.ToBoolean(lector["permitido"]))
+                        {
+                            r.mensaje = "Llegaste al límite de " + limiteDiario
+                                      + " consultas por día. Vuelve mañana.";
+                            return r;
+                        }
+                    }
+                }
+            }
+
+            // --- La llamada al modelo, ya sin conexión abierta ------------
+            //
+            // Tarda entre unos pocos segundos y medio minuto. Sostener una
+            // conexión de SQL Server durante ese rato desperdicia una del
+            // pool por cada pregunta en curso, sin ninguna necesidad.
+
+            System.Diagnostics.Stopwatch reloj = System.Diagnostics.Stopwatch.StartNew();
+            ResultadoIA salida = null;
+            string error = null;
+
+            try
+            {
+                salida = AsistenteIA.Preguntar(texto, campanaSlug);
+            }
+            catch (Exception ex)
+            {
+                error = ex.GetType().Name + ": " + ex.Message;
+                System.Diagnostics.Trace.TraceError("Asistente: " + ex);
+            }
+
+            reloj.Stop();
+
+            // --- Registro y respuesta ------------------------------------
+            bool respondio = error == null && salida != null
+                          && !string.IsNullOrEmpty(salida.texto);
+
+            if (respondio)
+            {
+                r.ok = true;
+                r.respuesta = salida.texto;
+                // Sin fuentes significa que el modelo respondió sin consultar
+                // la base, que pasa cuando la pregunta se contesta con las
+                // reglas —un pedido de ranking, por ejemplo—. Decirlo importa:
+                // callarlo dejaría una respuesta sin respaldo con el mismo
+                // aspecto que una respaldada.
+                r.fuentes = salida.fuentes.Count > 0
+                          ? salida.fuentes.ToArray()
+                          : new string[] { "Esta respuesta no consultó datos de la plataforma" };
+                r.restantes = r.restantes - 1;
+            }
+            else
+            {
+                r.mensaje = "No se pudo consultar al asistente en este momento. "
+                          + "Los gráficos del tablero siguen disponibles.";
+            }
+
+            RegistrarConsulta(codigoUsuario, texto, salida, error,
+                              (int)reloj.ElapsedMilliseconds, respondio);
+
+            return r;
+        }
+
+        /// <summary>
+        /// Deja la consulta en ConsultasIA. Usa la conexión normal y no la del
+        /// asistente, que no tiene permiso de escritura: la bitácora es una
+        /// decisión del servicio, no algo que el modelo pueda provocar.
+        ///
+        /// Si el registro falla no se le arruina la respuesta a la persona.
+        /// Queda en el rastro de la aplicación y ya.
+        /// </summary>
+        private static void RegistrarConsulta(int codigoUsuario, string pregunta,
+                                              ResultadoIA salida, string error,
+                                              int milisegundos, bool respondio)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(cadenaConexion))
+                {
+                    conn.Open();
+
+                    SqlCommand cmd = new SqlCommand("dbo.spIARegistrarConsulta", conn);
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                    cmd.Parameters.AddWithValue("@pregunta", pregunta);
+                    cmd.Parameters.AddWithValue("@respondio", respondio);
+                    cmd.Parameters.AddWithValue("@milisegundos", milisegundos);
+                    cmd.Parameters.AddWithValue("@modelo",
+                        (object)ConfigurationManager.AppSettings["AsistenteModelo"] ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@error",
+                        error == null ? (object)DBNull.Value
+                                      : (error.Length > 300 ? error.Substring(0, 300) : error));
+
+                    if (salida == null)
+                    {
+                        cmd.Parameters.AddWithValue("@respuesta", DBNull.Value);
+                        cmd.Parameters.AddWithValue("@herramientas", DBNull.Value);
+                        cmd.Parameters.AddWithValue("@tokensEntrada", DBNull.Value);
+                        cmd.Parameters.AddWithValue("@tokensSalida", DBNull.Value);
+                    }
+                    else
+                    {
+                        cmd.Parameters.AddWithValue("@respuesta",
+                            (object)salida.texto ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@herramientas",
+                            salida.herramientas == null || salida.herramientas.Count == 0
+                                ? (object)DBNull.Value
+                                : string.Join(", ", salida.herramientas.ToArray()));
+                        cmd.Parameters.AddWithValue("@tokensEntrada", salida.tokensEntrada);
+                        cmd.Parameters.AddWithValue("@tokensSalida", salida.tokensSalida);
+                    }
+
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("Registro de consulta IA: " + ex);
+            }
         }
     }
 }

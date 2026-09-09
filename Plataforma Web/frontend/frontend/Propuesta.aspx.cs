@@ -9,8 +9,14 @@ namespace frontend
     /// Ficha completa de una propuesta o proyecto de campaña, incluido el
     /// esquema de estados por el que puede transitar su cumplimiento.
     /// </summary>
-    public partial class PropuestaPagina : Page
+    public partial class PropuestaPagina : PaginaDeModulo
     {
+        /// <summary>Módulo al que pertenece esta página.</summary>
+        protected override string ModuloRequerido
+        {
+            get { return Modulos.Propuestas; }
+        }
+
         private Propuesta _propuesta;
         private Candidato _autor;
 
