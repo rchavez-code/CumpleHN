@@ -4,13 +4,13 @@
 
     <div class="gc-pagehead">
         <div>
-            <h2>Moderación de publicaciones</h2>
+            <h2>Moderación</h2>
             <p class="gc-muted" style="margin: 0;">
-                Retirar una publicación la saca de la consulta pública. No la borra: la fila se conserva
-                con el motivo y el responsable, y se puede restaurar.
+                Retirar contenido lo saca de la consulta pública. No lo borra: la fila se conserva con el
+                motivo y el responsable, y se puede restaurar. Alcanza a las publicaciones de las
+                candidaturas y a las iniciativas que escribe la ciudadanía.
             </p>
         </div>
-        <span class="gc-muted gc-small"><%: TotalTexto %></span>
     </div>
 
     <asp:PlaceHolder ID="phMensaje" runat="server" Visible="false">
@@ -29,12 +29,12 @@
 
                 <dl class="gc-datalist gc-mb">
                     <div>
-                        <dt>Publicación</dt>
+                        <dt>Contenido</dt>
                         <dd><%: SeleccionTexto %></dd>
                     </div>
                     <div>
                         <dt>Autor</dt>
-                        <dd><%: SeleccionCandidato %></dd>
+                        <dd><%: SeleccionAutor %></dd>
                     </div>
                     <div>
                         <dt>Participación registrada</dt>
@@ -45,8 +45,8 @@
                 <asp:PlaceHolder ID="phAvisoRetiro" runat="server" Visible="false">
                     <div class="gc-note gc-note--ambar gc-mb">
                         <span>
-                            Al retirarla, sus valoraciones y sus comentarios dejan de contar en el tablero de
-                            analítica. Las filas no se borran: vuelven a contar si la publicación se restaura.
+                            Al retirarlo, sus valoraciones y sus comentarios dejan de contar en el tablero de
+                            analítica. Las filas no se borran: vuelven a contar si el contenido se restaura.
                         </span>
                     </div>
                 </asp:PlaceHolder>
@@ -54,7 +54,7 @@
                 <div class="gc-field">
                     <label for="<%= txtMotivo.ClientID %>">Motivo de la decisión</label>
                     <asp:TextBox ID="txtMotivo" runat="server" CssClass="gc-input" TextMode="MultiLine" Rows="3"
-                                 placeholder="Por qué se toma esta decisión sobre la publicación." />
+                                 placeholder="Por qué se toma esta decisión sobre el contenido." />
                     <span class="gc-muted gc-small">
                         Obligatorio. Queda en la bitácora junto a tu nombre y la fecha.
                     </span>
@@ -72,7 +72,14 @@
 
     </asp:PlaceHolder>
 
-    <%-- ================================================== Filtros --%>
+    <%-- ==================================== Publicaciones --%>
+
+    <div class="gc-sechead" style="margin-top: 8px;">
+        <div>
+            <h3>Publicaciones de candidaturas</h3>
+        </div>
+        <span class="gc-muted gc-small"><%: TotalTexto %></span>
+    </div>
 
     <div class="gc-card gc-filters">
         <asp:DropDownList ID="ddlEstado" runat="server" CssClass="gc-select" />
@@ -134,6 +141,78 @@
         <div class="gc-card gc-empty">
             <h3>No hay publicaciones que mostrar</h3>
             <p>Cambiá el filtro de estado para ver las publicaciones activas o las retiradas.</p>
+        </div>
+    </asp:PlaceHolder>
+
+    <%-- ==================================== Iniciativas --%>
+
+    <div class="gc-sechead" style="margin-top: 34px;">
+        <div>
+            <h3>Iniciativas ciudadanas</h3>
+            <p class="gc-muted" style="margin: 0;">
+                Propuestas de proyecto que escribe la ciudadanía. La autora puede retirarlas ella misma,
+                y acá la administración retira o restaura cualquiera con motivo.
+            </p>
+        </div>
+        <span class="gc-muted gc-small"><%: TotalTextoInic %></span>
+    </div>
+
+    <div class="gc-card gc-filters">
+        <asp:DropDownList ID="ddlEstadoInic" runat="server" CssClass="gc-select" />
+        <asp:Button ID="btnFiltrarInic" runat="server" CssClass="gc-btn" Text="Filtrar" OnClick="btnFiltrar_Click" />
+    </div>
+
+    <asp:PlaceHolder ID="phListaInic" runat="server">
+        <div class="gc-card">
+            <div class="gc-tablewrap">
+                <table class="gc-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Iniciativa</th>
+                            <th scope="col">Autora</th>
+                            <th scope="col">Fecha</th>
+                            <th scope="col">Participación</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <asp:Repeater ID="rptIniciativas" runat="server" OnItemCommand="rptIniciativas_ItemCommand">
+                            <ItemTemplate>
+                                <tr>
+                                    <td style="min-width: 280px;">
+                                        <%#: Eval("Titulo") %>
+                                        <asp:PlaceHolder runat="server" Visible='<%# !(bool)Eval("Activa") %>'>
+                                            <div class="gc-muted gc-small" style="margin-top: 6px;">
+                                                Retirada: <%#: Eval("MotivoBaja") %>
+                                            </div>
+                                        </asp:PlaceHolder>
+                                    </td>
+                                    <td><%#: Eval("Autora") %></td>
+                                    <td class="gc-muted gc-nowrap"><%#: Eval("FechaTexto") %></td>
+                                    <td class="gc-muted gc-nowrap"><%#: Eval("Participacion") %></td>
+                                    <td class="gc-nowrap">
+                                        <span class="<%# EstadoClase(Eval("Activa")) %>"><%#: EstadoTexto(Eval("Activa")) %></span>
+                                    </td>
+                                    <td class="gc-nowrap" style="text-align: right;">
+                                        <asp:LinkButton runat="server" CssClass="gc-small"
+                                                        Text='<%# (bool)Eval("Activa") ? "Retirar" : "Restaurar" %>'
+                                                        CommandName="moderar"
+                                                        CommandArgument='<%# Eval("Id") %>' />
+                                    </td>
+                                </tr>
+                            </ItemTemplate>
+                        </asp:Repeater>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </asp:PlaceHolder>
+
+    <asp:PlaceHolder ID="phVacioInic" runat="server" Visible="false">
+        <div class="gc-card gc-empty">
+            <h3>No hay iniciativas que mostrar</h3>
+            <p>Cambiá el filtro de estado para ver las iniciativas activas o las retiradas.</p>
         </div>
     </asp:PlaceHolder>
 

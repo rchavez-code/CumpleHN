@@ -7,30 +7,47 @@ using frontend.Servicios;
 namespace frontend.Admin
 {
     /// <summary>
-    /// Moderación de publicaciones.
+    /// Moderación de publicaciones e iniciativas ciudadanas.
     ///
-    /// Retirar es una baja lógica: la publicación sale de la consulta pública
-    /// y de la analítica, pero la fila y su participación se conservan. Por eso
-    /// la lista muestra también las retiradas — sin poder verlas, un retiro por
+    /// Retirar es una baja lógica: el contenido sale de la consulta pública y
+    /// de la analítica, pero la fila y su participación se conservan. Por eso
+    /// las listas muestran también lo retirado — sin poder verlo, un retiro por
     /// error sería irreversible en la práctica.
     ///
     /// El motivo es obligatorio en las dos direcciones y lo exige el
-    /// procedimiento, no esta página.
+    /// procedimiento, no esta página. Las dos facultades comparten un solo
+    /// panel de decisión: lo que cambia es a qué tabla se aplica, y eso lo
+    /// recuerda el tipo guardado en la sesión.
     /// </summary>
     public partial class Moderacion : PaginaAdmin
     {
-        private IList<PublicacionModerada> _publicaciones;
-        private PublicacionModerada _seleccion;
+        private const string TipoPublicacion = "pub";
+        private const string TipoIniciativa = "inic";
 
-        private const string ClaveSeleccion = "admin.moder.codigo";
+        private const string ClaveTipo = "admin.moder.tipo";
+        private const string ClaveCodigo = "admin.moder.codigo";
+
+        private IList<PublicacionModerada> _publicaciones;
+        private IList<Iniciativa> _iniciativas;
+
+        // Selección resuelta, común a los dos tipos.
+        private string _selTipo;
+        private int _selCodigo;
+        private bool _selActiva;
+        private bool _selHay;
+        private string _selTitulo;
+        private string _selAutor;
+        private string _selParticipacion;
 
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack) CargarFiltros();
 
             // En cada carga, también en los postbacks: sin esto la fila que
-            // recibe el clic se queda sin modelo.
+            // recibe el clic se queda sin modelo. Estas tarjetas no llevan hilo
+            // de comentarios, así que Page_Load alcanza — no hace falta OnInit.
             CargarPublicaciones();
+            CargarIniciativas();
             MostrarSeleccion();
         }
 
@@ -39,16 +56,21 @@ namespace frontend.Admin
             ddlEstado.Items.Add(new ListItem("Todas", string.Empty));
             ddlEstado.Items.Add(new ListItem("Solo activas", "Activas"));
             ddlEstado.Items.Add(new ListItem("Solo retiradas", "Retiradas"));
+
+            ddlEstadoInic.Items.Add(new ListItem("Todas", string.Empty));
+            ddlEstadoInic.Items.Add(new ListItem("Solo activas", "Activas"));
+            ddlEstadoInic.Items.Add(new ListItem("Solo retiradas", "Retiradas"));
         }
 
         protected void btnFiltrar_Click(object sender, EventArgs e)
         {
             LimpiarSeleccion();
             CargarPublicaciones();
+            CargarIniciativas();
             MostrarSeleccion();
         }
 
-        // ------------------------------------------------------- Lista
+        // ---------------------------------------------------- Publicaciones
 
         private void CargarPublicaciones()
         {
@@ -56,7 +78,6 @@ namespace frontend.Admin
                 Sesion.CodigoUsuario, string.Empty, ddlEstado.SelectedValue);
 
             bool hay = _publicaciones.Count > 0;
-
             phLista.Visible = hay;
             phVacio.Visible = !hay;
 
@@ -69,12 +90,41 @@ namespace frontend.Admin
 
         protected void rptPublicaciones_ItemCommand(object source, RepeaterCommandEventArgs e)
         {
+            Seleccionar(TipoPublicacion, e);
+        }
+
+        // ------------------------------------------------------ Iniciativas
+
+        private void CargarIniciativas()
+        {
+            _iniciativas = Contenido.Datos.ObtenerIniciativasAdmin(
+                Sesion.CodigoUsuario, ddlEstadoInic.SelectedValue);
+
+            bool hay = _iniciativas.Count > 0;
+            phListaInic.Visible = hay;
+            phVacioInic.Visible = !hay;
+
+            if (hay)
+            {
+                rptIniciativas.DataSource = _iniciativas;
+                rptIniciativas.DataBind();
+            }
+        }
+
+        protected void rptIniciativas_ItemCommand(object source, RepeaterCommandEventArgs e)
+        {
+            Seleccionar(TipoIniciativa, e);
+        }
+
+        private void Seleccionar(string tipo, RepeaterCommandEventArgs e)
+        {
             if (e.CommandName != "moderar") return;
 
             int codigo;
             if (!int.TryParse(Convert.ToString(e.CommandArgument), out codigo)) return;
 
-            Session[ClaveSeleccion] = codigo;
+            Session[ClaveTipo] = tipo;
+            Session[ClaveCodigo] = codigo;
 
             Mensaje = null;
             MostrarSeleccion();
@@ -84,40 +134,75 @@ namespace frontend.Admin
 
         private void MostrarSeleccion()
         {
-            _seleccion = null;
+            _selHay = false;
+            _selTipo = Session[ClaveTipo] as string;
 
-            object guardado = Session[ClaveSeleccion];
-
-            if (guardado != null && _publicaciones != null)
+            object guardado = Session[ClaveCodigo];
+            if (_selTipo != null && guardado != null)
             {
-                int codigo = Convert.ToInt32(guardado);
+                _selCodigo = Convert.ToInt32(guardado);
 
-                foreach (PublicacionModerada p in _publicaciones)
-                {
-                    if (p.CodigoPublicacion == codigo)
-                    {
-                        _seleccion = p;
-                        break;
-                    }
-                }
+                if (_selTipo == TipoPublicacion) ResolverPublicacion();
+                else if (_selTipo == TipoIniciativa) ResolverIniciativa();
             }
 
-            phDecision.Visible = _seleccion != null;
+            phDecision.Visible = _selHay;
 
-            if (_seleccion == null)
+            if (!_selHay)
             {
                 LimpiarSeleccion();
                 return;
             }
 
             // El aviso sobre la analítica solo aplica al retirar.
-            phAvisoRetiro.Visible = _seleccion.Activa;
-            btnConfirmar.Text = _seleccion.Activa ? "Retirar publicación" : "Restaurar publicación";
+            phAvisoRetiro.Visible = _selActiva;
+            btnConfirmar.Text = _selActiva ? "Retirar de la vista pública" : "Restaurar a la vista pública";
+        }
+
+        private void ResolverPublicacion()
+        {
+            if (_publicaciones == null) return;
+
+            foreach (PublicacionModerada p in _publicaciones)
+            {
+                if (p.CodigoPublicacion != _selCodigo) continue;
+
+                _selHay = true;
+                _selActiva = p.Activa;
+                _selTitulo = p.Extracto;
+                _selAutor = p.Candidato;
+                _selParticipacion =
+                    Vista.Plural(p.MeGusta, "apoyo", "apoyos")
+                    + ", " + Vista.Plural(p.NoMeGusta, "rechazo", "rechazos")
+                    + " y " + Vista.Plural(p.Comentarios, "comentario", "comentarios");
+                return;
+            }
+        }
+
+        private void ResolverIniciativa()
+        {
+            if (_iniciativas == null) return;
+
+            foreach (Iniciativa i in _iniciativas)
+            {
+                if (i.Id != _selCodigo) continue;
+
+                _selHay = true;
+                _selActiva = i.Activa;
+                _selTitulo = i.Titulo;
+                _selAutor = i.Autora;
+                _selParticipacion =
+                    Vista.Plural(i.MeGusta, "apoyo", "apoyos")
+                    + ", " + Vista.Plural(i.NoMeGusta, "rechazo", "rechazos")
+                    + " y " + Vista.Plural(i.Comentarios, "comentario", "comentarios");
+                return;
+            }
         }
 
         private void LimpiarSeleccion()
         {
-            Session.Remove(ClaveSeleccion);
+            Session.Remove(ClaveTipo);
+            Session.Remove(ClaveCodigo);
             phDecision.Visible = false;
             txtMotivo.Text = string.Empty;
         }
@@ -131,18 +216,20 @@ namespace frontend.Admin
 
         protected void btnConfirmar_Click(object sender, EventArgs e)
         {
-            if (_seleccion == null)
+            if (!_selHay)
             {
-                MostrarMensaje("Elegí primero la publicación.", false);
+                MostrarMensaje("Elegí primero el contenido a moderar.", false);
                 return;
             }
 
             // Se envía el estado contrario al actual: el botón es el mismo para
             // retirar y para restaurar.
-            bool nuevoEstado = !_seleccion.Activa;
+            bool nuevoEstado = !_selActiva;
+            string motivo = txtMotivo.Text.Trim();
 
-            Resultado r = Contenido.Datos.ModerarPublicacion(
-                Sesion.CodigoUsuario, _seleccion.CodigoPublicacion, nuevoEstado, txtMotivo.Text.Trim());
+            Resultado r = _selTipo == TipoIniciativa
+                ? Contenido.Datos.ModerarIniciativa(Sesion.CodigoUsuario, _selCodigo, nuevoEstado, motivo)
+                : Contenido.Datos.ModerarPublicacion(Sesion.CodigoUsuario, _selCodigo, nuevoEstado, motivo);
 
             MostrarMensaje(r.Mensaje, r.Ok);
 
@@ -150,6 +237,7 @@ namespace frontend.Admin
 
             LimpiarSeleccion();
             CargarPublicaciones();
+            CargarIniciativas();
         }
 
         // ------------------------------------------------- Presentación
@@ -190,12 +278,21 @@ namespace frontend.Admin
             }
         }
 
+        protected string TotalTextoInic
+        {
+            get
+            {
+                int n = _iniciativas == null ? 0 : _iniciativas.Count;
+                return Vista.Plural(n, "iniciativa", "iniciativas");
+            }
+        }
+
         protected string TituloDecision
         {
             get
             {
-                if (_seleccion == null) return string.Empty;
-                return _seleccion.Activa
+                if (!_selHay) return string.Empty;
+                return _selActiva
                     ? "Retirar de la consulta pública"
                     : "Restaurar a la consulta pública";
             }
@@ -203,24 +300,17 @@ namespace frontend.Admin
 
         protected string SeleccionTexto
         {
-            get { return _seleccion == null ? string.Empty : _seleccion.Extracto; }
+            get { return _selHay ? _selTitulo : string.Empty; }
         }
 
-        protected string SeleccionCandidato
+        protected string SeleccionAutor
         {
-            get { return _seleccion == null ? string.Empty : _seleccion.Candidato; }
+            get { return _selHay ? _selAutor : string.Empty; }
         }
 
         protected string SeleccionParticipacion
         {
-            get
-            {
-                if (_seleccion == null) return string.Empty;
-
-                return Vista.Plural(_seleccion.MeGusta, "apoyo", "apoyos")
-                     + ", " + Vista.Plural(_seleccion.NoMeGusta, "rechazo", "rechazos")
-                     + " y " + Vista.Plural(_seleccion.Comentarios, "comentario", "comentarios");
-            }
+            get { return _selHay ? _selParticipacion : string.Empty; }
         }
     }
 }

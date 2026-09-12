@@ -112,5 +112,16 @@ namespace frontend.Modelos
         {
             get { return !Activa; }
         }
+
+        public string FechaTexto
+        {
+            get { return Vista.FechaCorta(FechaRegistro); }
+        }
+
+        /// <summary>Total de participación, para que quien modera sepa cuánta antes de decidir.</summary>
+        public int Participacion
+        {
+            get { return MeGusta + NoMeGusta + Comentarios; }
+        }
     }
 }
