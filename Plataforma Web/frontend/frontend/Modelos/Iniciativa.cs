@@ -70,6 +70,24 @@ namespace frontend.Modelos
             get { return Vista.ClaseCategoria(Categoria); }
         }
 
+        /// <summary>
+        /// Modificador de la tarjeta según la categoría (gc-inic--salud,
+        /// gc-inic--educacion…), derivado de la misma tabla que decide el
+        /// chip, para que el filo y la etiqueta nunca digan colores distintos.
+        /// Vacío cuando la categoría no tiene color asignado.
+        /// </summary>
+        public string ClaseCategoriaTarjeta
+        {
+            get
+            {
+                string chip = Vista.ClaseCategoria(Categoria);
+                int i = chip.IndexOf("gc-chip--", StringComparison.Ordinal);
+                if (i < 0) return string.Empty;
+
+                return "gc-inic--" + chip.Substring(i + "gc-chip--".Length);
+            }
+        }
+
         public bool TieneDepartamento
         {
             get { return !string.IsNullOrEmpty(Departamento); }

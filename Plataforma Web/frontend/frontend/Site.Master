@@ -77,6 +77,9 @@
                         <asp:PlaceHolder ID="phAdmin" runat="server" Visible="false">
                             <a class="gc-btn gc-btn--ghost gc-btn--sm" href="<%= ResolveUrl("~/Admin/") %>">Administración</a>
                         </asp:PlaceHolder>
+                        <asp:PlaceHolder ID="phCuenta" runat="server" Visible="false">
+                            <a class="gc-btn gc-btn--ghost gc-btn--sm" href="<%= ResolveUrl("~/MiCuenta") %>">Mi cuenta</a>
+                        </asp:PlaceHolder>
                         <a class="gc-btn gc-btn--quiet gc-btn--sm" href="<%= ResolveUrl("~/Acceso?salir=1") %>">Salir</a>
                     </asp:PlaceHolder>
                 </div>

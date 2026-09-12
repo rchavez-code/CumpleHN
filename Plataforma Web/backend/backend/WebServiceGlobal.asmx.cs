@@ -752,7 +752,7 @@ namespace backend
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
-                string filtro = string.IsNullOrEmpty(campanaSlug) ? "" : "WHERE ca.slug = @campana ";
+                string filtro = string.IsNullOrEmpty(campanaSlug) ? "" : "AND ca.slug = @campana ";
 
                 SqlCommand cmd = new SqlCommand(
                     SelectPublicacion + filtro + "ORDER BY b.fecha DESC", conn);

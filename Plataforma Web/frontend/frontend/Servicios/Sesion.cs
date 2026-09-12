@@ -169,6 +169,30 @@ namespace frontend.Servicios
         }
 
         /// <summary>
+        /// Cuenta ciudadana: participa en las páginas públicas y propone
+        /// iniciativas desde «Mi cuenta». Como las otras dos, decide qué se le
+        /// muestra, nunca qué se le permite.
+        /// </summary>
+        public static bool EsCiudadano
+        {
+            get { return EsRol(RolCiudadano); }
+        }
+
+        /// <summary>
+        /// Correo de la cuenta en sesión, para mostrárselo a su dueño en «Mi
+        /// cuenta». Se lee del objeto completo que dejó el acceso, en lugar de
+        /// guardarse aparte, porque es el único lugar del sitio que lo pide.
+        /// </summary>
+        public static string Correo
+        {
+            get
+            {
+                webservices.InfoUsuario u = Leer("usuario") as webservices.InfoUsuario;
+                return u == null ? string.Empty : u.correo;
+            }
+        }
+
+        /// <summary>
         /// Administrador de la plataforma: verifica contenido, modera
         /// publicaciones y administra los catálogos.
         ///

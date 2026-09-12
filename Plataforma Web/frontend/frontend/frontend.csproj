@@ -107,6 +107,7 @@
     <Content Include="Candidato.aspx" />
     <Content Include="Candidatos.aspx" />
     <Content Include="Confirmar.aspx" />
+    <Content Include="MiCuenta.aspx" />
     <None Include="Connected Services\webservices\WebServiceGlobal.disco" />
     <None Include="Connected Services\webservices\configuration91.svcinfo" />
     <None Include="Connected Services\webservices\configuration.svcinfo" />
@@ -224,6 +225,7 @@
     <Content Include="Controles\PropuestaCard.ascx" />
     <Content Include="Controles\EncuestaCard.ascx" />
     <Content Include="Controles\PublicacionCard.ascx" />
+    <Content Include="Controles\IniciativaCard.ascx" />
     <Content Include="Controles\Participacion\Interaccion.ascx" />
     <Content Include="Controles\Participacion\Comentarios.ascx" />
     <Content Include="Partidos.aspx" />
@@ -296,6 +298,13 @@
     <Compile Include="Controles\PublicacionCard.ascx.designer.cs">
       <DependentUpon>PublicacionCard.ascx</DependentUpon>
     </Compile>
+    <Compile Include="Controles\IniciativaCard.ascx.cs">
+      <DependentUpon>IniciativaCard.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Controles\IniciativaCard.ascx.designer.cs">
+      <DependentUpon>IniciativaCard.ascx</DependentUpon>
+    </Compile>
     <Compile Include="Controles\Participacion\Interaccion.ascx.cs">
       <DependentUpon>Interaccion.ascx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -365,6 +374,13 @@
     <Compile Include="Confirmar.aspx.cs">
       <DependentUpon>Confirmar.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="MiCuenta.aspx.cs">
+      <DependentUpon>MiCuenta.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="MiCuenta.aspx.designer.cs">
+      <DependentUpon>MiCuenta.aspx</DependentUpon>
     </Compile>
     <Compile Include="Confirmar.aspx.designer.cs">
       <DependentUpon>Confirmar.aspx</DependentUpon>
