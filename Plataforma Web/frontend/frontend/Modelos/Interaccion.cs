@@ -14,6 +14,7 @@ namespace frontend.Modelos
         public const string Partido = "Partido";
         public const string Propuesta = "Propuesta";
         public const string Encuesta = "Encuesta";
+        public const string Iniciativa = "Iniciativa";
     }
 
     /// <summary>

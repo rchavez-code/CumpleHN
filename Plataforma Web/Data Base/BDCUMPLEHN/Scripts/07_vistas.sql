@@ -19,6 +19,10 @@
    define sobre qué subconjunto se calcula.
 
    Se puede volver a ejecutar: cada vista se recrea.
+
+   Depende de objetos de scripts posteriores: la columna activo
+   de Publicaciones (script 09) y la tabla Iniciativas (script
+   18). En una base nueva se ejecuta después de ellos.
    ============================================================ */
 
 USE BDCUMPLEHN;
@@ -203,7 +207,7 @@ GO
    codigoObjeto), y el tablero necesita saber a qué candidatura
    y a qué campaña pertenece cada voto para poder filtrarlo.
 
-   La resolución se escribe como una UNION de cuatro ramas, una
+   La resolución se escribe como una UNION de cinco ramas, una
    por tipo, en vez de un CASE con subconsultas: cada rama deja
    explícito por qué columna se enlaza, que es justamente lo que
    el Manual Técnico tiene que documentar.
@@ -211,14 +215,18 @@ GO
    Las valoraciones sobre un partido no tienen candidatura
    asociada, así que candidato queda nulo. Las consultas que
    agrupan por candidatura las descartan sin perder el total,
-   que se sigue leyendo de la vista completa.
+   que se sigue leyendo de la vista completa. Las que recaen
+   sobre una iniciativa ciudadana tampoco tienen candidatura ni
+   partido, pero sí categoría y departamento, que son las
+   dimensiones por las que el tablero las cruza.
+
+   CREATE OR ALTER y no DROP + CREATE: el script 13 le niega
+   esta vista al login del asistente, y borrarla se llevaría ese
+   DENY en silencio cada vez que se vuelva a ejecutar este
+   script. Alterarla conserva los permisos.
    ==================================================== */
 
-IF OBJECT_ID('dbo.vwAnaliticaValoraciones') IS NOT NULL
-    DROP VIEW dbo.vwAnaliticaValoraciones;
-GO
-
-CREATE VIEW dbo.vwAnaliticaValoraciones
+CREATE OR ALTER VIEW dbo.vwAnaliticaValoraciones
 AS
 /* --- Voto sobre el perfil de una candidatura */
 SELECT  v.codigoValoracion, N'Candidato' AS tipoObjeto, v.codigoObjeto,
@@ -264,7 +272,23 @@ SELECT  v.codigoValoracion, N'Partido', v.codigoObjeto,
         NULL, NULL
 FROM dbo.Valoraciones v
 INNER JOIN dbo.TiposObjeto t ON t.codigoTipoObjeto = v.codigoTipoObjeto AND t.nombre = N'Partido'
-INNER JOIN dbo.Partidos pa ON pa.codigoPartido = v.codigoObjeto;
+INNER JOIN dbo.Partidos pa ON pa.codigoPartido = v.codigoObjeto
+
+UNION ALL
+
+/* --- Voto sobre una iniciativa ciudadana: sin candidatura ni partido,
+       con la categoría y el departamento que declaró quien la propuso.
+       Solo las activas, por lo mismo que las publicaciones: una
+       retirada sale de la consulta pública y del conteo. */
+SELECT  v.codigoValoracion, N'Iniciativa', v.codigoObjeto,
+        v.codigoUsuario, v.valor, CAST(v.fecha AS DATE),
+        NULL, NULL, NULL, NULL,
+        NULL, NULL, i.codigoDepartamento, d.nombre,
+        NULL, i.codigoCategoria
+FROM dbo.Valoraciones v
+INNER JOIN dbo.TiposObjeto t ON t.codigoTipoObjeto = v.codigoTipoObjeto AND t.nombre = N'Iniciativa'
+INNER JOIN dbo.Iniciativas i ON i.codigoIniciativa = v.codigoObjeto AND i.activo = 1
+LEFT  JOIN dbo.Departamentos d ON d.codigoDepartamento = i.codigoDepartamento;
 GO
 
 /* ===================================== 5. Comentarios
@@ -274,11 +298,7 @@ GO
    moderación no debe contar como participación.
    ==================================================== */
 
-IF OBJECT_ID('dbo.vwAnaliticaComentarios') IS NOT NULL
-    DROP VIEW dbo.vwAnaliticaComentarios;
-GO
-
-CREATE VIEW dbo.vwAnaliticaComentarios
+CREATE OR ALTER VIEW dbo.vwAnaliticaComentarios
 AS
 SELECT  c.codigoComentario, N'Candidato' AS tipoObjeto, c.codigoObjeto,
         c.codigoUsuario, CAST(c.fecha AS DATE) AS fecha,
@@ -324,6 +344,18 @@ SELECT  c.codigoComentario, N'Partido', c.codigoObjeto,
 FROM dbo.Comentarios c
 INNER JOIN dbo.TiposObjeto t ON t.codigoTipoObjeto = c.codigoTipoObjeto AND t.nombre = N'Partido'
 INNER JOIN dbo.Partidos pa ON pa.codigoPartido = c.codigoObjeto
+WHERE c.aprobado = 1
+
+UNION ALL
+
+SELECT  c.codigoComentario, N'Iniciativa', c.codigoObjeto,
+        c.codigoUsuario, CAST(c.fecha AS DATE),
+        NULL, NULL, NULL,
+        NULL, i.codigoDepartamento, NULL,
+        i.codigoCategoria
+FROM dbo.Comentarios c
+INNER JOIN dbo.TiposObjeto t ON t.codigoTipoObjeto = c.codigoTipoObjeto AND t.nombre = N'Iniciativa'
+INNER JOIN dbo.Iniciativas i ON i.codigoIniciativa = c.codigoObjeto AND i.activo = 1
 WHERE c.aprobado = 1;
 GO
 

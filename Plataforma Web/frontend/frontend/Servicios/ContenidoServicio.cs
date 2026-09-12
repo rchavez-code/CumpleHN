@@ -358,6 +358,108 @@ namespace frontend.Servicios
             };
         }
 
+        // =============================================================
+        //  Iniciativas ciudadanas
+        // =============================================================
+
+        public IList<Iniciativa> ObtenerIniciativas(int codigoUsuario)
+        {
+            return AIniciativas(Ejecutar(
+                c => c.listarIniciativas(codigoUsuario), new ws.IniciativaPublica[0]));
+        }
+
+        public IList<Iniciativa> ObtenerIniciativasDeUsuario(int codigoUsuario)
+        {
+            return AIniciativas(Ejecutar(
+                c => c.listarIniciativasDeUsuario(codigoUsuario), new ws.IniciativaPublica[0]));
+        }
+
+        public ResultadoGuardado GuardarIniciativa(int codigoUsuario, int codigoIniciativa,
+            string titulo, string descripcion, int codigoCategoria, int codigoDepartamento)
+        {
+            ws.RespuestaGuardado d = Ejecutar(
+                c => c.guardarIniciativa(codigoUsuario, codigoIniciativa,
+                    titulo, descripcion, codigoCategoria, codigoDepartamento), null);
+
+            if (d == null)
+            {
+                return new ResultadoGuardado
+                {
+                    Ok = false,
+                    Mensaje = "No se pudo contactar al servidor. Intentá de nuevo."
+                };
+            }
+
+            return new ResultadoGuardado { Ok = d.ok, Mensaje = d.mensaje, Codigo = d.codigo };
+        }
+
+        public Resultado RetirarIniciativaPropia(int codigoUsuario, int codigoIniciativa)
+        {
+            return AResultado(Ejecutar(
+                c => c.retirarIniciativaPropia(codigoUsuario, codigoIniciativa), null));
+        }
+
+        public IList<Iniciativa> ObtenerIniciativasAdmin(int codigoUsuario, string estado)
+        {
+            return AIniciativas(Ejecutar(
+                c => c.listarIniciativasAdmin(codigoUsuario, estado), new ws.IniciativaPublica[0]));
+        }
+
+        public Resultado ModerarIniciativa(int codigoUsuario, int codigoIniciativa,
+            bool activo, string motivo)
+        {
+            return AResultado(Ejecutar(
+                c => c.moderarIniciativa(codigoUsuario, codigoIniciativa, activo, motivo), null));
+        }
+
+        private static IList<Iniciativa> AIniciativas(ws.IniciativaPublica[] datos)
+        {
+            List<Iniciativa> lista = new List<Iniciativa>();
+            if (datos == null) return lista;
+
+            foreach (ws.IniciativaPublica d in datos)
+            {
+                lista.Add(new Iniciativa
+                {
+                    Id = d.codigoIniciativa,
+                    Autora = d.autora,
+                    Titulo = d.titulo,
+                    Descripcion = d.descripcion,
+                    CodigoCategoria = d.codigoCategoria,
+                    Categoria = d.categoria,
+                    CodigoDepartamento = d.codigoDepartamento,
+                    Departamento = d.departamento,
+                    MeGusta = d.meGusta,
+                    NoMeGusta = d.noMeGusta,
+                    Comentarios = d.comentarios,
+                    Saldo = d.saldo,
+                    MiValoracion = d.miValoracion,
+                    EsMia = d.esMia,
+                    Activa = d.activo,
+                    MotivoBaja = d.motivoBaja,
+                    PuedeEditar = d.puedeEditar,
+                    FechaRegistro = d.fechaRegistro,
+                    FechaEdicion = d.fechaEdicion
+                });
+            }
+
+            return lista;
+        }
+
+        private static Resultado AResultado(ws.RespuestaAdmin d)
+        {
+            if (d == null)
+            {
+                return new Resultado
+                {
+                    Ok = false,
+                    Mensaje = "No se pudo contactar al servidor. Intentá de nuevo."
+                };
+            }
+
+            return new Resultado { Ok = d.ok, Mensaje = d.mensaje };
+        }
+
         private static IList<OpcionEncuesta> AOpcionesEncuesta(ws.OpcionEncuesta[] datos)
         {
             List<OpcionEncuesta> lista = new List<OpcionEncuesta>();

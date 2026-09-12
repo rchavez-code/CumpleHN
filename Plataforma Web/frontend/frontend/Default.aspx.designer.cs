@@ -52,6 +52,41 @@ namespace frontend
         protected global::System.Web.UI.WebControls.HiddenField hdnEncuestas;
 
         /// <summary>
+        /// phIniciativas control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phIniciativas;
+
+        /// <summary>
+        /// phProponer control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phProponer;
+
+        /// <summary>
+        /// phIniciativasOcultas control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phIniciativasOcultas;
+
+        /// <summary>
+        /// zonaIniciativas control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl zonaIniciativas;
+
+        /// <summary>
+        /// rptIniciativas control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Repeater rptIniciativas;
+
+        /// <summary>
+        /// phVerMasInic control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phVerMasInic;
+
+        /// <summary>
+        /// hdnIniciativas control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.HiddenField hdnIniciativas;
+
+        /// <summary>
         /// rptCandidatos control.
         /// </summary>
         protected global::System.Web.UI.WebControls.Repeater rptCandidatos;

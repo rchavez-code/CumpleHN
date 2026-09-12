@@ -34,8 +34,9 @@ namespace frontend.Servicios
             if (string.Equals(rol, Sesion.RolCandidato, StringComparison.OrdinalIgnoreCase))
                 return "~/Panel/";
 
-            // Un ciudadano registrado no tiene área privada: participa en las
-            // páginas públicas.
+            // Un ciudadano entra a la portada, no a «Mi cuenta»: inicia sesión
+            // para participar en las páginas públicas, y ?volver= lo regresa a
+            // donde estaba. Su página propia queda a un clic en la barra.
             return "~/";
         }
 
@@ -124,6 +125,22 @@ namespace frontend.Servicios
         }
     }
 
+
+    /// <summary>
+    /// Página propia de una cuenta ciudadana («Mi cuenta»).
+    ///
+    /// Solo el rol Ciudadano. Una candidatura o la administración que llegue
+    /// acá se devuelve a su propia área, igual que en las otras dos: proponer
+    /// iniciativas es cosa de la ciudadanía, y el Web Service lo vuelve a
+    /// comprobar contra la base antes de guardar nada.
+    /// </summary>
+    public abstract class PaginaCiudadano : PaginaSegura
+    {
+        protected override string RolExigido
+        {
+            get { return Sesion.RolCiudadano; }
+        }
+    }
 
     /// <summary>
     /// Página pública que pertenece a un módulo que la administración puede

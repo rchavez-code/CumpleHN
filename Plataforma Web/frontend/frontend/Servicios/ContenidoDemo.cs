@@ -425,6 +425,47 @@ namespace frontend.Servicios
             };
         }
 
+        // =============================================================
+        //  Iniciativas ciudadanas — mismo criterio que las encuestas: sin
+        //  base de datos no hay iniciativas, y la lista vacía se ve como un
+        //  sitio sin propuestas y no como uno roto.
+        // =============================================================
+
+        public IList<Iniciativa> ObtenerIniciativas(int codigoUsuario)
+        {
+            return new List<Iniciativa>();
+        }
+
+        public IList<Iniciativa> ObtenerIniciativasDeUsuario(int codigoUsuario)
+        {
+            return new List<Iniciativa>();
+        }
+
+        public ResultadoGuardado GuardarIniciativa(int codigoUsuario, int codigoIniciativa,
+            string titulo, string descripcion, int codigoCategoria, int codigoDepartamento)
+        {
+            return new ResultadoGuardado { Ok = false, Mensaje = SinBaseIniciativas };
+        }
+
+        public Resultado RetirarIniciativaPropia(int codigoUsuario, int codigoIniciativa)
+        {
+            return new Resultado { Ok = false, Mensaje = SinBaseIniciativas };
+        }
+
+        public IList<Iniciativa> ObtenerIniciativasAdmin(int codigoUsuario, string estado)
+        {
+            return new List<Iniciativa>();
+        }
+
+        public Resultado ModerarIniciativa(int codigoUsuario, int codigoIniciativa,
+            bool activo, string motivo)
+        {
+            return new Resultado { Ok = false, Mensaje = SinBaseIniciativas };
+        }
+
+        private const string SinBaseIniciativas =
+            "Las iniciativas necesitan la base de datos. Este origen de datos es solo de demostración.";
+
         public IList<EncuestaAdmin> ObtenerEncuestasAdmin(
             int codigoUsuario, string campanaSlug, string estado)
         {

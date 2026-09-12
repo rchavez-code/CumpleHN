@@ -60,6 +60,11 @@ namespace frontend
         protected global::System.Web.UI.WebControls.PlaceHolder phAdmin;
 
         /// <summary>
+        /// phCuenta control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phCuenta;
+
+        /// <summary>
         /// phNavCampanas control.
         /// </summary>
         protected global::System.Web.UI.WebControls.PlaceHolder phNavCampanas;

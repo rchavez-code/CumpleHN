@@ -43,5 +43,20 @@ namespace frontend.Admin
 
         /// <summary>phVacio control.</summary>
         protected global::System.Web.UI.WebControls.PlaceHolder phVacio;
+
+        /// <summary>ddlEstadoInic control.</summary>
+        protected global::System.Web.UI.WebControls.DropDownList ddlEstadoInic;
+
+        /// <summary>btnFiltrarInic control.</summary>
+        protected global::System.Web.UI.WebControls.Button btnFiltrarInic;
+
+        /// <summary>phListaInic control.</summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phListaInic;
+
+        /// <summary>rptIniciativas control.</summary>
+        protected global::System.Web.UI.WebControls.Repeater rptIniciativas;
+
+        /// <summary>phVacioInic control.</summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phVacioInic;
     }
 }

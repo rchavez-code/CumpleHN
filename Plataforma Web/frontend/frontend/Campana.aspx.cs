@@ -34,8 +34,23 @@ namespace frontend
             get { return _campana; }
         }
 
-        protected void Page_Load(object sender, EventArgs e)
+        /// <summary>
+        /// La resolución de la campaña y el enlace de los repetidores van en
+        /// <c>OnInit</c>, no en <c>Page_Load</c>.
+        ///
+        /// El feed lleva tarjetas con hilo de comentarios, y su caja de texto y
+        /// su botón «Publicar» viven dentro del repetidor. Enlazar en Page_Load
+        /// correría después de que ASP.NET ya cargó los valores del postback y
+        /// decidió su destino, y recrearía la tarjeta desde cero: el texto se
+        /// perdería, el hilo quedaría oculto y el botón caería en un contenedor
+        /// invisible, que es lo que rompe la validación de eventos al publicar
+        /// un comentario. En OnInit el árbol se reconstruye antes de esos pasos.
+        /// Es el mismo motivo por el que «Mi cuenta» enlaza sus iniciativas acá.
+        /// </summary>
+        protected override void OnInit(EventArgs e)
         {
+            base.OnInit(e);
+
             _campana = Contenido.Datos.ObtenerCampana(Request.QueryString["c"]);
 
             if (_campana == null)

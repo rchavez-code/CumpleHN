@@ -16,6 +16,7 @@ namespace frontend
             phSesion.Visible = autenticado;
             phPanel.Visible = autenticado && Servicios.Sesion.EsCandidato;
             phAdmin.Visible = autenticado && Servicios.Sesion.EsAdministrador;
+            phCuenta.Visible = autenticado && Servicios.Sesion.EsCiudadano;
 
             // El menú refleja lo que la administración dejó visible. Para el
             // administrador se muestra todo, porque él sí puede entrar.
