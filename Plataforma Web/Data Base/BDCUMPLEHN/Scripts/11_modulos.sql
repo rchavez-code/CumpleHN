@@ -70,8 +70,12 @@ IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CK_Auditoria_accion
     ALTER TABLE dbo.Auditoria DROP CONSTRAINT CK_Auditoria_accion;
 GO
 
+/* WITH NOCHECK: al volver a ejecutar este script en una base que
+   ya tiene filas con acciones de scripts posteriores, validarlas
+   contra esta lista, que todavía no las incluye, haría fallar el
+   ALTER. El script siguiente vuelve a ampliar la lista. */
 ALTER TABLE dbo.Auditoria
-    ADD CONSTRAINT CK_Auditoria_accion
+    WITH NOCHECK ADD CONSTRAINT CK_Auditoria_accion
         CHECK (accion IN ('Verificacion', 'Retiro', 'Restauracion',
                           'Alta', 'Edicion', 'Baja', 'Cuenta', 'Modulo'));
 GO
@@ -352,8 +356,13 @@ BEGIN
     DECLARE @codigoTipoObjeto INT =
         (SELECT codigoTipoObjeto FROM dbo.TiposObjeto WHERE nombre = N'Modulo');
 
-    INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
-    VALUES (@codigoUsuario, N'Modulo', @codigoTipoObjeto, @codigoModulo,
+    /* Los interruptores son de la plataforma entera (por eso la
+       comprobación de arriba es fnEsAdministrador y no la versión
+       por espacio), así que la bitácora los anota en el espacio de
+       la plataforma. */
+    INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
+    VALUES ((SELECT codigoEspacio FROM dbo.Espacios WHERE esPlataforma = 1),
+            @codigoUsuario, N'Modulo', @codigoTipoObjeto, @codigoModulo,
             CASE WHEN @habilitado = 0
                  THEN N'Oculto del sitio público: '
                  ELSE N'Vuelto visible: ' END + @nombre,

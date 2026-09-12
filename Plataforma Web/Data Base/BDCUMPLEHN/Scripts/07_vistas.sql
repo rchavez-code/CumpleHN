@@ -23,6 +23,11 @@
    Depende de objetos de scripts posteriores: la columna activo
    de Publicaciones (script 09) y la tabla Iniciativas (script
    18). En una base nueva se ejecuta después de ellos.
+
+   Cada vista lleva codigoEspacio como segunda columna. Es la
+   dimensión por la que los procedimientos del 08 aíslan un
+   espacio, y a diferencia de las demás no es opcional: el
+   tablero de un cliente no puede sumar datos de otro.
    ============================================================ */
 
 USE BDCUMPLEHN;
@@ -87,6 +92,7 @@ CREATE VIEW dbo.vwAnaliticaCandidaturas
 AS
 SELECT
     k.codigoCandidato,
+    ca.codigoEspacio,
     k.slug                              AS candidatoSlug,
     (k.nombres + ' ' + k.apellidos)     AS candidato,
     ca.codigoCampana,
@@ -130,6 +136,7 @@ CREATE VIEW dbo.vwAnaliticaPropuestas
 AS
 SELECT
     p.codigoPropuesta,
+    ca.codigoEspacio,
     p.nombre                            AS propuesta,
     ca.slug                             AS campanaSlug,
     p.codigoCategoria,
@@ -177,6 +184,7 @@ CREATE VIEW dbo.vwAnaliticaPublicaciones
 AS
 SELECT
     b.codigoPublicacion,
+    ca.codigoEspacio,
     ca.slug                             AS campanaSlug,
     b.codigoCategoria,
     cat.nombre                          AS categoria,
@@ -229,7 +237,7 @@ GO
 CREATE OR ALTER VIEW dbo.vwAnaliticaValoraciones
 AS
 /* --- Voto sobre el perfil de una candidatura */
-SELECT  v.codigoValoracion, N'Candidato' AS tipoObjeto, v.codigoObjeto,
+SELECT  v.codigoValoracion, k.codigoEspacio, N'Candidato' AS tipoObjeto, v.codigoObjeto,
         v.codigoUsuario, v.valor, CAST(v.fecha AS DATE) AS fecha,
         k.codigoCandidato, k.candidato, k.candidatoSlug, k.campanaSlug,
         k.codigoPartido, k.partidoSiglas, k.codigoDepartamento, k.departamento,
@@ -241,7 +249,7 @@ INNER JOIN dbo.vwAnaliticaCandidaturas k ON k.codigoCandidato = v.codigoObjeto
 UNION ALL
 
 /* --- Voto sobre una propuesta: hereda la candidatura que la registró */
-SELECT  v.codigoValoracion, N'Propuesta', v.codigoObjeto,
+SELECT  v.codigoValoracion, p.codigoEspacio, N'Propuesta', v.codigoObjeto,
         v.codigoUsuario, v.valor, CAST(v.fecha AS DATE),
         p.codigoCandidato, p.candidato, p.candidatoSlug, p.campanaSlug,
         p.codigoPartido, p.partidoSiglas, p.codigoDepartamento, p.departamento,
@@ -253,7 +261,7 @@ INNER JOIN dbo.vwAnaliticaPropuestas p ON p.codigoPropuesta = v.codigoObjeto
 UNION ALL
 
 /* --- Voto sobre una publicación: hereda la candidatura que la publicó */
-SELECT  v.codigoValoracion, N'Publicacion', v.codigoObjeto,
+SELECT  v.codigoValoracion, b.codigoEspacio, N'Publicacion', v.codigoObjeto,
         v.codigoUsuario, v.valor, CAST(v.fecha AS DATE),
         b.codigoCandidato, b.candidato, b.candidatoSlug, b.campanaSlug,
         b.codigoPartido, b.partidoSiglas, b.codigoDepartamento, b.departamento,
@@ -265,7 +273,7 @@ INNER JOIN dbo.vwAnaliticaPublicaciones b ON b.codigoPublicacion = v.codigoObjet
 UNION ALL
 
 /* --- Voto sobre un partido: no pertenece a ninguna candidatura */
-SELECT  v.codigoValoracion, N'Partido', v.codigoObjeto,
+SELECT  v.codigoValoracion, pa.codigoEspacio, N'Partido', v.codigoObjeto,
         v.codigoUsuario, v.valor, CAST(v.fecha AS DATE),
         NULL, NULL, NULL, NULL,
         pa.codigoPartido, ISNULL(pa.siglas, pa.nombre), NULL, NULL,
@@ -280,7 +288,7 @@ UNION ALL
        con la categoría y el departamento que declaró quien la propuso.
        Solo las activas, por lo mismo que las publicaciones: una
        retirada sale de la consulta pública y del conteo. */
-SELECT  v.codigoValoracion, N'Iniciativa', v.codigoObjeto,
+SELECT  v.codigoValoracion, i.codigoEspacio, N'Iniciativa', v.codigoObjeto,
         v.codigoUsuario, v.valor, CAST(v.fecha AS DATE),
         NULL, NULL, NULL, NULL,
         NULL, NULL, i.codigoDepartamento, d.nombre,
@@ -300,7 +308,7 @@ GO
 
 CREATE OR ALTER VIEW dbo.vwAnaliticaComentarios
 AS
-SELECT  c.codigoComentario, N'Candidato' AS tipoObjeto, c.codigoObjeto,
+SELECT  c.codigoComentario, k.codigoEspacio, N'Candidato' AS tipoObjeto, c.codigoObjeto,
         c.codigoUsuario, CAST(c.fecha AS DATE) AS fecha,
         k.codigoCandidato, k.candidatoSlug, k.campanaSlug,
         k.codigoPartido, k.codigoDepartamento, k.nivelGobierno,
@@ -312,7 +320,7 @@ WHERE c.aprobado = 1
 
 UNION ALL
 
-SELECT  c.codigoComentario, N'Propuesta', c.codigoObjeto,
+SELECT  c.codigoComentario, p.codigoEspacio, N'Propuesta', c.codigoObjeto,
         c.codigoUsuario, CAST(c.fecha AS DATE),
         p.codigoCandidato, p.candidatoSlug, p.campanaSlug,
         p.codigoPartido, p.codigoDepartamento, p.nivelGobierno,
@@ -324,7 +332,7 @@ WHERE c.aprobado = 1
 
 UNION ALL
 
-SELECT  c.codigoComentario, N'Publicacion', c.codigoObjeto,
+SELECT  c.codigoComentario, b.codigoEspacio, N'Publicacion', c.codigoObjeto,
         c.codigoUsuario, CAST(c.fecha AS DATE),
         b.codigoCandidato, b.candidatoSlug, b.campanaSlug,
         b.codigoPartido, b.codigoDepartamento, b.nivelGobierno,
@@ -336,7 +344,7 @@ WHERE c.aprobado = 1
 
 UNION ALL
 
-SELECT  c.codigoComentario, N'Partido', c.codigoObjeto,
+SELECT  c.codigoComentario, pa.codigoEspacio, N'Partido', c.codigoObjeto,
         c.codigoUsuario, CAST(c.fecha AS DATE),
         NULL, NULL, NULL,
         pa.codigoPartido, NULL, NULL,
@@ -348,7 +356,7 @@ WHERE c.aprobado = 1
 
 UNION ALL
 
-SELECT  c.codigoComentario, N'Iniciativa', c.codigoObjeto,
+SELECT  c.codigoComentario, i.codigoEspacio, N'Iniciativa', c.codigoObjeto,
         c.codigoUsuario, CAST(c.fecha AS DATE),
         NULL, NULL, NULL,
         NULL, i.codigoDepartamento, NULL,

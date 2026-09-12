@@ -19,6 +19,13 @@
        (@p IS NULL OR columna = @p) lo resuelve en una línea y
        deja un solo plan de consulta por procedimiento.
 
+       La excepción es @codigoEspacio, que va primero y es
+       obligatorio en los diez. Acá NULL no puede significar «sin
+       filtrar», porque «todos los espacios» es exactamente el
+       cruce de datos de dos clientes que no debe existir. El
+       asistente de IA (script 12) pasa siempre el espacio de la
+       plataforma.
+
      - La agregación se hace en la base, nunca en el navegador.
        Cada procedimiento devuelve decenas de filas, no miles.
 
@@ -48,6 +55,7 @@ IF OBJECT_ID('dbo.spAnaliticaCatalogos') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAnaliticaCatalogos
+    @codigoEspacio INT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -55,17 +63,19 @@ BEGIN
     SELECT N'Campana' AS grupo, CAST(codigoCampana AS NVARCHAR(20)) AS codigo,
            slug AS valor, nombre AS texto, codigoCampana AS orden
     FROM dbo.Campanas
+    WHERE codigoEspacio = @codigoEspacio
 
     UNION ALL
     SELECT N'Categoria', CAST(codigoCategoria AS NVARCHAR(20)),
            CAST(codigoCategoria AS NVARCHAR(20)), nombre, orden
     FROM dbo.Categorias
+    WHERE codigoEspacio IS NULL OR codigoEspacio = @codigoEspacio
 
     UNION ALL
     SELECT N'Partido', CAST(codigoPartido AS NVARCHAR(20)),
            CAST(codigoPartido AS NVARCHAR(20)), ISNULL(siglas + N' — ', N'') + nombre, codigoPartido
     FROM dbo.Partidos
-    WHERE activo = 1
+    WHERE activo = 1 AND codigoEspacio = @codigoEspacio
 
     UNION ALL
     SELECT N'Departamento', CAST(codigoDepartamento AS NVARCHAR(20)),
@@ -74,8 +84,10 @@ BEGIN
 
     UNION ALL
     SELECT DISTINCT N'NivelGobierno', nivelGobierno, nivelGobierno, nivelGobierno,
-           CASE nivelGobierno WHEN N'Nacional' THEN 1 WHEN N'Departamental' THEN 2 ELSE 3 END
+           CASE nivelGobierno WHEN N'Nacional' THEN 1 WHEN N'Departamental' THEN 2
+                              WHEN N'Municipal' THEN 3 ELSE 4 END
     FROM dbo.Cargos
+    WHERE codigoEspacio IS NULL OR codigoEspacio = @codigoEspacio
 
     ORDER BY grupo, orden;
 END
@@ -99,6 +111,7 @@ IF OBJECT_ID('dbo.spAnaliticaResumen') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAnaliticaResumen
+    @codigoEspacio      INT,
     @campanaSlug       NVARCHAR(80)  = NULL,
     @codigoCategoria   INT           = NULL,
     @codigoPartido     INT           = NULL,
@@ -120,7 +133,8 @@ BEGIN
     INSERT INTO @candidaturas (codigoCandidato, codigoDepartamento, verificacion)
     SELECT codigoCandidato, codigoDepartamento, verificacion
     FROM dbo.vwAnaliticaCandidaturas
-    WHERE (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
+    WHERE codigoEspacio = @codigoEspacio
+      AND (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
       AND (@codigoPartido      IS NULL OR codigoPartido      = @codigoPartido)
       AND (@codigoDepartamento IS NULL OR codigoDepartamento = @codigoDepartamento)
       AND (@nivelGobierno      IS NULL OR nivelGobierno      = @nivelGobierno);
@@ -132,7 +146,8 @@ BEGIN
     INSERT INTO @propuestas (codigoPropuesta, codigoCategoria, estado, ponderacion, verificacion)
     SELECT codigoPropuesta, codigoCategoria, estado, ponderacion, verificacion
     FROM dbo.vwAnaliticaPropuestas
-    WHERE (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
+    WHERE codigoEspacio = @codigoEspacio
+      AND (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
       AND (@codigoCategoria    IS NULL OR codigoCategoria    = @codigoCategoria)
       AND (@codigoPartido      IS NULL OR codigoPartido      = @codigoPartido)
       AND (@codigoDepartamento IS NULL OR codigoDepartamento = @codigoDepartamento)
@@ -143,7 +158,8 @@ BEGIN
         (SELECT COUNT(*) FROM @propuestas)                                       AS propuestas,
         (SELECT COUNT(*) FROM @candidaturas)                                     AS candidaturas,
         (SELECT COUNT(DISTINCT codigoCategoria) FROM @propuestas)                AS categoriasConOferta,
-        (SELECT COUNT(*) FROM dbo.Categorias)                                    AS categoriasTotal,
+        (SELECT COUNT(*) FROM dbo.Categorias
+          WHERE codigoEspacio IS NULL OR codigoEspacio = @codigoEspacio)                                    AS categoriasTotal,
         (SELECT COUNT(*) FROM @propuestas WHERE estado <> N'Declarada')          AS propuestasEvaluadas,
         (SELECT COUNT(*) FROM @propuestas WHERE verificacion = N'Verificado')    AS propuestasVerificadas,
 
@@ -165,7 +181,8 @@ BEGIN
            «29 valoraciones · 16 comentarios» para una categoría en la que los
            16 comentarios no son todos de esa categoría. */
         (SELECT COUNT(*) FROM dbo.vwAnaliticaComentarios c
-          WHERE (@campanaSlug        IS NULL OR c.campanaSlug        = @campanaSlug)
+          WHERE c.codigoEspacio = @codigoEspacio
+            AND (@campanaSlug        IS NULL OR c.campanaSlug        = @campanaSlug)
             AND (@codigoCategoria    IS NULL OR c.codigoCategoria    = @codigoCategoria)
             AND (@codigoPartido      IS NULL OR c.codigoPartido      = @codigoPartido)
             AND (@codigoDepartamento IS NULL OR c.codigoDepartamento = @codigoDepartamento)
@@ -174,7 +191,8 @@ BEGIN
             AND (@hasta              IS NULL OR c.fecha             <= @hasta))   AS comentarios,
 
         (SELECT COUNT(*) FROM dbo.vwAnaliticaPublicaciones b
-          WHERE (@campanaSlug        IS NULL OR b.campanaSlug        = @campanaSlug)
+          WHERE b.codigoEspacio = @codigoEspacio
+            AND (@campanaSlug        IS NULL OR b.campanaSlug        = @campanaSlug)
             AND (@codigoPartido      IS NULL OR b.codigoPartido      = @codigoPartido)
             AND (@codigoDepartamento IS NULL OR b.codigoDepartamento = @codigoDepartamento)
             AND (@nivelGobierno      IS NULL OR b.nivelGobierno      = @nivelGobierno))
@@ -183,16 +201,20 @@ BEGIN
         /* --- Fecha del hecho más reciente que entra en la selección */
         (SELECT MAX(f) FROM (
             SELECT MAX(fecha) AS f FROM dbo.vwAnaliticaValoraciones
-             WHERE (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
+             WHERE codigoEspacio = @codigoEspacio
+               AND (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
             UNION ALL
             SELECT MAX(fecha) FROM dbo.vwAnaliticaComentarios
-             WHERE (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
+             WHERE codigoEspacio = @codigoEspacio
+               AND (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
             UNION ALL
             SELECT MAX(fecha) FROM dbo.vwAnaliticaPublicaciones
-             WHERE (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
+             WHERE codigoEspacio = @codigoEspacio
+               AND (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
             UNION ALL
             SELECT MAX(fecha) FROM dbo.vwAnaliticaPropuestas
-             WHERE (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
+             WHERE codigoEspacio = @codigoEspacio
+               AND (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
          ) AS u)                                                                 AS ultimoRegistro
     FROM (
         /* Los ISNULL no son decorativos: sobre un conjunto vacío —una campaña
@@ -204,7 +226,8 @@ BEGIN
             ISNULL(SUM(CASE WHEN valor = -1 THEN 1 ELSE 0 END), 0)        AS noMeGusta,
             COUNT(DISTINCT codigoUsuario)                                 AS personas
         FROM dbo.vwAnaliticaValoraciones
-        WHERE (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
+        WHERE codigoEspacio = @codigoEspacio
+          AND (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
           AND (@codigoCategoria    IS NULL OR codigoCategoria    = @codigoCategoria)
           AND (@codigoPartido      IS NULL OR codigoPartido      = @codigoPartido)
           AND (@codigoDepartamento IS NULL OR codigoDepartamento = @codigoDepartamento)
@@ -232,6 +255,7 @@ IF OBJECT_ID('dbo.spAnaliticaCategorias') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAnaliticaCategorias
+    @codigoEspacio      INT,
     @campanaSlug        NVARCHAR(80) = NULL,
     @codigoPartido      INT          = NULL,
     @codigoDepartamento INT          = NULL,
@@ -253,10 +277,12 @@ BEGIN
     FROM dbo.Categorias cat
     LEFT JOIN dbo.vwAnaliticaPropuestas p
            ON p.codigoCategoria = cat.codigoCategoria
+          AND p.codigoEspacio = @codigoEspacio
           AND (@campanaSlug        IS NULL OR p.campanaSlug        = @campanaSlug)
           AND (@codigoPartido      IS NULL OR p.codigoPartido      = @codigoPartido)
           AND (@codigoDepartamento IS NULL OR p.codigoDepartamento = @codigoDepartamento)
           AND (@nivelGobierno      IS NULL OR p.nivelGobierno      = @nivelGobierno)
+    WHERE cat.codigoEspacio IS NULL OR cat.codigoEspacio = @codigoEspacio
     GROUP BY cat.codigoCategoria, cat.nombre, cat.orden, cat.interesEncuesta
     ORDER BY cat.orden;
 END
@@ -276,6 +302,7 @@ IF OBJECT_ID('dbo.spAnaliticaEstados') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAnaliticaEstados
+    @codigoEspacio      INT,
     @campanaSlug        NVARCHAR(80) = NULL,
     @codigoCategoria    INT          = NULL,
     @codigoPartido      INT          = NULL,
@@ -323,6 +350,7 @@ IF OBJECT_ID('dbo.spAnaliticaVerificacion') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAnaliticaVerificacion
+    @codigoEspacio      INT,
     @campanaSlug        NVARCHAR(80) = NULL,
     @codigoCategoria    INT          = NULL,
     @codigoPartido      INT          = NULL,
@@ -343,7 +371,8 @@ BEGIN
     LEFT JOIN (
         SELECT N'Candidaturas' AS entidad, verificacion, COUNT(*) AS total
         FROM dbo.vwAnaliticaCandidaturas
-        WHERE (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
+        WHERE codigoEspacio = @codigoEspacio
+          AND (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
           AND (@codigoPartido      IS NULL OR codigoPartido      = @codigoPartido)
           AND (@codigoDepartamento IS NULL OR codigoDepartamento = @codigoDepartamento)
           AND (@nivelGobierno      IS NULL OR nivelGobierno      = @nivelGobierno)
@@ -353,7 +382,8 @@ BEGIN
 
         SELECT N'Propuestas', verificacion, COUNT(*)
         FROM dbo.vwAnaliticaPropuestas
-        WHERE (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
+        WHERE codigoEspacio = @codigoEspacio
+          AND (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
           AND (@codigoCategoria    IS NULL OR codigoCategoria    = @codigoCategoria)
           AND (@codigoPartido      IS NULL OR codigoPartido      = @codigoPartido)
           AND (@codigoDepartamento IS NULL OR codigoDepartamento = @codigoDepartamento)
@@ -364,7 +394,8 @@ BEGIN
 
         SELECT N'Publicaciones', verificacion, COUNT(*)
         FROM dbo.vwAnaliticaPublicaciones
-        WHERE (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
+        WHERE codigoEspacio = @codigoEspacio
+          AND (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
           AND (@codigoCategoria    IS NULL OR codigoCategoria    = @codigoCategoria)
           AND (@codigoPartido      IS NULL OR codigoPartido      = @codigoPartido)
           AND (@codigoDepartamento IS NULL OR codigoDepartamento = @codigoDepartamento)
@@ -387,6 +418,7 @@ IF OBJECT_ID('dbo.spAnaliticaParticipacion') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAnaliticaParticipacion
+    @codigoEspacio      INT,
     @campanaSlug        NVARCHAR(80) = NULL,
     @codigoCategoria    INT          = NULL,
     @codigoPartido      INT          = NULL,
@@ -413,7 +445,8 @@ BEGIN
                SUM(CASE WHEN valor =  1 THEN 1 ELSE 0 END) AS meGusta,
                SUM(CASE WHEN valor = -1 THEN 1 ELSE 0 END) AS noMeGusta
         FROM dbo.vwAnaliticaValoraciones
-        WHERE (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
+        WHERE codigoEspacio = @codigoEspacio
+          AND (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
           AND (@codigoCategoria    IS NULL OR codigoCategoria    = @codigoCategoria)
           AND (@codigoPartido      IS NULL OR codigoPartido      = @codigoPartido)
           AND (@codigoDepartamento IS NULL OR codigoDepartamento = @codigoDepartamento)
@@ -425,7 +458,8 @@ BEGIN
     LEFT JOIN (
         SELECT tipoObjeto, COUNT(*) AS comentarios
         FROM dbo.vwAnaliticaComentarios
-        WHERE (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
+        WHERE codigoEspacio = @codigoEspacio
+          AND (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
           AND (@codigoCategoria    IS NULL OR codigoCategoria    = @codigoCategoria)
           AND (@codigoPartido      IS NULL OR codigoPartido      = @codigoPartido)
           AND (@codigoDepartamento IS NULL OR codigoDepartamento = @codigoDepartamento)
@@ -455,6 +489,7 @@ IF OBJECT_ID('dbo.spAnaliticaCandidatos') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAnaliticaCandidatos
+    @codigoEspacio      INT,
     @campanaSlug        NVARCHAR(80) = NULL,
     @codigoCategoria    INT          = NULL,
     @codigoPartido      INT          = NULL,
@@ -510,7 +545,8 @@ BEGIN
           AND (@hasta           IS NULL OR fecha          <= @hasta)
         GROUP BY codigoCandidato
     ) AS c ON c.codigoCandidato = k.codigoCandidato
-    WHERE (@campanaSlug        IS NULL OR k.campanaSlug        = @campanaSlug)
+    WHERE k.codigoEspacio = @codigoEspacio
+      AND (@campanaSlug        IS NULL OR k.campanaSlug        = @campanaSlug)
       AND (@codigoPartido      IS NULL OR k.codigoPartido      = @codigoPartido)
       AND (@codigoDepartamento IS NULL OR k.codigoDepartamento = @codigoDepartamento)
       AND (@nivelGobierno      IS NULL OR k.nivelGobierno      = @nivelGobierno)
@@ -532,6 +568,7 @@ IF OBJECT_ID('dbo.spAnaliticaPartidos') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAnaliticaPartidos
+    @codigoEspacio      INT,
     @campanaSlug        NVARCHAR(80) = NULL,
     @codigoCategoria    INT          = NULL,
     @codigoDepartamento INT          = NULL,
@@ -553,7 +590,8 @@ BEGIN
                ISNULL(k.partido, N'Candidaturas independientes') AS partido,
                k.codigoCandidato
         FROM dbo.vwAnaliticaCandidaturas k
-        WHERE (@campanaSlug        IS NULL OR k.campanaSlug        = @campanaSlug)
+        WHERE k.codigoEspacio = @codigoEspacio
+          AND (@campanaSlug        IS NULL OR k.campanaSlug        = @campanaSlug)
           AND (@codigoDepartamento IS NULL OR k.codigoDepartamento = @codigoDepartamento)
           AND (@nivelGobierno      IS NULL OR k.nivelGobierno      = @nivelGobierno)
     )
@@ -607,6 +645,7 @@ IF OBJECT_ID('dbo.spAnaliticaTerritorio') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAnaliticaTerritorio
+    @codigoEspacio   INT,
     @campanaSlug     NVARCHAR(80) = NULL,
     @codigoCategoria INT          = NULL,
     @codigoPartido   INT          = NULL,
@@ -629,6 +668,7 @@ BEGIN
         SELECT codigoDepartamento, COUNT(*) AS candidaturas
         FROM dbo.vwAnaliticaCandidaturas
         WHERE codigoDepartamento IS NOT NULL
+          AND codigoEspacio = @codigoEspacio
           AND (@campanaSlug   IS NULL OR campanaSlug   = @campanaSlug)
           AND (@codigoPartido IS NULL OR codigoPartido = @codigoPartido)
           AND (@nivelGobierno IS NULL OR nivelGobierno = @nivelGobierno)
@@ -638,6 +678,7 @@ BEGIN
         SELECT codigoDepartamento, COUNT(*) AS propuestas
         FROM dbo.vwAnaliticaPropuestas
         WHERE codigoDepartamento IS NOT NULL
+          AND codigoEspacio = @codigoEspacio
           AND (@campanaSlug     IS NULL OR campanaSlug     = @campanaSlug)
           AND (@codigoCategoria IS NULL OR codigoCategoria = @codigoCategoria)
           AND (@codigoPartido   IS NULL OR codigoPartido   = @codigoPartido)
@@ -648,6 +689,7 @@ BEGIN
         SELECT codigoDepartamento, COUNT(*) AS valoraciones
         FROM dbo.vwAnaliticaValoraciones
         WHERE codigoDepartamento IS NOT NULL
+          AND codigoEspacio = @codigoEspacio
           AND (@campanaSlug   IS NULL OR campanaSlug   = @campanaSlug)
           AND (@codigoPartido IS NULL OR codigoPartido = @codigoPartido)
           AND (@nivelGobierno IS NULL OR nivelGobierno = @nivelGobierno)
@@ -677,6 +719,7 @@ IF OBJECT_ID('dbo.spAnaliticaActividad') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAnaliticaActividad
+    @codigoEspacio      INT,
     @campanaSlug        NVARCHAR(80) = NULL,
     @codigoPartido      INT          = NULL,
     @codigoDepartamento INT          = NULL,
@@ -694,19 +737,23 @@ BEGIN
     IF @desde IS NULL
         SELECT @desde = MIN(f) FROM (
             SELECT MIN(fecha) AS f FROM dbo.vwAnaliticaValoraciones
-             WHERE (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
+             WHERE codigoEspacio = @codigoEspacio
+               AND (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
             UNION ALL
             SELECT MIN(fecha) FROM dbo.vwAnaliticaComentarios
-             WHERE (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
+             WHERE codigoEspacio = @codigoEspacio
+               AND (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
         ) AS u;
 
     IF @hasta IS NULL
         SELECT @hasta = MAX(f) FROM (
             SELECT MAX(fecha) AS f FROM dbo.vwAnaliticaValoraciones
-             WHERE (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
+             WHERE codigoEspacio = @codigoEspacio
+               AND (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
             UNION ALL
             SELECT MAX(fecha) FROM dbo.vwAnaliticaComentarios
-             WHERE (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
+             WHERE codigoEspacio = @codigoEspacio
+               AND (@campanaSlug IS NULL OR campanaSlug = @campanaSlug)
         ) AS u;
 
     IF @desde IS NULL OR @hasta IS NULL OR @hasta < @desde
@@ -736,7 +783,8 @@ BEGIN
                SUM(CASE WHEN valor =  1 THEN 1 ELSE 0 END) AS meGusta,
                SUM(CASE WHEN valor = -1 THEN 1 ELSE 0 END) AS noMeGusta
         FROM dbo.vwAnaliticaValoraciones
-        WHERE (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
+        WHERE codigoEspacio = @codigoEspacio
+          AND (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
           AND (@codigoPartido      IS NULL OR codigoPartido      = @codigoPartido)
           AND (@codigoDepartamento IS NULL OR codigoDepartamento = @codigoDepartamento)
           AND (@nivelGobierno      IS NULL OR nivelGobierno      = @nivelGobierno)
@@ -745,7 +793,8 @@ BEGIN
     LEFT JOIN (
         SELECT fecha, COUNT(*) AS comentarios
         FROM dbo.vwAnaliticaComentarios
-        WHERE (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
+        WHERE codigoEspacio = @codigoEspacio
+          AND (@campanaSlug        IS NULL OR campanaSlug        = @campanaSlug)
           AND (@codigoPartido      IS NULL OR codigoPartido      = @codigoPartido)
           AND (@codigoDepartamento IS NULL OR codigoDepartamento = @codigoDepartamento)
           AND (@nivelGobierno      IS NULL OR nivelGobierno      = @nivelGobierno)

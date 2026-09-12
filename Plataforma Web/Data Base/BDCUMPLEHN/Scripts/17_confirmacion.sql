@@ -769,21 +769,21 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0
-    BEGIN
-        SELECT CAST(0 AS BIT) AS ok, N'La cuenta no tiene permiso para crear cuentas de acceso.' AS mensaje;
-        RETURN;
-    END
-
     SET @login  = LOWER(LTRIM(RTRIM(ISNULL(@login, N''))));
     SET @correo = LOWER(LTRIM(RTRIM(ISNULL(@correo, N''))));
 
-    DECLARE @nombre NVARCHAR(200) =
-        (SELECT nombres + N' ' + apellidos FROM dbo.Candidatos WHERE codigoCandidato = @codigoCandidato);
+    /* El espacio es el de la campaña de la candidatura, y el permiso
+       se comprueba contra él (script 09). Si la candidatura no
+       existe, el espacio queda NULL y la función responde 0. */
+    DECLARE @nombre NVARCHAR(200), @codigoEspacio INT;
+    SELECT @nombre = c.nombres + N' ' + c.apellidos, @codigoEspacio = ca.codigoEspacio
+      FROM dbo.Candidatos c
+      INNER JOIN dbo.Campanas ca ON ca.codigoCampana = c.codigoCampana
+     WHERE c.codigoCandidato = @codigoCandidato;
 
-    IF @nombre IS NULL
+    IF dbo.fnEsAdministradorDe(@codigoUsuario, @codigoEspacio) = 0
     BEGIN
-        SELECT CAST(0 AS BIT) AS ok, N'No se encontró la candidatura.' AS mensaje;
+        SELECT CAST(0 AS BIT) AS ok, N'La cuenta no tiene permiso para crear cuentas en este espacio.' AS mensaje;
         RETURN;
     END
 
@@ -848,8 +848,8 @@ BEGIN
     DECLARE @codigoTipoObjeto INT =
         (SELECT codigoTipoObjeto FROM dbo.TiposObjeto WHERE nombre = N'Usuario');
 
-    INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
-    VALUES (@codigoUsuario, N'Cuenta', @codigoTipoObjeto, @nuevo,
+    INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
+    VALUES (@codigoEspacio, @codigoUsuario, N'Cuenta', @codigoTipoObjeto, @nuevo,
             N'Cuenta de acceso creada para ' + @nombre + N' (' + @login + N')', NULL);
 
     SELECT CAST(1 AS BIT) AS ok,

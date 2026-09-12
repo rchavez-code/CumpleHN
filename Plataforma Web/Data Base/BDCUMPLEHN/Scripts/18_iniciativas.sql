@@ -80,6 +80,11 @@ CREATE TABLE dbo.Iniciativas
        se proyecta hacia el público: la vista muestra el nombre,
        nunca el login ni el correo. */
     codigoUsuario      INT            NOT NULL,
+    /* La iniciativa no pertenece a una campaña (ver el encabezado),
+       así que el espacio va directo en la tabla y no heredado. Nace
+       nula y el 19 la migra al espacio de la plataforma y la deja
+       NOT NULL. */
+    codigoEspacio      INT            NULL,
     titulo             NVARCHAR(120)  NOT NULL,
     descripcion        NVARCHAR(1500) NOT NULL,
     codigoCategoria    INT            NOT NULL,
@@ -93,6 +98,8 @@ CREATE TABLE dbo.Iniciativas
     CONSTRAINT PK_Iniciativas PRIMARY KEY (codigoIniciativa),
     CONSTRAINT FK_Iniciativas_Usuarios
         FOREIGN KEY (codigoUsuario) REFERENCES dbo.Usuarios (codigoUsuario),
+    CONSTRAINT FK_Iniciativas_Espacios
+        FOREIGN KEY (codigoEspacio) REFERENCES dbo.Espacios (codigoEspacio),
     CONSTRAINT FK_Iniciativas_Categorias
         FOREIGN KEY (codigoCategoria) REFERENCES dbo.Categorias (codigoCategoria),
     CONSTRAINT FK_Iniciativas_Departamentos
@@ -104,6 +111,11 @@ CREATE TABLE dbo.Iniciativas
     CONSTRAINT CK_Iniciativas_titulo      CHECK (LEN(LTRIM(RTRIM(titulo))) >= 8),
     CONSTRAINT CK_Iniciativas_descripcion CHECK (LEN(LTRIM(RTRIM(descripcion))) >= 20)
 );
+GO
+
+IF COL_LENGTH('dbo.Iniciativas', 'codigoEspacio') IS NULL
+    ALTER TABLE dbo.Iniciativas ADD codigoEspacio INT NULL
+        CONSTRAINT FK_Iniciativas_Espacios REFERENCES dbo.Espacios (codigoEspacio);
 GO
 
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Iniciativas_activo')
@@ -182,6 +194,7 @@ CREATE OR ALTER VIEW dbo.vwIniciativas
 AS
 SELECT
     i.codigoIniciativa,
+    i.codigoEspacio,
     i.codigoUsuario,
     u.nombre                        AS autora,
     i.titulo,
@@ -229,6 +242,7 @@ GO
    tarjeta y saber cuáles son suyas. Con cero es un visitante. */
 
 CREATE OR ALTER PROCEDURE dbo.spIniciativasPublicas
+    @codigoEspacio INT,
     @codigoUsuario INT = 0
 AS
 BEGIN
@@ -261,6 +275,7 @@ BEGIN
         i.fechaEdicion
     FROM dbo.vwIniciativas i
     WHERE i.activo = 1
+      AND i.codigoEspacio = @codigoEspacio
     ORDER BY i.saldo DESC, i.fechaRegistro DESC, i.codigoIniciativa DESC;
 END
 GO
@@ -336,6 +351,7 @@ GO
 
 CREATE OR ALTER PROCEDURE dbo.spIniciativaGuardar
     @codigoUsuario      INT,
+    @codigoEspacio      INT,
     @codigoIniciativa   INT           = 0,
     @titulo             NVARCHAR(120),
     @descripcion        NVARCHAR(1500),
@@ -347,6 +363,18 @@ BEGIN
 
     SET @titulo      = LTRIM(RTRIM(ISNULL(@titulo, N'')));
     SET @descripcion = LTRIM(RTRIM(ISNULL(@descripcion, N'')));
+
+    /* En el alta, el espacio es donde la persona está proponiendo
+       (la plataforma o el espacio de su organización). Al editar
+       se conserva el de la fila: una iniciativa no se muda. */
+    IF ISNULL(@codigoIniciativa, 0) > 0
+        SET @codigoEspacio = (SELECT codigoEspacio FROM dbo.Iniciativas WHERE codigoIniciativa = @codigoIniciativa);
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.Espacios WHERE codigoEspacio = @codigoEspacio AND activo = 1)
+    BEGIN
+        SELECT CAST(0 AS BIT) AS ok, N'El espacio no existe o fue retirado.' AS mensaje, 0 AS codigo;
+        RETURN;
+    END
 
     IF NOT EXISTS (SELECT 1 FROM dbo.Usuarios u
                    INNER JOIN dbo.Roles r ON r.codigoRol = u.codigoRol
@@ -375,7 +403,9 @@ BEGIN
         RETURN;
     END
 
-    IF NOT EXISTS (SELECT 1 FROM dbo.Categorias WHERE codigoCategoria = @codigoCategoria)
+    IF NOT EXISTS (SELECT 1 FROM dbo.Categorias
+                    WHERE codigoCategoria = @codigoCategoria
+                      AND (codigoEspacio IS NULL OR codigoEspacio = @codigoEspacio))
     BEGIN
         SELECT CAST(0 AS BIT) AS ok,
                N'Elegí la categoría a la que pertenece la iniciativa.' AS mensaje, 0 AS codigo;
@@ -397,9 +427,9 @@ BEGIN
     IF ISNULL(@codigoIniciativa, 0) = 0
     BEGIN
         INSERT INTO dbo.Iniciativas
-            (codigoUsuario, titulo, descripcion, codigoCategoria, codigoDepartamento)
+            (codigoUsuario, codigoEspacio, titulo, descripcion, codigoCategoria, codigoDepartamento)
         VALUES
-            (@codigoUsuario, @titulo, @descripcion, @codigoCategoria, @codigoDepartamento);
+            (@codigoUsuario, @codigoEspacio, @titulo, @descripcion, @codigoCategoria, @codigoDepartamento);
 
         SELECT CAST(1 AS BIT) AS ok,
                N'Tu iniciativa quedó publicada.' AS mensaje,
@@ -512,7 +542,7 @@ GO
 /* ============================================================
    5. Administración
 
-   Mismas reglas del script 09: fnEsAdministrador dentro de cada
+   Mismas reglas del script 09: fnEsAdministradorDe dentro de cada
    escritura aunque el Web Service ya lo haya comprobado, motivo
    obligatorio, y una fila en la bitácora por cada acción.
    ============================================================ */
@@ -525,12 +555,13 @@ GO
 
 CREATE OR ALTER PROCEDURE dbo.spAdminIniciativas
     @codigoUsuario INT,
+    @codigoEspacio INT,
     @estado        NVARCHAR(20) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0 RETURN;
+    IF dbo.fnEsAdministradorDe(@codigoUsuario, @codigoEspacio) = 0 RETURN;
 
     IF @estado = N'' SET @estado = NULL;
 
@@ -555,9 +586,10 @@ BEGIN
         i.fechaRegistro,
         i.fechaEdicion
     FROM dbo.vwIniciativas i
-    WHERE @estado IS NULL
-       OR (@estado = N'Activas'   AND i.activo = 1)
-       OR (@estado = N'Retiradas' AND i.activo = 0)
+    WHERE i.codigoEspacio = @codigoEspacio
+      AND (@estado IS NULL
+           OR (@estado = N'Activas'   AND i.activo = 1)
+           OR (@estado = N'Retiradas' AND i.activo = 0))
     ORDER BY i.fechaRegistro DESC, i.codigoIniciativa DESC;
 END
 GO
@@ -577,10 +609,13 @@ BEGIN
 
     SET @motivo = NULLIF(LTRIM(RTRIM(ISNULL(@motivo, N''))), N'');
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0
+    DECLARE @codigoEspacio INT =
+        (SELECT codigoEspacio FROM dbo.Iniciativas WHERE codigoIniciativa = @codigoIniciativa);
+
+    IF dbo.fnEsAdministradorDe(@codigoUsuario, @codigoEspacio) = 0
     BEGIN
         SELECT CAST(0 AS BIT) AS ok,
-               N'La cuenta no tiene permiso para moderar iniciativas.' AS mensaje;
+               N'La cuenta no tiene permiso para moderar esta iniciativa.' AS mensaje;
         RETURN;
     END
 
@@ -629,8 +664,8 @@ BEGIN
     DECLARE @tipo INT =
         (SELECT codigoTipoObjeto FROM dbo.TiposObjeto WHERE nombre = N'Iniciativa');
 
-    INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
-    VALUES (@codigoUsuario,
+    INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
+    VALUES (@codigoEspacio, @codigoUsuario,
             CASE WHEN @activo = 0 THEN N'Retiro' ELSE N'Restauracion' END,
             @tipo, @codigoIniciativa,
             CASE WHEN @activo = 0

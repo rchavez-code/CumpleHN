@@ -65,6 +65,12 @@ IF OBJECT_ID('dbo.Auditoria') IS NULL
 CREATE TABLE dbo.Auditoria
 (
     codigoAuditoria  INT            NOT NULL IDENTITY(1,1),
+    /* En qué espacio ocurrió. Cada espacio lee solo su bitácora, y
+       la plataforma las lee todas. Lo que no pertenece a ningún
+       espacio en particular (los interruptores de módulos) se
+       anota en el de la plataforma. Nace nula y el 19 la deja
+       NOT NULL. */
+    codigoEspacio    INT            NULL,
     codigoUsuario    INT            NOT NULL,
     accion           NVARCHAR(40)   NOT NULL,
     codigoTipoObjeto INT            NOT NULL,
@@ -73,6 +79,8 @@ CREATE TABLE dbo.Auditoria
     motivo           NVARCHAR(300)  NULL,   -- por qué, lo escribe quien administra
     fecha            DATETIME2(0)   NOT NULL CONSTRAINT DF_Auditoria_fecha DEFAULT (SYSDATETIME()),
     CONSTRAINT PK_Auditoria PRIMARY KEY (codigoAuditoria),
+    CONSTRAINT FK_Auditoria_Espacios
+        FOREIGN KEY (codigoEspacio) REFERENCES dbo.Espacios (codigoEspacio),
     CONSTRAINT FK_Auditoria_Usuarios
         FOREIGN KEY (codigoUsuario) REFERENCES dbo.Usuarios (codigoUsuario),
     CONSTRAINT FK_Auditoria_TiposObjeto
@@ -80,6 +88,11 @@ CREATE TABLE dbo.Auditoria
     CONSTRAINT CK_Auditoria_accion
         CHECK (accion IN ('Verificacion', 'Retiro', 'Restauracion'))
 );
+GO
+
+IF COL_LENGTH('dbo.Auditoria', 'codigoEspacio') IS NULL
+    ALTER TABLE dbo.Auditoria ADD codigoEspacio INT NULL
+        CONSTRAINT FK_Auditoria_Espacios REFERENCES dbo.Espacios (codigoEspacio);
 GO
 
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Auditoria_fecha')
@@ -95,6 +108,22 @@ GO
 
    Función y no procedimiento, para poder usarla dentro de un IF
    en cada procedimiento de escritura sin variables de salida.
+
+   Son dos, con alcance distinto:
+
+     fnEsAdministrador(@usuario) — administra la plataforma
+       entera: rol Administrador con Usuarios.codigoEspacio en
+       NULL. Es la que usan los procedimientos que tocan cosas
+       que no pertenecen a un espacio (interruptores de módulos,
+       alta de espacios).
+
+     fnEsAdministradorDe(@usuario, @espacio) — administra ese
+       espacio: la anterior, o rol Administrador con
+       codigoEspacio igual al espacio. Es la que usa todo lo
+       demás. El espacio del objeto lo deriva el procedimiento a
+       partir del objeto (publicación -> campaña -> espacio),
+       nunca lo recibe de quien llama: recibirlo sería dejar que
+       el cliente diga sobre qué espacio tiene permiso.
    ============================================================ */
 
 IF OBJECT_ID('dbo.fnEsAdministrador') IS NOT NULL
@@ -113,7 +142,37 @@ BEGIN
         INNER JOIN dbo.Roles r ON r.codigoRol = u.codigoRol
         WHERE u.codigoUsuario = @codigoUsuario
           AND u.activo = 1
+          AND u.codigoEspacio IS NULL
           AND r.nombre = N'Administrador'
+    )
+        SET @ok = 1;
+
+    RETURN @ok;
+END
+GO
+
+IF OBJECT_ID('dbo.fnEsAdministradorDe') IS NOT NULL
+    DROP FUNCTION dbo.fnEsAdministradorDe;
+GO
+
+CREATE FUNCTION dbo.fnEsAdministradorDe (@codigoUsuario INT, @codigoEspacio INT)
+RETURNS BIT
+AS
+BEGIN
+    DECLARE @ok BIT = 0;
+
+    /* Un objeto sin espacio (todavía nulo, o inexistente) no lo
+       administra nadie. */
+    IF @codigoEspacio IS NULL RETURN 0;
+
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.Usuarios u
+        INNER JOIN dbo.Roles r ON r.codigoRol = u.codigoRol
+        WHERE u.codigoUsuario = @codigoUsuario
+          AND u.activo = 1
+          AND r.nombre = N'Administrador'
+          AND (u.codigoEspacio IS NULL OR u.codigoEspacio = @codigoEspacio)
     )
         SET @ok = 1;
 
@@ -133,8 +192,10 @@ GO
    necesita ver primero lo más antiguo sin verificar, sin
    importar de qué tipo sea.
 
-   Parámetros opcionales con el mismo patrón del script 08.
-   @soloPendientes en 1 deja fuera lo ya verificado.
+   Parámetros opcionales con el mismo patrón del script 08,
+   salvo el espacio, que es obligatorio: «todos los espacios»
+   no es una bandeja que alguien deba ver. @soloPendientes en 1
+   deja fuera lo ya verificado.
    ============================================================ */
 
 IF OBJECT_ID('dbo.spAdminBandejaVerificacion') IS NOT NULL
@@ -142,6 +203,7 @@ IF OBJECT_ID('dbo.spAdminBandejaVerificacion') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAdminBandejaVerificacion
+    @codigoEspacio  INT,
     @tipoObjeto     NVARCHAR(40) = NULL,
     @campanaSlug    NVARCHAR(80) = NULL,
     @soloPendientes BIT          = 1
@@ -171,7 +233,7 @@ BEGIN
         FROM dbo.Candidatos c
         INNER JOIN dbo.Campanas ca            ON ca.codigoCampana = c.codigoCampana
         INNER JOIN dbo.NivelesVerificacion nv ON nv.codigoVerificacion = c.codigoVerificacion
-        WHERE c.activo = 1
+        WHERE c.activo = 1 AND ca.codigoEspacio = @codigoEspacio
 
         UNION ALL
 
@@ -193,6 +255,7 @@ BEGIN
         INNER JOIN dbo.Candidatos c           ON c.codigoCandidato = p.codigoCandidato
         INNER JOIN dbo.Campanas ca            ON ca.codigoCampana = p.codigoCampana
         INNER JOIN dbo.NivelesVerificacion nv ON nv.codigoVerificacion = p.codigoVerificacion
+        WHERE ca.codigoEspacio = @codigoEspacio
 
         UNION ALL
 
@@ -214,7 +277,7 @@ BEGIN
         INNER JOIN dbo.Candidatos c           ON c.codigoCandidato = b.codigoCandidato
         INNER JOIN dbo.Campanas ca            ON ca.codigoCampana = b.codigoCampana
         INNER JOIN dbo.NivelesVerificacion nv ON nv.codigoVerificacion = b.codigoVerificacion
-        WHERE b.activo = 1
+        WHERE b.activo = 1 AND ca.codigoEspacio = @codigoEspacio
     )
     SELECT
         tipoObjeto,
@@ -265,20 +328,39 @@ BEGIN
 
     IF @motivo = N'' SET @motivo = NULL;
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0
-    BEGIN
-        SELECT CAST(0 AS BIT) AS ok,
-               N'La cuenta no tiene permiso para verificar contenido.' AS mensaje;
-        RETURN;
-    END
-
     DECLARE @codigoTipoObjeto INT =
         (SELECT codigoTipoObjeto FROM dbo.TiposObjeto WHERE nombre = @tipoObjeto);
 
-    IF @codigoTipoObjeto IS NULL OR @tipoObjeto = N'Partido'
+    IF @codigoTipoObjeto IS NULL
+       OR @tipoObjeto NOT IN (N'Candidato', N'Propuesta', N'Publicacion')
     BEGIN
         SELECT CAST(0 AS BIT) AS ok,
                N'El tipo de contenido no admite verificación.' AS mensaje;
+        RETURN;
+    END
+
+    /* El espacio se deriva del objeto, no se recibe: el permiso se
+       comprueba contra el espacio al que de verdad pertenece lo que
+       se va a tocar. Si el objeto no existe queda NULL y la función
+       responde 0, así que «no existe» y «no es tuyo» se rechazan
+       igual, sin revelar cuál de los dos fue. */
+    DECLARE @codigoEspacio INT =
+        CASE @tipoObjeto
+            WHEN N'Candidato'   THEN (SELECT ca.codigoEspacio FROM dbo.Candidatos c
+                                      INNER JOIN dbo.Campanas ca ON ca.codigoCampana = c.codigoCampana
+                                      WHERE c.codigoCandidato = @codigoObjeto)
+            WHEN N'Propuesta'   THEN (SELECT ca.codigoEspacio FROM dbo.Propuestas p
+                                      INNER JOIN dbo.Campanas ca ON ca.codigoCampana = p.codigoCampana
+                                      WHERE p.codigoPropuesta = @codigoObjeto)
+            WHEN N'Publicacion' THEN (SELECT ca.codigoEspacio FROM dbo.Publicaciones b
+                                      INNER JOIN dbo.Campanas ca ON ca.codigoCampana = b.codigoCampana
+                                      WHERE b.codigoPublicacion = @codigoObjeto)
+        END;
+
+    IF dbo.fnEsAdministradorDe(@codigoUsuario, @codigoEspacio) = 0
+    BEGIN
+        SELECT CAST(0 AS BIT) AS ok,
+               N'La cuenta no tiene permiso para verificar este contenido.' AS mensaje;
         RETURN;
     END
 
@@ -328,8 +410,8 @@ BEGIN
         RETURN;
     END
 
-    INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
-    VALUES (@codigoUsuario, N'Verificacion', @codigoTipoObjeto, @codigoObjeto,
+    INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
+    VALUES (@codigoEspacio, @codigoUsuario, N'Verificacion', @codigoTipoObjeto, @codigoObjeto,
             N'Nivel de verificación: ' + @nivel, @motivo);
 
     SELECT CAST(1 AS BIT) AS ok,
@@ -350,8 +432,9 @@ IF OBJECT_ID('dbo.spAdminPublicaciones') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAdminPublicaciones
-    @campanaSlug NVARCHAR(80) = NULL,
-    @estado      NVARCHAR(20) = NULL   -- Activas, Retiradas, o NULL para todas
+    @codigoEspacio INT,
+    @campanaSlug   NVARCHAR(80) = NULL,
+    @estado        NVARCHAR(20) = NULL   -- Activas, Retiradas, o NULL para todas
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -389,7 +472,8 @@ BEGIN
     INNER JOIN dbo.NivelesVerificacion nv ON nv.codigoVerificacion = b.codigoVerificacion
     LEFT  JOIN dbo.Categorias cat         ON cat.codigoCategoria = b.codigoCategoria
     LEFT  JOIN dbo.Usuarios ub            ON ub.codigoUsuario = b.codigoUsuarioBaja
-    WHERE (@campanaSlug IS NULL OR ca.slug = @campanaSlug)
+    WHERE ca.codigoEspacio = @codigoEspacio
+      AND (@campanaSlug IS NULL OR ca.slug = @campanaSlug)
       AND (@estado IS NULL
            OR (@estado = N'Activas'   AND b.activo = 1)
            OR (@estado = N'Retiradas' AND b.activo = 0))
@@ -422,10 +506,15 @@ BEGIN
 
     IF @motivo = N'' SET @motivo = NULL;
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0
+    DECLARE @codigoEspacio INT =
+        (SELECT ca.codigoEspacio FROM dbo.Publicaciones b
+         INNER JOIN dbo.Campanas ca ON ca.codigoCampana = b.codigoCampana
+         WHERE b.codigoPublicacion = @codigoPublicacion);
+
+    IF dbo.fnEsAdministradorDe(@codigoUsuario, @codigoEspacio) = 0
     BEGIN
         SELECT CAST(0 AS BIT) AS ok,
-               N'La cuenta no tiene permiso para moderar publicaciones.' AS mensaje;
+               N'La cuenta no tiene permiso para moderar esta publicación.' AS mensaje;
         RETURN;
     END
 
@@ -438,12 +527,6 @@ BEGIN
 
     DECLARE @actual BIT =
         (SELECT activo FROM dbo.Publicaciones WHERE codigoPublicacion = @codigoPublicacion);
-
-    IF @actual IS NULL
-    BEGIN
-        SELECT CAST(0 AS BIT) AS ok, N'No se encontró la publicación.' AS mensaje;
-        RETURN;
-    END
 
     IF @actual = @activo
     BEGIN
@@ -475,8 +558,8 @@ BEGIN
     DECLARE @codigoTipoObjeto INT =
         (SELECT codigoTipoObjeto FROM dbo.TiposObjeto WHERE nombre = N'Publicacion');
 
-    INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
-    VALUES (@codigoUsuario,
+    INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
+    VALUES (@codigoEspacio, @codigoUsuario,
             CASE WHEN @activo = 0 THEN N'Retiro' ELSE N'Restauracion' END,
             @codigoTipoObjeto, @codigoPublicacion,
             CASE WHEN @activo = 0
@@ -497,6 +580,11 @@ GO
    Se lee entera, sin filtrar por usuario: quien administra tiene
    que poder ver también lo que hicieron los demás. Esa es la
    diferencia entre un registro y una bitácora.
+
+   Sí se filtra por espacio: cada cliente ve la suya. El único
+   caso en que @codigoEspacio va en NULL es la plataforma
+   leyendo todas, y el Web Service solo lo manda así cuando la
+   cuenta administra la plataforma.
    ============================================================ */
 
 IF OBJECT_ID('dbo.spAdminAuditoria') IS NOT NULL
@@ -504,8 +592,9 @@ IF OBJECT_ID('dbo.spAdminAuditoria') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAdminAuditoria
-    @accion NVARCHAR(40) = NULL,
-    @limite INT          = 100
+    @codigoEspacio INT          = NULL,
+    @accion        NVARCHAR(40) = NULL,
+    @limite        INT          = 100
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -521,11 +610,14 @@ BEGIN
         t.nombre               AS tipoObjeto,
         a.codigoObjeto,
         ISNULL(a.detalle, N'') AS detalle,
-        ISNULL(a.motivo, N'')  AS motivo
+        ISNULL(a.motivo, N'')  AS motivo,
+        e.nombre               AS espacio
     FROM dbo.Auditoria a
     INNER JOIN dbo.Usuarios u    ON u.codigoUsuario = a.codigoUsuario
     INNER JOIN dbo.TiposObjeto t ON t.codigoTipoObjeto = a.codigoTipoObjeto
-    WHERE (@accion IS NULL OR a.accion = @accion)
+    INNER JOIN dbo.Espacios e    ON e.codigoEspacio = a.codigoEspacio
+    WHERE (@codigoEspacio IS NULL OR a.codigoEspacio = @codigoEspacio)
+      AND (@accion IS NULL OR a.accion = @accion)
     ORDER BY a.fecha DESC, a.codigoAuditoria DESC;
 END
 GO

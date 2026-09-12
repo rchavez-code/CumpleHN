@@ -5,7 +5,7 @@
    creación de la cuenta de acceso de una candidatura.
 
    Sigue las mismas reglas del script 09: cada procedimiento de
-   escritura comprueba el rol con fnEsAdministrador, registra lo
+   escritura comprueba el rol con fnEsAdministradorDe, registra lo
    que hizo en Auditoria y devuelve una fila con ok y mensaje.
 
    Tres decisiones que conviene tener presentes:
@@ -58,8 +58,12 @@ IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CK_Auditoria_accion
     ALTER TABLE dbo.Auditoria DROP CONSTRAINT CK_Auditoria_accion;
 GO
 
+/* WITH NOCHECK: al volver a ejecutar este script en una base que
+   ya tiene filas con acciones de scripts posteriores, validarlas
+   contra esta lista, que todavía no las incluye, haría fallar el
+   ALTER. El script siguiente vuelve a ampliar la lista. */
 ALTER TABLE dbo.Auditoria
-    ADD CONSTRAINT CK_Auditoria_accion
+    WITH NOCHECK ADD CONSTRAINT CK_Auditoria_accion
         CHECK (accion IN ('Verificacion', 'Retiro', 'Restauracion',
                           'Alta', 'Edicion', 'Baja', 'Cuenta'));
 GO
@@ -153,7 +157,8 @@ IF OBJECT_ID('dbo.spAdminPartidos') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAdminPartidos
-    @soloActivos BIT = 0
+    @codigoEspacio INT,
+    @soloActivos   BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -168,7 +173,8 @@ BEGIN
         (SELECT COUNT(*) FROM dbo.Candidatos c
           WHERE c.codigoPartido = p.codigoPartido AND c.activo = 1) AS candidaturas
     FROM dbo.Partidos p
-    WHERE (@soloActivos = 0 OR p.activo = 1)
+    WHERE p.codigoEspacio = @codigoEspacio
+      AND (@soloActivos = 0 OR p.activo = 1)
     ORDER BY p.nombre;
 END
 GO
@@ -179,10 +185,16 @@ GO
 
 /* Un solo procedimiento para alta y edición: con @codigoPartido en
    cero es alta. Son la misma validación y el mismo conjunto de
-   campos, así que separarlos duplicaría las dos cosas. */
+   campos, así que separarlos duplicaría las dos cosas.
+
+   @codigoEspacio solo cuenta en el alta: es donde nace el partido.
+   Al editar, el espacio se lee de la fila y el parámetro se
+   ignora, para que el permiso se compruebe contra el espacio al
+   que el partido pertenece de verdad. */
 
 CREATE PROCEDURE dbo.spAdminGuardarPartido
     @codigoUsuario INT,
+    @codigoEspacio INT,
     @codigoPartido INT,
     @nombre        NVARCHAR(120),
     @siglas        NVARCHAR(20)  = NULL,
@@ -191,9 +203,12 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0
+    IF @codigoPartido > 0
+        SET @codigoEspacio = (SELECT codigoEspacio FROM dbo.Partidos WHERE codigoPartido = @codigoPartido);
+
+    IF dbo.fnEsAdministradorDe(@codigoUsuario, @codigoEspacio) = 0
     BEGIN
-        SELECT CAST(0 AS BIT) AS ok, N'La cuenta no tiene permiso para administrar partidos.' AS mensaje, 0 AS codigo;
+        SELECT CAST(0 AS BIT) AS ok, N'La cuenta no tiene permiso para administrar partidos en este espacio.' AS mensaje, 0 AS codigo;
         RETURN;
     END
 
@@ -210,9 +225,11 @@ BEGIN
     DECLARE @slug NVARCHAR(160) = dbo.fnSlug(@nombre);
 
     /* El nombre identifica al partido en pantalla. Dos partidos con
-       el mismo nombre serían indistinguibles para quien consulta. */
+       el mismo nombre en el mismo espacio serían indistinguibles
+       para quien consulta. En espacios distintos no se estorban. */
     IF EXISTS (SELECT 1 FROM dbo.Partidos
-                WHERE nombre = @nombre AND codigoPartido <> @codigoPartido)
+                WHERE nombre = @nombre AND codigoEspacio = @codigoEspacio
+                  AND codigoPartido <> @codigoPartido)
     BEGIN
         SELECT CAST(0 AS BIT) AS ok, N'Ya existe un partido con ese nombre.' AS mensaje, 0 AS codigo;
         RETURN;
@@ -254,21 +271,21 @@ BEGIN
                partidoSiglas = @siglas
          WHERE codigoPartido = @codigoPartido;
 
-        INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
-        VALUES (@codigoUsuario, N'Edicion', @codigoTipoObjeto, @codigoPartido,
+        INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
+        VALUES (@codigoEspacio, @codigoUsuario, N'Edicion', @codigoTipoObjeto, @codigoPartido,
                 N'Partido editado: ' + @nombre, NULL);
 
         SELECT CAST(1 AS BIT) AS ok, N'El partido quedó actualizado.' AS mensaje, @codigoPartido AS codigo;
         RETURN;
     END
 
-    INSERT INTO dbo.Partidos (slug, nombre, siglas, descripcion, activo)
-    VALUES (@slug, @nombre, @siglas, @descripcion, 1);
+    INSERT INTO dbo.Partidos (codigoEspacio, slug, nombre, siglas, descripcion, activo)
+    VALUES (@codigoEspacio, @slug, @nombre, @siglas, @descripcion, 1);
 
     DECLARE @nuevo INT = SCOPE_IDENTITY();
 
-    INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
-    VALUES (@codigoUsuario, N'Alta', @codigoTipoObjeto, @nuevo,
+    INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
+    VALUES (@codigoEspacio, @codigoUsuario, N'Alta', @codigoTipoObjeto, @nuevo,
             N'Partido registrado: ' + @nombre, NULL);
 
     SELECT CAST(1 AS BIT) AS ok, N'El partido quedó registrado.' AS mensaje, @nuevo AS codigo;
@@ -290,18 +307,13 @@ BEGIN
 
     IF @motivo = N'' SET @motivo = NULL;
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0
-    BEGIN
-        SELECT CAST(0 AS BIT) AS ok, N'La cuenta no tiene permiso para administrar partidos.' AS mensaje;
-        RETURN;
-    END
+    DECLARE @nombre NVARCHAR(120), @codigoEspacio INT;
+    SELECT @nombre = nombre, @codigoEspacio = codigoEspacio
+      FROM dbo.Partidos WHERE codigoPartido = @codigoPartido;
 
-    DECLARE @nombre NVARCHAR(120) =
-        (SELECT nombre FROM dbo.Partidos WHERE codigoPartido = @codigoPartido);
-
-    IF @nombre IS NULL
+    IF dbo.fnEsAdministradorDe(@codigoUsuario, @codigoEspacio) = 0
     BEGIN
-        SELECT CAST(0 AS BIT) AS ok, N'No se encontró el partido.' AS mensaje;
+        SELECT CAST(0 AS BIT) AS ok, N'La cuenta no tiene permiso para administrar este partido.' AS mensaje;
         RETURN;
     END
 
@@ -320,8 +332,8 @@ BEGIN
     DECLARE @codigoTipoObjeto INT =
         (SELECT codigoTipoObjeto FROM dbo.TiposObjeto WHERE nombre = N'Partido');
 
-    INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
-    VALUES (@codigoUsuario,
+    INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
+    VALUES (@codigoEspacio, @codigoUsuario,
             CASE WHEN @activo = 0 THEN N'Baja' ELSE N'Alta' END,
             @codigoTipoObjeto, @codigoPartido,
             CASE WHEN @activo = 0 THEN N'Partido desactivado: ' ELSE N'Partido reactivado: ' END + @nombre,
@@ -343,6 +355,7 @@ IF OBJECT_ID('dbo.spAdminCampanas') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAdminCampanas
+    @codigoEspacio INT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -363,6 +376,7 @@ BEGIN
         (SELECT COUNT(*) FROM dbo.Propuestas x
           WHERE x.codigoCampana = c.codigoCampana) AS propuestas
     FROM dbo.Campanas c
+    WHERE c.codigoEspacio = @codigoEspacio
     ORDER BY c.fechaEleccion DESC;
 END
 GO
@@ -371,8 +385,11 @@ IF OBJECT_ID('dbo.spAdminGuardarCampana') IS NOT NULL
     DROP PROCEDURE dbo.spAdminGuardarCampana;
 GO
 
+/* @codigoEspacio cuenta solo en el alta, igual que en partidos. */
+
 CREATE PROCEDURE dbo.spAdminGuardarCampana
     @codigoUsuario INT,
+    @codigoEspacio INT,
     @codigoCampana INT,
     @nombre        NVARCHAR(160),
     @resumen       NVARCHAR(400) = NULL,
@@ -386,9 +403,12 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0
+    IF @codigoCampana > 0
+        SET @codigoEspacio = (SELECT codigoEspacio FROM dbo.Campanas WHERE codigoCampana = @codigoCampana);
+
+    IF dbo.fnEsAdministradorDe(@codigoUsuario, @codigoEspacio) = 0
     BEGIN
-        SELECT CAST(0 AS BIT) AS ok, N'La cuenta no tiene permiso para administrar campañas.' AS mensaje, 0 AS codigo;
+        SELECT CAST(0 AS BIT) AS ok, N'La cuenta no tiene permiso para administrar campañas en este espacio.' AS mensaje, 0 AS codigo;
         RETURN;
     END
 
@@ -422,13 +442,16 @@ BEGIN
     DECLARE @slug NVARCHAR(160) = dbo.fnSlug(@nombre);
 
     IF EXISTS (SELECT 1 FROM dbo.Campanas
-                WHERE nombre = @nombre AND codigoCampana <> @codigoCampana)
+                WHERE nombre = @nombre AND codigoEspacio = @codigoEspacio
+                  AND codigoCampana <> @codigoCampana)
     BEGIN
         SELECT CAST(0 AS BIT) AS ok, N'Ya existe una campaña con ese nombre.' AS mensaje, 0 AS codigo;
         RETURN;
     END
 
-    /* Igual que en partidos: el slug solo se asigna al dar de alta. */
+    /* Igual que en partidos: el slug solo se asigna al dar de alta.
+       Y es único en toda la plataforma, no por espacio: es la
+       dirección pública /Campana/{slug}. */
     IF @codigoCampana = 0 AND EXISTS (SELECT 1 FROM dbo.Campanas WHERE slug = @slug)
     BEGIN
         SELECT CAST(0 AS BIT) AS ok,
@@ -439,12 +462,14 @@ BEGIN
     DECLARE @codigoTipoObjeto INT =
         (SELECT codigoTipoObjeto FROM dbo.TiposObjeto WHERE nombre = N'Campana');
 
-    /* Solo una campaña puede estar destacada. El índice filtrado
-       UQ_Campanas_unicaActual lo impone, así que hay que apagar la
-       anterior antes de encender esta o el UPDATE falla. */
+    /* Solo una campaña por espacio puede estar destacada. El índice
+       filtrado UQ_Campanas_unicaActual lo impone, así que hay que
+       apagar la anterior del mismo espacio antes de encender esta o
+       el UPDATE falla. */
     IF @esActual = 1
         UPDATE dbo.Campanas SET esActual = 0
-         WHERE esActual = 1 AND codigoCampana <> @codigoCampana;
+         WHERE esActual = 1 AND codigoEspacio = @codigoEspacio
+           AND codigoCampana <> @codigoCampana;
 
     IF @codigoCampana > 0
     BEGIN
@@ -465,23 +490,23 @@ BEGIN
                esActual = @esActual
          WHERE codigoCampana = @codigoCampana;
 
-        INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
-        VALUES (@codigoUsuario, N'Edicion', @codigoTipoObjeto, @codigoCampana,
+        INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
+        VALUES (@codigoEspacio, @codigoUsuario, N'Edicion', @codigoTipoObjeto, @codigoCampana,
                 N'Campaña editada: ' + @nombre, NULL);
 
         SELECT CAST(1 AS BIT) AS ok, N'La campaña quedó actualizada.' AS mensaje, @codigoCampana AS codigo;
         RETURN;
     END
 
-    INSERT INTO dbo.Campanas (slug, nombre, resumen, descripcion, alcance,
+    INSERT INTO dbo.Campanas (codigoEspacio, slug, nombre, resumen, descripcion, alcance,
                               fechaInicio, fechaEleccion, estado, esActual)
-    VALUES (@slug, @nombre, @resumen, @descripcion, @alcance,
+    VALUES (@codigoEspacio, @slug, @nombre, @resumen, @descripcion, @alcance,
             @fechaInicio, @fechaEleccion, @estado, @esActual);
 
     DECLARE @nuevo INT = SCOPE_IDENTITY();
 
-    INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
-    VALUES (@codigoUsuario, N'Alta', @codigoTipoObjeto, @nuevo,
+    INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
+    VALUES (@codigoEspacio, @codigoUsuario, N'Alta', @codigoTipoObjeto, @nuevo,
             N'Campaña registrada: ' + @nombre, NULL);
 
     SELECT CAST(1 AS BIT) AS ok, N'La campaña quedó registrada.' AS mensaje, @nuevo AS codigo;
@@ -497,8 +522,9 @@ IF OBJECT_ID('dbo.spAdminCandidatos') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spAdminCandidatos
-    @campanaSlug NVARCHAR(80) = NULL,
-    @soloActivos BIT          = 0
+    @codigoEspacio INT,
+    @campanaSlug   NVARCHAR(80) = NULL,
+    @soloActivos   BIT          = 0
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -536,7 +562,8 @@ BEGIN
     INNER JOIN dbo.Cargos cg              ON cg.codigoCargo = c.codigoCargo
     INNER JOIN dbo.NivelesVerificacion nv ON nv.codigoVerificacion = c.codigoVerificacion
     LEFT  JOIN dbo.Departamentos d        ON d.codigoDepartamento = c.codigoDepartamento
-    WHERE (@campanaSlug IS NULL OR ca.slug = @campanaSlug)
+    WHERE ca.codigoEspacio = @codigoEspacio
+      AND (@campanaSlug IS NULL OR ca.slug = @campanaSlug)
       AND (@soloActivos = 0 OR c.activo = 1)
     ORDER BY c.apellidos, c.nombres;
 END
@@ -566,9 +593,30 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0
+    /* El espacio es el de la campaña a la que se presenta. Una
+       candidatura no se muda de espacio al editarse: la campaña
+       nueva tiene que ser del mismo espacio que la anterior. */
+    DECLARE @codigoEspacio INT =
+        (SELECT codigoEspacio FROM dbo.Campanas WHERE codigoCampana = @codigoCampana);
+
+    IF @codigoEspacio IS NULL
     BEGIN
-        SELECT CAST(0 AS BIT) AS ok, N'La cuenta no tiene permiso para administrar candidaturas.' AS mensaje, 0 AS codigo;
+        SELECT CAST(0 AS BIT) AS ok, N'Elegí la campaña a la que se presenta.' AS mensaje, 0 AS codigo;
+        RETURN;
+    END
+
+    IF @codigoCandidato > 0 AND NOT EXISTS (
+        SELECT 1 FROM dbo.Candidatos c
+        INNER JOIN dbo.Campanas ca ON ca.codigoCampana = c.codigoCampana
+        WHERE c.codigoCandidato = @codigoCandidato AND ca.codigoEspacio = @codigoEspacio)
+    BEGIN
+        SELECT CAST(0 AS BIT) AS ok, N'No se encontró la candidatura.' AS mensaje, 0 AS codigo;
+        RETURN;
+    END
+
+    IF dbo.fnEsAdministradorDe(@codigoUsuario, @codigoEspacio) = 0
+    BEGIN
+        SELECT CAST(0 AS BIT) AS ok, N'La cuenta no tiene permiso para administrar candidaturas en este espacio.' AS mensaje, 0 AS codigo;
         RETURN;
     END
 
@@ -583,20 +631,18 @@ BEGIN
         RETURN;
     END
 
-    IF NOT EXISTS (SELECT 1 FROM dbo.Campanas WHERE codigoCampana = @codigoCampana)
-    BEGIN
-        SELECT CAST(0 AS BIT) AS ok, N'Elegí la campaña a la que se presenta.' AS mensaje, 0 AS codigo;
-        RETURN;
-    END
-
-    IF NOT EXISTS (SELECT 1 FROM dbo.Cargos WHERE codigoCargo = @codigoCargo)
+    /* El cargo es compartido (NULL) o del mismo espacio. */
+    IF NOT EXISTS (SELECT 1 FROM dbo.Cargos
+                    WHERE codigoCargo = @codigoCargo
+                      AND (codigoEspacio IS NULL OR codigoEspacio = @codigoEspacio))
     BEGIN
         SELECT CAST(0 AS BIT) AS ok, N'Elegí el cargo al que aspira.' AS mensaje, 0 AS codigo;
         RETURN;
     END
 
     /* El partido queda nulo en las candidaturas independientes. Es
-       información, no un dato faltante. */
+       información, no un dato faltante. Y tiene que ser del mismo
+       espacio: una planilla de otra organización no es una opción. */
     DECLARE @partidoNombre NVARCHAR(120) = NULL;
     DECLARE @partidoSiglas NVARCHAR(20) = NULL;
 
@@ -604,7 +650,8 @@ BEGIN
     BEGIN
         SELECT @partidoNombre = nombre, @partidoSiglas = siglas
           FROM dbo.Partidos
-         WHERE codigoPartido = @codigoPartido AND activo = 1;
+         WHERE codigoPartido = @codigoPartido AND activo = 1
+           AND codigoEspacio = @codigoEspacio;
 
         IF @partidoNombre IS NULL
         BEGIN
@@ -654,8 +701,8 @@ BEGIN
                titular = @titular
          WHERE codigoCandidato = @codigoCandidato;
 
-        INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
-        VALUES (@codigoUsuario, N'Edicion', @codigoTipoObjeto, @codigoCandidato,
+        INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
+        VALUES (@codigoEspacio, @codigoUsuario, N'Edicion', @codigoTipoObjeto, @codigoCandidato,
                 N'Candidatura editada: ' + @nombreCompleto, NULL);
 
         SELECT CAST(1 AS BIT) AS ok, N'La candidatura quedó actualizada.' AS mensaje, @codigoCandidato AS codigo;
@@ -679,8 +726,8 @@ BEGIN
 
     DECLARE @nuevo INT = SCOPE_IDENTITY();
 
-    INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
-    VALUES (@codigoUsuario, N'Alta', @codigoTipoObjeto, @nuevo,
+    INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
+    VALUES (@codigoEspacio, @codigoUsuario, N'Alta', @codigoTipoObjeto, @nuevo,
             N'Candidatura registrada: ' + @nombreCompleto, NULL);
 
     SELECT CAST(1 AS BIT) AS ok, N'La candidatura quedó registrada.' AS mensaje, @nuevo AS codigo;
@@ -702,24 +749,21 @@ BEGIN
 
     IF @motivo = N'' SET @motivo = NULL;
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0
+    DECLARE @nombre NVARCHAR(200), @codigoEspacio INT;
+    SELECT @nombre = c.nombres + N' ' + c.apellidos, @codigoEspacio = ca.codigoEspacio
+      FROM dbo.Candidatos c
+      INNER JOIN dbo.Campanas ca ON ca.codigoCampana = c.codigoCampana
+     WHERE c.codigoCandidato = @codigoCandidato;
+
+    IF dbo.fnEsAdministradorDe(@codigoUsuario, @codigoEspacio) = 0
     BEGIN
-        SELECT CAST(0 AS BIT) AS ok, N'La cuenta no tiene permiso para administrar candidaturas.' AS mensaje;
+        SELECT CAST(0 AS BIT) AS ok, N'La cuenta no tiene permiso para administrar esta candidatura.' AS mensaje;
         RETURN;
     END
 
     IF @motivo IS NULL
     BEGIN
         SELECT CAST(0 AS BIT) AS ok, N'Hay que registrar el motivo de la decisión.' AS mensaje;
-        RETURN;
-    END
-
-    DECLARE @nombre NVARCHAR(200) =
-        (SELECT nombres + N' ' + apellidos FROM dbo.Candidatos WHERE codigoCandidato = @codigoCandidato);
-
-    IF @nombre IS NULL
-    BEGIN
-        SELECT CAST(0 AS BIT) AS ok, N'No se encontró la candidatura.' AS mensaje;
         RETURN;
     END
 
@@ -733,8 +777,8 @@ BEGIN
     DECLARE @codigoTipoObjeto INT =
         (SELECT codigoTipoObjeto FROM dbo.TiposObjeto WHERE nombre = N'Candidato');
 
-    INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
-    VALUES (@codigoUsuario,
+    INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
+    VALUES (@codigoEspacio, @codigoUsuario,
             CASE WHEN @activo = 0 THEN N'Baja' ELSE N'Alta' END,
             @codigoTipoObjeto, @codigoCandidato,
             CASE WHEN @activo = 0
@@ -775,21 +819,18 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0
-    BEGIN
-        SELECT CAST(0 AS BIT) AS ok, N'La cuenta no tiene permiso para crear cuentas de acceso.' AS mensaje;
-        RETURN;
-    END
-
     SET @login = LOWER(LTRIM(RTRIM(ISNULL(@login, N''))));
     SET @correo = LOWER(LTRIM(RTRIM(ISNULL(@correo, N''))));
 
-    DECLARE @nombre NVARCHAR(200) =
-        (SELECT nombres + N' ' + apellidos FROM dbo.Candidatos WHERE codigoCandidato = @codigoCandidato);
+    DECLARE @nombre NVARCHAR(200), @codigoEspacio INT;
+    SELECT @nombre = c.nombres + N' ' + c.apellidos, @codigoEspacio = ca.codigoEspacio
+      FROM dbo.Candidatos c
+      INNER JOIN dbo.Campanas ca ON ca.codigoCampana = c.codigoCampana
+     WHERE c.codigoCandidato = @codigoCandidato;
 
-    IF @nombre IS NULL
+    IF dbo.fnEsAdministradorDe(@codigoUsuario, @codigoEspacio) = 0
     BEGIN
-        SELECT CAST(0 AS BIT) AS ok, N'No se encontró la candidatura.' AS mensaje;
+        SELECT CAST(0 AS BIT) AS ok, N'La cuenta no tiene permiso para crear cuentas en este espacio.' AS mensaje;
         RETURN;
     END
 
@@ -844,8 +885,8 @@ BEGIN
 
     /* La bitácora registra que se creó la cuenta y para quién. La
        contraseña no aparece por ninguna parte, ni siquiera acá. */
-    INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
-    VALUES (@codigoUsuario, N'Cuenta', @codigoTipoObjeto, @nuevo,
+    INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle, motivo)
+    VALUES (@codigoEspacio, @codigoUsuario, N'Cuenta', @codigoTipoObjeto, @nuevo,
             N'Cuenta de acceso creada para ' + @nombre + N' (' + @login + N')', NULL);
 
     SELECT CAST(1 AS BIT) AS ok,

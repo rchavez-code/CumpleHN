@@ -6,12 +6,84 @@
    ejecutar: cada objeto se crea solo si no existe.
 
    Orden de dependencias:
-     Catálogos  ->  Campanas  ->  Candidatos  ->  Propuestas
-                                             ->  Publicaciones
+     Espacios   ->  Catálogos  ->  Campanas  ->  Candidatos  ->  Propuestas
+                                                            ->  Publicaciones
      Roles      ->  Usuarios
+
+   Desde el script 19 la plataforma admite espacios: un espacio
+   es un cliente que compra el uso de la plataforma para su
+   propio proceso electoral (la junta directiva de un colegio
+   profesional, por ejemplo). Las columnas codigoEspacio nacen
+   acá, junto con sus tablas, y no en el 19: en una base nueva
+   las vistas del 07 y los procedimientos del 08 en adelante las
+   referencian, y fallarían si la columna se agregara al final.
+   El 19 solo migra lo existente al espacio de la plataforma y
+   fija los NOT NULL.
    ============================================================ */
 
 USE BDCUMPLEHN;
+GO
+
+/* Los índices filtrados de este script (UQ_Espacios_plataforma y
+   UQ_Campanas_unicaActual) exigen QUOTED_IDENTIFIER, y sqlcmd lo
+   trae apagado. Ver la nota del script 09. */
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
+
+/* ------------------------------------------------- ESPACIOS */
+
+/* Un espacio es el cliente que administra su propio proceso
+   electoral dentro de la plataforma. El sitio público CumpleHN
+   es también un espacio, el único con esPlataforma en 1, para
+   que ninguna consulta tenga que tratar el caso «sin espacio»
+   como algo distinto.
+
+   padronCerrado: en 1, solo participa quien esté en el padrón
+   del espacio (script 20). En la plataforma va en 0, donde
+   participa cualquiera con correo confirmado.
+
+   terminoAgrupacion: cómo llama el espacio a la agrupación de
+   candidaturas. En la plataforma es «Partido», en una elección
+   interna suele ser «Planilla» o «Lista». La tabla Partidos no
+   cambia de nombre por esto. */
+IF OBJECT_ID('dbo.Espacios') IS NULL
+CREATE TABLE dbo.Espacios
+(
+    codigoEspacio            INT            NOT NULL IDENTITY(1,1),
+    slug                     NVARCHAR(80)   NOT NULL,
+    nombre                   NVARCHAR(160)  NOT NULL,
+    organizacion             NVARCHAR(200)  NOT NULL,
+    descripcion              NVARCHAR(1000) NULL,
+    esPlataforma             BIT            NOT NULL CONSTRAINT DF_Espacios_esPlataforma DEFAULT (0),
+    padronCerrado            BIT            NOT NULL CONSTRAINT DF_Espacios_padron DEFAULT (1),
+    terminoAgrupacion        NVARCHAR(40)   NOT NULL CONSTRAINT DF_Espacios_termino DEFAULT (N'Partido'),
+    codigoUsuarioPropietario INT            NULL,
+    activo                   BIT            NOT NULL CONSTRAINT DF_Espacios_activo DEFAULT (1),
+    motivoBaja               NVARCHAR(300)  NULL,
+    fechaBaja                DATETIME2(0)   NULL,
+    codigoUsuarioBaja        INT            NULL,
+    fechaCreacion            DATETIME2(0)   NOT NULL CONSTRAINT DF_Espacios_fecha DEFAULT (SYSDATETIME()),
+    CONSTRAINT PK_Espacios PRIMARY KEY (codigoEspacio),
+    CONSTRAINT UQ_Espacios_slug UNIQUE (slug),
+    CONSTRAINT UQ_Espacios_nombre UNIQUE (nombre)
+);
+GO
+
+/* Un solo espacio puede ser la plataforma. Índice filtrado, como
+   el de la campaña destacada. */
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UQ_Espacios_plataforma')
+CREATE UNIQUE INDEX UQ_Espacios_plataforma
+    ON dbo.Espacios (esPlataforma) WHERE esPlataforma = 1;
+GO
+
+/* El espacio de la plataforma se siembra acá y no en el 03: no es
+   un catálogo, es la fila a la que se cuelga todo lo existente. */
+IF NOT EXISTS (SELECT 1 FROM dbo.Espacios WHERE esPlataforma = 1)
+INSERT INTO dbo.Espacios (slug, nombre, organizacion, descripcion, esPlataforma, padronCerrado, terminoAgrupacion)
+VALUES (N'cumplehn', N'CumpleHN', N'CumpleHN',
+        N'Sitio público de seguimiento ciudadano de promesas políticas en Honduras.',
+        1, 0, N'Partido');
 GO
 
 /* ------------------------------------------------ CATÁLOGOS */
@@ -29,7 +101,12 @@ CREATE TABLE dbo.Roles
 GO
 
 /* Cargos de elección popular. El nivel de gobierno se hereda de acá,
-   no se repite en cada candidato. */
+   no se repite en cada candidato.
+
+   codigoEspacio en NULL significa compartido por todos los espacios.
+   Un espacio agrega los suyos («Presidente de junta», «Tesorero»),
+   que solo se listan dentro de él. El nombre es único por espacio y
+   no en toda la tabla: dos organizaciones pueden tener «Presidente». */
 IF OBJECT_ID('dbo.Cargos') IS NULL
 CREATE TABLE dbo.Cargos
 (
@@ -37,10 +114,20 @@ CREATE TABLE dbo.Cargos
     nombre         NVARCHAR(80) NOT NULL,
     nivelGobierno  NVARCHAR(20) NOT NULL,
     orden          INT          NOT NULL CONSTRAINT DF_Cargos_orden DEFAULT (0),
+    codigoEspacio  INT          NULL,
     CONSTRAINT PK_Cargos PRIMARY KEY (codigoCargo),
-    CONSTRAINT UQ_Cargos_nombre UNIQUE (nombre),
-    CONSTRAINT CK_Cargos_nivel CHECK (nivelGobierno IN ('Nacional','Departamental','Municipal'))
+    CONSTRAINT UQ_Cargos_espacioNombre UNIQUE (codigoEspacio, nombre),
+    CONSTRAINT FK_Cargos_Espacios FOREIGN KEY (codigoEspacio) REFERENCES dbo.Espacios (codigoEspacio),
+    CONSTRAINT CK_Cargos_nivel CHECK (nivelGobierno IN ('Nacional','Departamental','Municipal','Institucional'))
 );
+GO
+
+/* Base existente: la columna se agrega con el mismo patrón que usó
+   el 05 para Candidatos.codigoPartido. La restricción única y el
+   CHECK del nivel se reemplazan en el 19, después de la migración. */
+IF COL_LENGTH('dbo.Cargos', 'codigoEspacio') IS NULL
+    ALTER TABLE dbo.Cargos ADD codigoEspacio INT NULL
+        CONSTRAINT FK_Cargos_Espacios REFERENCES dbo.Espacios (codigoEspacio);
 GO
 
 /* Los 18 departamentos de Honduras. */
@@ -64,9 +151,19 @@ CREATE TABLE dbo.Categorias
     nombre          NVARCHAR(60)  NOT NULL,
     descripcion     NVARCHAR(300) NULL,
     orden           INT           NOT NULL CONSTRAINT DF_Categorias_orden DEFAULT (0),
+    /* NULL es compartida (la taxonomía COFOG). Las de un espacio
+       solo se listan dentro de él, y el interés de la encuesta
+       (script 08) solo tiene sentido en las compartidas. */
+    codigoEspacio   INT           NULL,
     CONSTRAINT PK_Categorias PRIMARY KEY (codigoCategoria),
-    CONSTRAINT UQ_Categorias_nombre UNIQUE (nombre)
+    CONSTRAINT UQ_Categorias_espacioNombre UNIQUE (codigoEspacio, nombre),
+    CONSTRAINT FK_Categorias_Espacios FOREIGN KEY (codigoEspacio) REFERENCES dbo.Espacios (codigoEspacio)
 );
+GO
+
+IF COL_LENGTH('dbo.Categorias', 'codigoEspacio') IS NULL
+    ALTER TABLE dbo.Categorias ADD codigoEspacio INT NULL
+        CONSTRAINT FK_Categorias_Espacios REFERENCES dbo.Espacios (codigoEspacio);
 GO
 
 /* Estados de cumplimiento. Replican el esquema del rastreador de promesas
@@ -102,12 +199,19 @@ GO
 
 /* ------------------------------------------------- CAMPAÑAS */
 
-/* Campaña electoral. Es la entidad raíz: toda candidatura, propuesta y
-   publicación pertenece a una campaña. */
+/* Campaña electoral. Es la entidad raíz de un espacio: toda candidatura,
+   propuesta, publicación y encuesta pertenece a una campaña, y por ella
+   hereda el espacio. Es lo que hace que aislar un espacio cueste una sola
+   columna acá y no una en cada tabla.
+
+   El slug sigue siendo único en toda la plataforma y no por espacio: la
+   dirección /Campana/{slug} identifica la campaña sin prefijo, y la
+   campaña dice a qué espacio pertenece. */
 IF OBJECT_ID('dbo.Campanas') IS NULL
 CREATE TABLE dbo.Campanas
 (
     codigoCampana INT            NOT NULL IDENTITY(1,1),
+    codigoEspacio INT            NULL,   -- NOT NULL desde el 19
     slug          NVARCHAR(80)   NOT NULL,
     nombre        NVARCHAR(160)  NOT NULL,
     resumen       NVARCHAR(400)  NULL,
@@ -119,16 +223,24 @@ CREATE TABLE dbo.Campanas
     esActual      BIT            NOT NULL CONSTRAINT DF_Campanas_esActual DEFAULT (0),
     CONSTRAINT PK_Campanas PRIMARY KEY (codigoCampana),
     CONSTRAINT UQ_Campanas_slug UNIQUE (slug),
+    CONSTRAINT FK_Campanas_Espacios FOREIGN KEY (codigoEspacio) REFERENCES dbo.Espacios (codigoEspacio),
     CONSTRAINT CK_Campanas_estado CHECK (estado IN ('Activa','Proxima','Cerrada')),
     CONSTRAINT CK_Campanas_fechas CHECK (fechaEleccion >= fechaInicio)
 );
 GO
 
-/* Solo una campaña puede estar destacada en la portada a la vez. El índice
-   filtrado lo obliga a nivel de base, no de aplicación. */
+IF COL_LENGTH('dbo.Campanas', 'codigoEspacio') IS NULL
+    ALTER TABLE dbo.Campanas ADD codigoEspacio INT NULL
+        CONSTRAINT FK_Campanas_Espacios REFERENCES dbo.Espacios (codigoEspacio);
+GO
+
+/* Solo una campaña por espacio puede estar destacada en su portada a la
+   vez. El índice filtrado lo obliga a nivel de base, no de aplicación.
+   En una base anterior al 19 el índice existe sin la columna del
+   espacio, y es el 19 quien lo reemplaza. */
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UQ_Campanas_unicaActual')
 CREATE UNIQUE INDEX UQ_Campanas_unicaActual
-    ON dbo.Campanas (esActual) WHERE esActual = 1;
+    ON dbo.Campanas (codigoEspacio, esActual) WHERE esActual = 1;
 GO
 
 /* ----------------------------------------------- CANDIDATOS */
@@ -191,6 +303,14 @@ CREATE TABLE dbo.Usuarios
     correo          NVARCHAR(160) NOT NULL,
     codigoRol       INT           NOT NULL,
     codigoCandidato INT           NULL,
+    /* Alcance de una cuenta con rol Administrador: NULL administra
+       la plataforma entera y todos los espacios, un valor administra
+       solo ese espacio (es la cuenta del cliente que lo compró). En
+       los demás roles va siempre en NULL: la candidatura ya dice su
+       campaña y la campaña su espacio, y el ciudadano tiene cuenta
+       global y participa donde el padrón lo admita. No hace falta un
+       cuarto rol: fnEsAdministradorDe (script 09) lee esta columna. */
+    codigoEspacio   INT           NULL,
     activo          BIT           NOT NULL CONSTRAINT DF_Usuarios_activo DEFAULT (1),
     fechaRegistro   DATETIME2(0)  NOT NULL CONSTRAINT DF_Usuarios_fecha DEFAULT (SYSDATETIME()),
     CONSTRAINT PK_Usuarios PRIMARY KEY (codigoUsuario),
@@ -199,8 +319,26 @@ CREATE TABLE dbo.Usuarios
     CONSTRAINT FK_Usuarios_Roles
         FOREIGN KEY (codigoRol) REFERENCES dbo.Roles (codigoRol),
     CONSTRAINT FK_Usuarios_Candidatos
-        FOREIGN KEY (codigoCandidato) REFERENCES dbo.Candidatos (codigoCandidato)
+        FOREIGN KEY (codigoCandidato) REFERENCES dbo.Candidatos (codigoCandidato),
+    CONSTRAINT FK_Usuarios_Espacios
+        FOREIGN KEY (codigoEspacio) REFERENCES dbo.Espacios (codigoEspacio)
 );
+GO
+
+IF COL_LENGTH('dbo.Usuarios', 'codigoEspacio') IS NULL
+    ALTER TABLE dbo.Usuarios ADD codigoEspacio INT NULL
+        CONSTRAINT FK_Usuarios_Espacios REFERENCES dbo.Espacios (codigoEspacio);
+GO
+
+/* El propietario del espacio es una cuenta, y la cuenta apunta a su
+   espacio: la referencia es circular y por eso la llave foránea de
+   Espacios se agrega acá, cuando ya existen las dos tablas. */
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Espacios_Propietario')
+    ALTER TABLE dbo.Espacios ADD
+        CONSTRAINT FK_Espacios_Propietario
+            FOREIGN KEY (codigoUsuarioPropietario) REFERENCES dbo.Usuarios (codigoUsuario),
+        CONSTRAINT FK_Espacios_UsuarioBaja
+            FOREIGN KEY (codigoUsuarioBaja) REFERENCES dbo.Usuarios (codigoUsuario);
 GO
 
 /* ------------------------------------------------ PROPUESTAS */

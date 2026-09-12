@@ -233,6 +233,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    DECLARE @plataforma INT = (SELECT codigoEspacio FROM dbo.Espacios WHERE esPlataforma = 1);
+
     /* Tope duro. El parámetro puede pedir menos, nunca más: lo que
        vuelve de acá entra al contexto del modelo. */
     IF @limite IS NULL OR @limite > 50 SET @limite = 50;
@@ -273,6 +275,7 @@ BEGIN
     INNER JOIN dbo.Propuestas p ON p.codigoPropuesta = v.codigoPropuesta
     INNER JOIN dbo.Candidatos  k ON k.codigoCandidato = v.codigoCandidato
     WHERE k.activo = 1
+      AND v.codigoEspacio = @plataforma
       AND (@codigoPropuesta IS NULL OR v.codigoPropuesta = @codigoPropuesta)
       AND (@campanaSlug     IS NULL OR v.campanaSlug     = @campanaSlug)
       AND (@codigoCategoria IS NULL OR v.codigoCategoria = @codigoCategoria)
@@ -316,6 +319,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    DECLARE @plataforma INT = (SELECT codigoEspacio FROM dbo.Espacios WHERE esPlataforma = 1);
+
     SELECT
         v.candidatoSlug,
         v.candidato,
@@ -334,6 +339,7 @@ BEGIN
     FROM dbo.vwAnaliticaCandidaturas v
     INNER JOIN dbo.Candidatos k ON k.codigoCandidato = v.codigoCandidato
     WHERE v.candidatoSlug = @candidatoSlug
+      AND v.codigoEspacio = @plataforma
       AND k.activo = 1;
 
     SELECT
@@ -347,6 +353,7 @@ BEGIN
     FROM dbo.vwAnaliticaPropuestas v
     INNER JOIN dbo.Propuestas p ON p.codigoPropuesta = v.codigoPropuesta
     WHERE v.candidatoSlug = @candidatoSlug
+      AND v.codigoEspacio = @plataforma
     ORDER BY v.fecha DESC, v.propuesta;
 END
 GO
@@ -380,15 +387,17 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    DECLARE @plataforma INT = (SELECT codigoEspacio FROM dbo.Espacios WHERE esPlataforma = 1);
+
     IF @campanaSlug IS NULL OR LTRIM(RTRIM(@campanaSlug)) = N''
         SELECT TOP (1) slug, nombre
         FROM dbo.Campanas
-        WHERE esActual = 1
+        WHERE esActual = 1 AND codigoEspacio = @plataforma
         ORDER BY codigoCampana;
     ELSE
         SELECT slug, nombre
         FROM dbo.Campanas
-        WHERE slug = @campanaSlug;
+        WHERE slug = @campanaSlug AND codigoEspacio = @plataforma;
 END
 GO
 

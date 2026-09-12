@@ -18,10 +18,17 @@ GO
 
 /* ============================================ PARTIDOS POLÍTICOS */
 
+/* Cada espacio tiene sus propios partidos (en una elección interna
+   son planillas o listas, y Espacios.terminoAgrupacion dice cómo
+   llamarlos). El nombre es único por espacio: dos organizaciones
+   pueden tener una «Planilla Azul». El slug sigue único en toda la
+   plataforma, como el de las campañas. La columna nace nula y el
+   19 la migra y la deja NOT NULL. */
 IF OBJECT_ID('dbo.Partidos') IS NULL
 CREATE TABLE dbo.Partidos
 (
     codigoPartido INT            NOT NULL IDENTITY(1,1),
+    codigoEspacio INT            NULL,
     slug          NVARCHAR(80)   NOT NULL,
     nombre        NVARCHAR(120)  NOT NULL,
     siglas        NVARCHAR(20)   NULL,
@@ -29,8 +36,14 @@ CREATE TABLE dbo.Partidos
     activo        BIT            NOT NULL CONSTRAINT DF_Partidos_activo DEFAULT (1),
     CONSTRAINT PK_Partidos PRIMARY KEY (codigoPartido),
     CONSTRAINT UQ_Partidos_slug UNIQUE (slug),
-    CONSTRAINT UQ_Partidos_nombre UNIQUE (nombre)
+    CONSTRAINT UQ_Partidos_espacioNombre UNIQUE (codigoEspacio, nombre),
+    CONSTRAINT FK_Partidos_Espacios FOREIGN KEY (codigoEspacio) REFERENCES dbo.Espacios (codigoEspacio)
 );
+GO
+
+IF COL_LENGTH('dbo.Partidos', 'codigoEspacio') IS NULL
+    ALTER TABLE dbo.Partidos ADD codigoEspacio INT NULL
+        CONSTRAINT FK_Partidos_Espacios REFERENCES dbo.Espacios (codigoEspacio);
 GO
 
 /* Se pueblan los partidos a partir de los que ya están escritos en

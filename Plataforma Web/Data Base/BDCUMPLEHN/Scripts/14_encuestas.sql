@@ -184,8 +184,12 @@ IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CK_Auditoria_accion
     ALTER TABLE dbo.Auditoria DROP CONSTRAINT CK_Auditoria_accion;
 GO
 
+/* WITH NOCHECK: al volver a ejecutar este script en una base que
+   ya tiene filas con acciones de scripts posteriores, validarlas
+   contra esta lista, que todavía no las incluye, haría fallar el
+   ALTER. El script siguiente vuelve a ampliar la lista. */
 ALTER TABLE dbo.Auditoria
-    ADD CONSTRAINT CK_Auditoria_accion
+    WITH NOCHECK ADD CONSTRAINT CK_Auditoria_accion
         CHECK (accion IN ('Verificacion', 'Retiro', 'Restauracion',
                           'Alta', 'Edicion', 'Baja', 'Cuenta', 'Modulo',
                           'Cierre', 'Reapertura'));
@@ -238,6 +242,7 @@ CREATE VIEW dbo.vwEncuestas
 AS
 SELECT
     e.codigoEncuesta,
+    ca.codigoEspacio,
     e.codigoCampana,
     ca.slug                      AS campanaSlug,
     ca.nombre                    AS campana,
@@ -298,6 +303,7 @@ IF OBJECT_ID('dbo.spEncuestasVigentes') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spEncuestasVigentes
+    @codigoEspacio INT,
     @campanaSlug   NVARCHAR(80) = NULL,
     @codigoUsuario INT          = 0
 AS
@@ -320,6 +326,7 @@ BEGIN
     FROM dbo.vwEncuestas e
     WHERE e.opciones > 0
       AND e.estado = N'Abierta'
+      AND e.codigoEspacio = @codigoEspacio
       AND (@campanaSlug IS NULL OR e.campanaSlug = @campanaSlug)
       AND (@campanaSlug IS NOT NULL OR EXISTS (
               SELECT 1 FROM dbo.Campanas c
@@ -346,6 +353,7 @@ IF OBJECT_ID('dbo.spEncuestasVigentesOpciones') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.spEncuestasVigentesOpciones
+    @codigoEspacio INT,
     @campanaSlug   NVARCHAR(80) = NULL,
     @codigoUsuario INT          = 0
 AS
@@ -364,6 +372,7 @@ BEGIN
           AND v.codigoUsuario  = @codigoUsuario
     WHERE e.opciones > 0
       AND e.estado = N'Abierta'
+      AND e.codigoEspacio = @codigoEspacio
       AND (@campanaSlug IS NULL OR e.campanaSlug = @campanaSlug)
       AND (@campanaSlug IS NOT NULL OR EXISTS (
               SELECT 1 FROM dbo.Campanas c
@@ -502,7 +511,7 @@ GO
 /* ============================================================
    5. Administración
 
-   Mismas reglas del script 09: fnEsAdministrador dentro de cada
+   Mismas reglas del script 09: fnEsAdministradorDe dentro de cada
    escritura aunque el Web Service ya lo haya comprobado, y una
    fila en la bitácora por cada acción.
    ============================================================ */
@@ -519,13 +528,14 @@ GO
 
 CREATE PROCEDURE dbo.spAdminEncuestas
     @codigoUsuario INT,
+    @codigoEspacio INT,
     @campanaSlug   NVARCHAR(80) = NULL,
     @estado        NVARCHAR(20) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0 RETURN;
+    IF dbo.fnEsAdministradorDe(@codigoUsuario, @codigoEspacio) = 0 RETURN;
 
     SELECT
         e.codigoEncuesta,
@@ -544,7 +554,8 @@ BEGIN
         e.opciones,
         e.votos
     FROM dbo.vwEncuestas e
-    WHERE (@campanaSlug IS NULL OR e.campanaSlug = @campanaSlug)
+    WHERE e.codigoEspacio = @codigoEspacio
+      AND (@campanaSlug IS NULL OR e.campanaSlug = @campanaSlug)
       AND (@estado      IS NULL OR e.estado      = @estado)
     ORDER BY e.fechaInicio DESC, e.codigoEncuesta DESC;
 END
@@ -569,7 +580,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0 RETURN;
+    IF dbo.fnEsAdministradorDe(@codigoUsuario,
+        (SELECT codigoEspacio FROM dbo.vwEncuestas WHERE codigoEncuesta = @codigoEncuesta)) = 0 RETURN;
 
     SELECT
         o.codigoOpcion,
@@ -623,10 +635,31 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0
+    /* El espacio es el de la campaña. Al editar, la campaña nueva
+       tiene que ser del mismo espacio que la encuesta: una
+       encuesta no se muda de cliente. */
+    DECLARE @codigoEspacio INT =
+        (SELECT codigoEspacio FROM dbo.Campanas WHERE codigoCampana = @codigoCampana);
+
+    IF @codigoEspacio IS NULL
     BEGIN
         SELECT CAST(0 AS BIT) AS ok,
-               N'La cuenta no tiene permiso para administrar encuestas.' AS mensaje,
+               N'Elegí la campaña a la que pertenece la encuesta.' AS mensaje, 0 AS codigo;
+        RETURN;
+    END
+
+    IF @codigoEncuesta > 0 AND NOT EXISTS (
+        SELECT 1 FROM dbo.vwEncuestas
+        WHERE codigoEncuesta = @codigoEncuesta AND codigoEspacio = @codigoEspacio)
+    BEGIN
+        SELECT CAST(0 AS BIT) AS ok, N'La encuesta no existe.' AS mensaje, 0 AS codigo;
+        RETURN;
+    END
+
+    IF dbo.fnEsAdministradorDe(@codigoUsuario, @codigoEspacio) = 0
+    BEGIN
+        SELECT CAST(0 AS BIT) AS ok,
+               N'La cuenta no tiene permiso para administrar encuestas en este espacio.' AS mensaje,
                0 AS codigo;
         RETURN;
     END
@@ -638,13 +671,6 @@ BEGIN
     BEGIN
         SELECT CAST(0 AS BIT) AS ok,
                N'Escribí la pregunta de la encuesta.' AS mensaje, 0 AS codigo;
-        RETURN;
-    END
-
-    IF NOT EXISTS (SELECT 1 FROM dbo.Campanas WHERE codigoCampana = @codigoCampana)
-    BEGIN
-        SELECT CAST(0 AS BIT) AS ok,
-               N'Elegí la campaña a la que pertenece la encuesta.' AS mensaje, 0 AS codigo;
         RETURN;
     END
 
@@ -746,8 +772,8 @@ BEGIN
             SELECT @nuevo, l.texto, l.orden FROM @lista l;
         END
 
-        INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle)
-        VALUES (@codigoUsuario, @accion, @tipo, @nuevo,
+        INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, detalle)
+        VALUES (@codigoEspacio, @codigoUsuario, @accion, @tipo, @nuevo,
                 LEFT(N'Encuesta: ' + @pregunta, 300));
 
         COMMIT TRANSACTION;
@@ -797,16 +823,13 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF dbo.fnEsAdministrador(@codigoUsuario) = 0
+    DECLARE @codigoEspacio INT =
+        (SELECT codigoEspacio FROM dbo.vwEncuestas WHERE codigoEncuesta = @codigoEncuesta);
+
+    IF dbo.fnEsAdministradorDe(@codigoUsuario, @codigoEspacio) = 0
     BEGIN
         SELECT CAST(0 AS BIT) AS ok,
-               N'La cuenta no tiene permiso para administrar encuestas.' AS mensaje;
-        RETURN;
-    END
-
-    IF NOT EXISTS (SELECT 1 FROM dbo.Encuestas WHERE codigoEncuesta = @codigoEncuesta)
-    BEGIN
-        SELECT CAST(0 AS BIT) AS ok, N'La encuesta no existe.' AS mensaje;
+               N'La cuenta no tiene permiso para administrar esta encuesta.' AS mensaje;
         RETURN;
     END
 
@@ -890,8 +913,8 @@ BEGIN
         SET @mensaje  = N'Encuesta restaurada.';
     END
 
-    INSERT INTO dbo.Auditoria (codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, motivo)
-    VALUES (@codigoUsuario, @registro, @tipo, @codigoEncuesta, @motivo);
+    INSERT INTO dbo.Auditoria (codigoEspacio, codigoUsuario, accion, codigoTipoObjeto, codigoObjeto, motivo)
+    VALUES (@codigoEspacio, @codigoUsuario, @registro, @tipo, @codigoEncuesta, @motivo);
 
     SELECT CAST(1 AS BIT) AS ok, @mensaje AS mensaje;
 END

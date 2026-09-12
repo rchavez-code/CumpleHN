@@ -164,6 +164,12 @@ DENY SELECT ON dbo.Auditoria                TO cumplehn_ia;
 DENY SELECT ON dbo.ConsultasIA              TO cumplehn_ia;
 DENY SELECT ON dbo.vwAnaliticaValoraciones  TO cumplehn_ia;
 DENY SELECT ON dbo.vwAnaliticaComentarios   TO cumplehn_ia;
+
+/* Los espacios son clientes. Su lista, quién los compró y qué
+   administran no es materia del asistente, que solo responde
+   sobre el espacio de la plataforma (lo fijan los propios
+   procedimientos del 12, no el backend). */
+DENY SELECT ON dbo.Espacios                 TO cumplehn_ia;
 GO
 
 /* ============================================================
