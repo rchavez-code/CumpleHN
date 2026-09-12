@@ -43,8 +43,20 @@
                     <span class="gc-avatar gc-avatar--sm" aria-hidden="true"><%: Iniciales %></span>
                     <span style="min-width: 0;">
                         <strong><%: NombreUsuario %></strong>
-                        <span class="gc-muted gc-small">Administración</span>
+                        <span class="gc-muted gc-small"><%: AdministraPlataforma ? "Administración de la plataforma" : "Administración del espacio" %></span>
                     </span>
+                </div>
+
+                <%-- Qué espacio se está administrando. La cuenta de la plataforma
+                     elige, la de un cliente solo lo ve: todo lo de esta área se
+                     acota por el espacio de la sesión, y decirlo acá evita que
+                     quien administra confunda lo que ve con lo que ve el resto. --%>
+                <div class="gc-side__esp">
+                    <span class="gc-side__esp-lbl">Espacio</span>
+                    <asp:DropDownList ID="ddlEspacio" runat="server" CssClass="gc-select gc-select--side"
+                                      AutoPostBack="true" OnSelectedIndexChanged="ddlEspacio_SelectedIndexChanged"
+                                      Visible="false" />
+                    <strong class="gc-side__esp-nombre" runat="server" id="lblEspacio"><%: EspacioNombre %></strong>
                 </div>
 
                 <nav aria-label="Navegación de administración">
@@ -52,6 +64,9 @@
 
                     <a class="gc-side__link <%= ClaseNav("Default") %>" href="<%= ResolveUrl("~/Admin/") %>">Resumen</a>
                     <a class="gc-side__link" href="<%= ResolveUrl("~/Analitica") %>">Tablero de analítica</a>
+                    <% if (AdministraPlataforma) { %>
+                    <a class="gc-side__link <%= ClaseNav("Espacios") %>" href="<%= ResolveUrl("~/Admin/Espacios") %>">Espacios</a>
+                    <% } %>
 
                     <div class="gc-side__lbl">Revisión de contenido</div>
 
@@ -69,9 +84,11 @@
 
                     <a class="gc-side__link <%= ClaseNav("Encuestas") %>" href="<%= ResolveUrl("~/Admin/Encuestas") %>">Encuestas</a>
 
+                    <% if (AdministraPlataforma) { %>
                     <div class="gc-side__lbl">Configuración</div>
 
                     <a class="gc-side__link <%= ClaseNav("Modulos") %>" href="<%= ResolveUrl("~/Admin/Modulos") %>">Módulos</a>
+                    <% } %>
                 </nav>
 
                 <div class="gc-side__foot">

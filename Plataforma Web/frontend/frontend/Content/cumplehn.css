@@ -1221,6 +1221,33 @@ a.gc-chip:hover { text-decoration: none; border-color: #d3d8dd; }
 
 .gc-side__foot { padding: 14px 20px; border-top: 1px solid var(--gc-line-2); }
 
+/* Espacio administrado, bajo la identidad de la barra lateral. Con la
+   cuenta de la plataforma es un desplegable, con la de un cliente es
+   solo el nombre. Verificado con grep que el prefijo estaba libre. */
+.gc-side__esp {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--gc-line-2);
+}
+
+.gc-side__esp-lbl {
+    display: block;
+    margin-bottom: 5px;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--gc-faint);
+}
+
+.gc-side__esp-nombre { display: block; font-size: .9rem; }
+
+.gc-select--side {
+    width: 100%;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    font-size: .88rem;
+}
+
 .gc-main { flex: 1 1 auto; min-width: 0; }
 
 .gc-topbar {

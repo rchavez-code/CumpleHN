@@ -16,6 +16,10 @@ namespace frontend.Admin
         /// </summary>
         protected global::System.Web.UI.WebControls.ContentPlaceHolder HeadContent;
 
+        protected global::System.Web.UI.WebControls.DropDownList ddlEspacio;
+
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl lblEspacio;
+
         /// <summary>
         /// TopActions control.
         /// </summary>

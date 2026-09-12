@@ -177,13 +177,36 @@ namespace frontend.Servicios
     }
 
     /// <summary>
-    /// Página del área de administración de la plataforma.
+    /// Página del área de administración. La usan tanto la cuenta de la
+    /// plataforma como la de un cliente que administra su espacio: lo que
+    /// cada una ve lo acota la capa de servicios con el espacio de la sesión,
+    /// y lo que cada una puede hacer lo decide el Web Service contra la base.
     /// </summary>
     public abstract class PaginaAdmin : PaginaSegura
     {
         protected override string RolExigido
         {
             get { return Sesion.RolAdministrador; }
+        }
+    }
+
+    /// <summary>
+    /// Página de administración que solo tiene sentido para la plataforma:
+    /// los espacios y los interruptores de módulos. Una cuenta de cliente
+    /// que llegue vuelve al resumen de su propia administración. Como en
+    /// <see cref="PaginaSegura"/>, se decide en <c>OnPreInit</c> y en la
+    /// clase base, para que una página nueva no pueda olvidarse. El Web
+    /// Service rechazaría igual la acción: acá solo se evita la pantalla
+    /// que no guarda.
+    /// </summary>
+    public abstract class PaginaAdminPlataforma : PaginaAdmin
+    {
+        protected override void OnPreInit(EventArgs e)
+        {
+            base.OnPreInit(e);
+
+            if (!Sesion.AdministraPlataforma)
+                Response.Redirect("~/Admin/");
         }
     }
 }

@@ -13,7 +13,7 @@ namespace frontend.Admin
     /// administración lo sigue viendo. Es la diferencia entre retirar algo de
     /// la vista y darlo de baja.
     /// </summary>
-    public partial class ModulosPagina : PaginaAdmin
+    public partial class ModulosPagina : PaginaAdminPlataforma
     {
         private IList<ModuloAdmin> _modulos;
         private ModuloAdmin _seleccion;

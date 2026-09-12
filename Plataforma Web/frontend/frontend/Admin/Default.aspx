@@ -4,10 +4,8 @@
 
     <div class="gc-pagehead">
         <div>
-            <h2>Administración de la plataforma</h2>
-            <p class="gc-muted" style="margin: 0;">
-                Área privada para la revisión de contenido, los catálogos y la configuración de CumpleHN.
-            </p>
+            <h2><%: Titulo %></h2>
+            <p class="gc-muted" style="margin: 0;"><%: Subtitulo %></p>
         </div>
     </div>
 
@@ -30,7 +28,7 @@
                         </div>
                         <div>
                             <dt>Alcance</dt>
-                            <dd>Toda la plataforma. No está limitada a una campaña ni a una candidatura.</dd>
+                            <dd><%: Alcance %></dd>
                         </div>
                     </dl>
                 </div>
@@ -79,10 +77,16 @@
                                 <td>Crear cuentas de acceso de candidaturas</td>
                                 <td><span class="gc-chip gc-chip--cumplida">Habilitado</span></td>
                             </tr>
+                            <% if (Sesion.AdministraPlataforma) { %>
                             <tr>
                                 <td>Ocultar módulos y gráficos del sitio público</td>
                                 <td><span class="gc-chip gc-chip--cumplida">Habilitado</span></td>
                             </tr>
+                            <tr>
+                                <td>Registrar espacios de clientes y crear sus cuentas</td>
+                                <td><span class="gc-chip gc-chip--cumplida">Habilitado</span></td>
+                            </tr>
+                            <% } %>
                         </tbody>
                     </table>
                 </div>

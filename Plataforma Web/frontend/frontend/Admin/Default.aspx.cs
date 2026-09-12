@@ -4,12 +4,9 @@ using frontend.Servicios;
 namespace frontend.Admin
 {
     /// <summary>
-    /// Entrada del área de administración.
-    ///
-    /// En esta etapa el área declara su propio alcance: qué puede hacer la
-    /// cuenta hoy y qué falta por habilitar. Las facultades de administración
-    /// se agregan como secciones propias, cada una con su procedimiento
-    /// almacenado y su método en el Web Service.
+    /// Resumen del área de administración. Dice qué cuenta es y qué alcance
+    /// tiene: toda la plataforma o un espacio. El texto sale de la sesión,
+    /// que a su vez sale de lo que el Web Service respondió al entrar.
     /// </summary>
     public partial class AdminDefault : PaginaAdmin
     {
@@ -20,6 +17,39 @@ namespace frontend.Admin
         protected string NombreUsuario
         {
             get { return Sesion.Nombre; }
+        }
+
+        protected string Titulo
+        {
+            get
+            {
+                return Sesion.AdministraPlataforma
+                    ? "Administración de la plataforma"
+                    : "Administración de " + Sesion.EspacioNombre;
+            }
+        }
+
+        protected string Subtitulo
+        {
+            get
+            {
+                return Sesion.AdministraPlataforma
+                    ? "Área privada para la revisión de contenido, los catálogos, los espacios de clientes y la configuración de CumpleHN."
+                    : "Área privada del espacio: sus campañas, candidaturas, encuestas y la revisión de su contenido.";
+            }
+        }
+
+        protected string Alcance
+        {
+            get
+            {
+                if (Sesion.AdministraPlataforma)
+                    return "Toda la plataforma y todos sus espacios. Ahora mismo está mirando «"
+                         + Sesion.EspacioNombre + "»: cambialo desde la barra lateral.";
+
+                return "Solo el espacio «" + Sesion.EspacioNombre + "». Lo que otras organizaciones "
+                     + "administran en la plataforma no aparece acá ni se puede tocar desde esta cuenta.";
+            }
         }
     }
 }
