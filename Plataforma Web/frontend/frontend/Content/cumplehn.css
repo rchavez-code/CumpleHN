@@ -2210,3 +2210,40 @@ a.gc-enc__op:not(.aspNetDisabled):hover .gc-enc__marca {
 }
 
 .gc-mia__acciones .gc-btn--quiet { margin-left: auto; }
+
+/* --------------------------------- 21b. Iniciativas en la portada
+
+   Cuatro a la vista y el resto oculto por bloques de cuatro. «Ver más»
+   solo quita la clase is-oculta a un bloque —no pide otra carga—, y el
+   contador «8 de 24» viaja al lado del botón. Cuántos bloques están
+   abiertos vive en un input oculto de la página, como la pestaña activa
+   del tablero, para sobrevivir al postback de votar o comentar. */
+
+.gc-inic-col.is-oculta { display: none; }
+
+.gc-inics__mas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 4px;
+}
+
+.gc-inics__cont {
+    color: var(--gc-muted);
+    font-size: .88rem;
+}
+
+/* Franja de administrador: el módulo está oculto al público y solo lo ve
+   quien administra. Ámbar como el resto de los avisos «oculto», no
+   escarlata: no es un error, es un estado. */
+.gc-oculto-aviso {
+    margin: 0 0 18px;
+    padding: 10px 14px;
+    border-radius: var(--gc-r-sm);
+    background: var(--gc-ambar-l);
+    border: 1px dashed var(--gc-ambar);
+    color: #8f6110;
+    font-size: .84rem;
+}

@@ -15,6 +15,22 @@ namespace frontend
     {
         private Campana _actual;
 
+        /// <summary>
+        /// Las iniciativas se enlazan en <c>OnInit</c>, no en <c>Page_Load</c>.
+        ///
+        /// Sus tarjetas llevan hilo de comentarios dentro de un repetidor, y
+        /// enlazar en Page_Load recrearía la tarjeta después de que ASP.NET ya
+        /// procesó el postback, rompiendo la publicación de un comentario. Es
+        /// el mismo motivo por el que «Mi cuenta» y el feed de campaña enlazan
+        /// acá. Las demás tarjetas de la portada (candidaturas, campañas,
+        /// encuestas) no tienen hilo inline, así que siguen en Page_Load.
+        /// </summary>
+        protected override void OnInit(EventArgs e)
+        {
+            base.OnInit(e);
+            CargarIniciativas();
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             _actual = Contenido.Datos.ObtenerCampanaActual();
@@ -116,6 +132,129 @@ namespace frontend
         protected string TextoBotonEncuestas
         {
             get { return EncuestasDesplegadas ? "Ver menos" : TextoVerMas; }
+        }
+
+        // =============================================== Iniciativas
+
+        /// <summary>Cuántas iniciativas revela cada «Ver más». Decisión de la página.</summary>
+        private const int IniciativasPorBloque = 4;
+
+        private IList<Iniciativa> _iniciativas;
+
+        /// <summary>
+        /// Cuántos bloques de cuatro están desplegados. Se lee del input oculto
+        /// directamente de <c>Request.Form</c> y no de <c>hdnIniciativas.Value</c>
+        /// porque el enlace ocurre en OnInit, antes de que ASP.NET cargue los
+        /// valores del postback en los controles. Por defecto uno: los primeros
+        /// cuatro a la vista.
+        /// </summary>
+        private int _bloquesAbiertos = 1;
+
+        private void CargarIniciativas()
+        {
+            // El administrador ve el módulo aunque esté oculto, marcado. Para el
+            // resto desaparece. Es la misma regla de las encuestas.
+            if (!Modulos.Visible(Modulos.Iniciativas))
+            {
+                phIniciativas.Visible = false;
+                return;
+            }
+
+            _iniciativas = Contenido.Datos.ObtenerIniciativas(Sesion.CodigoUsuario);
+
+            // Una sección que anuncia iniciativas y no tiene ninguna es peor que
+            // no estar, igual que el bloque de encuestas.
+            phIniciativas.Visible = _iniciativas.Count > 0;
+            if (_iniciativas.Count == 0) return;
+
+            int valor;
+            string enviado = Request.Form[hdnIniciativas.UniqueID];
+            if (!string.IsNullOrEmpty(enviado) && int.TryParse(enviado, out valor) && valor >= 1)
+                _bloquesAbiertos = valor;
+
+            hdnIniciativas.Value = _bloquesAbiertos.ToString();
+
+            rptIniciativas.DataSource = _iniciativas;
+            rptIniciativas.DataBind();
+
+            phVerMasInic.Visible = _iniciativas.Count > IniciativasPorBloque;
+
+            // Franja de administrador cuando el módulo está apagado.
+            phIniciativasOcultas.Visible = !Modulos.Habilitado(Modulos.Iniciativas);
+
+            // El ciudadano propone desde su cuenta. Quien no tiene sesión va al
+            // acceso que lo devuelve a su cuenta. El candidato y el administrador
+            // no proponen, así que no ven el enlace.
+            phProponer.Visible = Sesion.EsCiudadano || !Sesion.Autenticado;
+        }
+
+        protected int BloqueDe(int indice)
+        {
+            return indice / IniciativasPorBloque;
+        }
+
+        /// <summary>
+        /// Columna de cada tarjeta. Dos por fila. El servidor siempre deja a la
+        /// vista el primer bloque y oculta el resto, sin importar cuántos estén
+        /// desplegados: el despliegue lo reaplica el script al cargar, leyendo
+        /// el input oculto.
+        ///
+        /// La clase no puede depender de <c>_bloquesAbiertos</c> porque es un
+        /// enlace de datos <c>&lt;%# %&gt;</c> dentro del repetidor, y al enlazar
+        /// en OnInit el <c>LoadViewState</c> posterior lo pisaría con el valor
+        /// del render anterior. Dejarla constante evita ese conflicto, y el
+        /// contador y el botón —que son expresiones de render— sí reflejan el
+        /// estado real. Es el mismo reparto del «Ver más» de las encuestas: el
+        /// estado vive en un input oculto y el cliente lo aplica.
+        /// </summary>
+        protected string ClaseColumnaIniciativa(int indice)
+        {
+            string clase = "col-lg-6 gc-mb gc-inic-col";
+
+            if (BloqueDe(indice) >= 1) clase += " is-oculta";
+
+            return clase;
+        }
+
+        protected int TotalIniciativas
+        {
+            get { return _iniciativas == null ? 0 : _iniciativas.Count; }
+        }
+
+        protected int PorBloqueInic
+        {
+            get { return IniciativasPorBloque; }
+        }
+
+        private int IniciativasVisibles
+        {
+            get { return Math.Min(_bloquesAbiertos * IniciativasPorBloque, TotalIniciativas); }
+        }
+
+        protected string TextoContadorInic
+        {
+            get { return IniciativasVisibles + " de " + TotalIniciativas + " iniciativas"; }
+        }
+
+        protected string TextoBotonInic
+        {
+            get
+            {
+                if (IniciativasVisibles >= TotalIniciativas) return "Ver menos";
+
+                int faltan = Math.Min(IniciativasPorBloque, TotalIniciativas - IniciativasVisibles);
+                return "Ver " + faltan + " más";
+            }
+        }
+
+        protected string UrlProponer
+        {
+            get
+            {
+                if (Sesion.EsCiudadano) return ResolveUrl("~/MiCuenta");
+
+                return ResolveUrl("~/Acceso?volver=" + Server.UrlEncode("/MiCuenta"));
+            }
         }
 
         private void CargarCandidatos()

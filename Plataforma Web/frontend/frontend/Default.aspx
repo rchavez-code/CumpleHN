@@ -158,6 +158,116 @@
             </script>
         </asp:PlaceHolder>
 
+        <%-- =========================================== Iniciativas --%>
+
+        <%-- Después de las encuestas: las dos son participación ciudadana, y
+             estas son las propuestas que escribe la gente. Ordenadas por apoyo
+             (me gusta menos no me gusta). La plataforma no las respalda, y el
+             encabezado lo dice: es texto de cualquier persona con cuenta. --%>
+
+        <asp:PlaceHolder ID="phIniciativas" runat="server" Visible="false">
+            <div class="gc-sechead" style="margin-top: 42px;">
+                <div>
+                    <h2>Iniciativas ciudadanas</h2>
+                    <p class="gc-muted">
+                        Propuestas de proyecto que escribe la ciudadanía, ordenadas por el apoyo que reciben.
+                        La plataforma no las respalda ni las verifica: las ordena para que las veas y opines.
+                    </p>
+                </div>
+                <asp:PlaceHolder ID="phProponer" runat="server">
+                    <a class="gc-btn gc-btn--quiet gc-btn--sm gc-nowrap" href="<%= UrlProponer %>">Proponer una &rarr;</a>
+                </asp:PlaceHolder>
+            </div>
+
+            <asp:PlaceHolder ID="phIniciativasOcultas" runat="server" Visible="false">
+                <p class="gc-oculto-aviso">
+                    Este módulo está oculto al público. Solo vos lo ves, como administrador.
+                </p>
+            </asp:PlaceHolder>
+
+            <%-- Todas las activas se dibujan en la misma respuesta, cuatro a la
+                 vista y el resto ocultas por bloques de cuatro. «Ver más» solo
+                 les quita el ocultamiento: si pidiera otra carga, desplegar la
+                 lista costaría un viaje para mostrar algo ya consultado. Cuántos
+                 bloques están abiertos viaja en el input oculto, como la pestaña
+                 activa del tablero, para sobrevivir al postback de votar o
+                 comentar. --%>
+
+            <div id="zonaIniciativas" runat="server" class="gc-inics">
+                <div class="row">
+                    <asp:Repeater ID="rptIniciativas" runat="server">
+                        <ItemTemplate>
+                            <div class="<%# ClaseColumnaIniciativa(Container.ItemIndex) %>" data-bloque="<%# BloqueDe(Container.ItemIndex) %>">
+                                <gc:IniciativaCard runat="server" Item="<%# (Iniciativa)Container.DataItem %>" />
+                            </div>
+                        </ItemTemplate>
+                    </asp:Repeater>
+                </div>
+
+                <asp:PlaceHolder ID="phVerMasInic" runat="server" Visible="false">
+                    <div class="gc-inics__mas">
+                        <span class="gc-inics__cont" id="contIniciativas" data-total="<%: TotalIniciativas %>"><%: TextoContadorInic %></span>
+                        <button type="button" class="gc-btn gc-btn--ghost" id="btnVerMasInic"
+                                data-porbloque="<%: PorBloqueInic %>" data-menos="Ver menos"
+                                onclick="cumplehnVerMasIniciativas(this)"><%: TextoBotonInic %></button>
+                    </div>
+                </asp:PlaceHolder>
+
+                <asp:HiddenField ID="hdnIniciativas" runat="server" Value="1" />
+            </div>
+
+            <script type="text/javascript">
+                // Despliega las iniciativas de cuatro en cuatro y mantiene el
+                // contador «8 de 24». El estado vive en el input oculto —cuántos
+                // bloques están abiertos— y se reaplica al cargar, también
+                // después de un postback de votar o comentar, porque el servidor
+                // siempre rinde solo el primer bloque. Igual que el «Ver más» de
+                // las encuestas, son pocas líneas para una sola página y no
+                // justifican un archivo aparte con su huella de versión.
+                function cumplehnAplicarIniciativas() {
+                    var zona = document.getElementById('<%= zonaIniciativas.ClientID %>');
+                    var estado = document.getElementById('<%= hdnIniciativas.ClientID %>');
+                    var boton = document.getElementById('btnVerMasInic');
+                    var cont = document.getElementById('contIniciativas');
+                    if (!zona || !estado || !boton || !cont) return;
+
+                    var total = parseInt(cont.getAttribute('data-total'), 10);
+                    var porBloque = parseInt(boton.getAttribute('data-porbloque'), 10);
+                    var abiertos = parseInt(estado.value, 10) || 1;
+
+                    var columnas = zona.querySelectorAll('[data-bloque]');
+                    for (var i = 0; i < columnas.length; i++) {
+                        var bloque = parseInt(columnas[i].getAttribute('data-bloque'), 10);
+                        if (bloque < abiertos) columnas[i].classList.remove('is-oculta');
+                        else columnas[i].classList.add('is-oculta');
+                    }
+
+                    var visibles = Math.min(abiertos * porBloque, total);
+                    cont.textContent = visibles + ' de ' + total + ' iniciativas';
+
+                    boton.textContent = (visibles >= total)
+                        ? boton.getAttribute('data-menos')
+                        : 'Ver ' + Math.min(porBloque, total - visibles) + ' más';
+                }
+
+                function cumplehnVerMasIniciativas(boton) {
+                    var estado = document.getElementById('<%= hdnIniciativas.ClientID %>');
+                    var cont = document.getElementById('contIniciativas');
+
+                    var total = parseInt(cont.getAttribute('data-total'), 10);
+                    var porBloque = parseInt(boton.getAttribute('data-porbloque'), 10);
+                    var abiertos = parseInt(estado.value, 10) || 1;
+
+                    // Con todo a la vista, el botón colapsa a la vista inicial.
+                    estado.value = (abiertos * porBloque >= total) ? 1 : abiertos + 1;
+
+                    cumplehnAplicarIniciativas();
+                }
+
+                cumplehnAplicarIniciativas();
+            </script>
+        </asp:PlaceHolder>
+
         <%-- ================================================= Candidatos --%>
 
         <div class="gc-sechead" style="margin-top: 42px;">
