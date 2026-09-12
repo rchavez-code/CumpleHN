@@ -806,7 +806,7 @@
             <div class="gc-ia__cabeza">
                 <span class="gc-msg__ico" style="background: rgba(255,255,255,.18); color: #fff;">IA</span>
                 <h3>Asistente de consulta en lenguaje natural</h3>
-                <span class="gc-ia__proto">Prototipo</span>
+                <span class="gc-ia__proto">En linea</span>
             </div>
 
             <div class="gc-ia__cuerpo">
