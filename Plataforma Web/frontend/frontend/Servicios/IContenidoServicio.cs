@@ -110,6 +110,47 @@ namespace frontend.Servicios
         /// </summary>
         ResultadoEncuesta ResponderEncuesta(int codigoEncuesta, int codigoOpcion, int codigoUsuario);
 
+        // --------------------------------------------------- Iniciativas
+
+        /* La otra mitad de la participación: además de reaccionar, la
+           ciudadanía propone. Consultar es público y proponer exige cuenta
+           ciudadana con correo confirmado, la misma puerta que votar y
+           comentar. Las reacciones sobre una iniciativa van por el módulo de
+           interacción, con TiposObjeto.Iniciativa. */
+
+        /// <summary>
+        /// Iniciativas activas, de la más popular (meGusta − noMeGusta) a la
+        /// menos, con desempate por la más reciente. Devuelve todas: cuántas
+        /// se ven y de a cuántas se despliegan lo decide la portada.
+        /// </summary>
+        IList<Iniciativa> ObtenerIniciativas(int codigoUsuario);
+
+        /// <summary>
+        /// Las iniciativas de una persona, activas y retiradas, para «Mi
+        /// cuenta». Cada una dice si su texto todavía se puede editar.
+        /// </summary>
+        IList<Iniciativa> ObtenerIniciativasDeUsuario(int codigoUsuario);
+
+        /// <summary>
+        /// Alta (código cero) o edición. El texto solo se edita mientras nadie
+        /// reaccionó, y lo decide el backend, no esta capa. Departamento en
+        /// cero es «sin departamento».
+        /// </summary>
+        ResultadoGuardado GuardarIniciativa(int codigoUsuario, int codigoIniciativa,
+            string titulo, string descripcion, int codigoCategoria, int codigoDepartamento);
+
+        /// <summary>Retiro por quien la propuso. Baja lógica: las reacciones se conservan.</summary>
+        Resultado RetirarIniciativaPropia(int codigoUsuario, int codigoIniciativa);
+
+        /// <summary>
+        /// Listado para moderación. <paramref name="estado"/> acepta
+        /// «Activas», «Retiradas» o vacío para todas.
+        /// </summary>
+        IList<Iniciativa> ObtenerIniciativasAdmin(int codigoUsuario, string estado);
+
+        /// <summary>Retira o restaura desde administración, con motivo obligatorio.</summary>
+        Resultado ModerarIniciativa(int codigoUsuario, int codigoIniciativa, bool activo, string motivo);
+
         // ----------------------------------------------------- Analítica
 
         /// <summary>

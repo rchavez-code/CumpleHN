@@ -121,6 +121,7 @@
     <Compile Include="Modelos\Asistente.cs" />
     <Compile Include="Modelos\Encuestas.cs" />
     <Compile Include="Modelos\Entidades.cs" />
+    <Compile Include="Modelos\Iniciativas.cs" />
     <Compile Include="Modelos\Interaccion.cs" />
     <Compile Include="Modelos\Seguridad.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

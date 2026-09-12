@@ -155,6 +155,8 @@ namespace frontend.Modelos
                     case "Candidato": return "Candidaturas";
                     case "Partido": return "Partidos";
                     case "Propuesta": return "Propuestas";
+                    case "Encuesta": return "Encuestas";
+                    case "Iniciativa": return "Iniciativas ciudadanas";
                     default: return TipoObjeto;
                 }
             }

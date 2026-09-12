@@ -335,6 +335,7 @@
     <Compile Include="Modelos\Enumeraciones.cs" />
     <Compile Include="Modelos\Propuesta.cs" />
     <Compile Include="Modelos\Encuesta.cs" />
+    <Compile Include="Modelos\Iniciativa.cs" />
     <Compile Include="Modelos\Publicacion.cs" />
     <Compile Include="Modelos\Vista.cs" />
     <Compile Include="Servicios\Contenido.cs" />

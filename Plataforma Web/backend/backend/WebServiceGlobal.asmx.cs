@@ -40,6 +40,7 @@ namespace backend
         /// dbo.Roles. Cambiarlo en la base obliga a cambiarlo acá.
         /// </summary>
         private const string RolAdministrador = "Administrador";
+        private const string RolCiudadano = "Ciudadano";
 
         // =============================================================
         //  Seguridad
@@ -923,7 +924,8 @@ namespace backend
                 || tipoObjeto == "Candidato"
                 || tipoObjeto == "Partido"
                 || tipoObjeto == "Propuesta"
-                || tipoObjeto == "Encuesta";
+                || tipoObjeto == "Encuesta"
+                || tipoObjeto == "Iniciativa";
         }
 
         /// <summary>
@@ -951,10 +953,13 @@ namespace backend
                     query = "SELECT COUNT(*) FROM dbo.Propuestas WHERE codigoPropuesta = @codigo";
                     break;
                 case "Encuesta":
-                    // La única de las cinco que filtra por activo: una encuesta
+                    // Filtra por activo, junto con la iniciativa: una encuesta
                     // retirada sale del sitio público, y comentar algo que ya
                     // no se ve dejaría el hilo colgando de la nada.
                     query = "SELECT COUNT(*) FROM dbo.Encuestas WHERE codigoEncuesta = @codigo AND activo = 1";
+                    break;
+                case "Iniciativa":
+                    query = "SELECT COUNT(*) FROM dbo.Iniciativas WHERE codigoIniciativa = @codigo AND activo = 1";
                     break;
                 default:
                     return false;
@@ -3134,6 +3139,255 @@ namespace backend
         {
             object valor = reader[columna];
             return valor == DBNull.Value ? string.Empty : Convert.ToString(valor);
+        }
+
+        // =============================================================
+        //  Iniciativas ciudadanas
+        // =============================================================
+
+        /// <summary>
+        /// Las iniciativas activas, de la más popular a la menos. Es lo que
+        /// dibuja la portada.
+        ///
+        /// Devuelve todas: cuántas se ven y de a cuántas se despliegan es una
+        /// decisión de la página, y todas se dibujan en la misma respuesta
+        /// para que «Ver más» no cueste un viaje. El código de usuario sirve
+        /// para marcar el voto propio y cuáles son suyas. Con cero es un
+        /// visitante sin cuenta.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<IniciativaPublica> listarIniciativas(int codigoUsuario)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand("dbo.spIniciativasPublicas", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+
+                return LeerIniciativas(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Las iniciativas de una persona, activas y retiradas, para «Mi
+        /// cuenta». Cada una dice si su texto todavía se puede editar.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<IniciativaPublica> listarIniciativasDeUsuario(int codigoUsuario)
+        {
+            if (codigoUsuario <= 0) return new List<IniciativaPublica>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand("dbo.spIniciativasDeUsuario", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+
+                return LeerIniciativas(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Alta o edición de una iniciativa por una cuenta ciudadana.
+        ///
+        /// Las mismas tres puertas que votar y comentar, en el mismo orden:
+        /// módulo visible, cuenta que puede participar (existe, está activa y
+        /// confirmó su correo) y, además, rol Ciudadano. El procedimiento
+        /// vuelve a comprobar el rol, la autoría y que la iniciativa no tenga
+        /// reacciones: lo que el frontend sabe de su sesión decide qué
+        /// formulario muestra, nunca qué se acepta.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaGuardado guardarIniciativa(int codigoUsuario, int codigoIniciativa,
+            string titulo, string descripcion, int codigoCategoria, int codigoDepartamento)
+        {
+            RespuestaGuardado r = new RespuestaGuardado { ok = false, codigo = 0 };
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(cadenaConexion))
+                {
+                    conn.Open();
+
+                    if (!ModuloVisible(conn, "iniciativas"))
+                    {
+                        r.mensaje = "Las iniciativas ciudadanas están temporalmente cerradas.";
+                        return r;
+                    }
+
+                    string motivo = MotivoSinParticipacion(conn, codigoUsuario,
+                        "Necesitás una cuenta activa para proponer una iniciativa.");
+                    if (motivo != null)
+                    {
+                        r.mensaje = motivo;
+                        return r;
+                    }
+
+                    if (!EsCiudadano(conn, codigoUsuario))
+                    {
+                        r.mensaje = "Las iniciativas las proponen las cuentas ciudadanas.";
+                        return r;
+                    }
+
+                    SqlCommand cmd = new SqlCommand("dbo.spIniciativaGuardar", conn);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                    cmd.Parameters.AddWithValue("@codigoIniciativa", codigoIniciativa);
+                    cmd.Parameters.AddWithValue("@titulo", (object)titulo ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@descripcion", (object)descripcion ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@codigoCategoria", codigoCategoria);
+                    cmd.Parameters.AddWithValue("@codigoDepartamento", codigoDepartamento);
+
+                    return LeerGuardado(cmd);
+                }
+            }
+            catch (Exception ex)
+            {
+                r.mensaje = "No se pudo guardar la iniciativa: " + ex.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Retiro de una iniciativa por quien la propuso. Baja lógica: las
+        /// reacciones que recibió se conservan. La autoría la confirma el
+        /// procedimiento.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin retirarIniciativaPropia(int codigoUsuario, int codigoIniciativa)
+        {
+            if (codigoUsuario <= 0)
+                return Rechazo("Necesitás una cuenta activa para retirar una iniciativa.");
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand("dbo.spIniciativaRetirarPropia", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoIniciativa", codigoIniciativa);
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Listado para moderación, con las retiradas. <paramref name="estado"/>
+        /// acepta «Activas», «Retiradas» o vacío para todas.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<IniciativaPublica> listarIniciativasAdmin(int codigoUsuario, string estado)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario)) return new List<IniciativaPublica>();
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminIniciativas", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@estado",
+                    string.IsNullOrEmpty(estado) ? (object)DBNull.Value : estado);
+
+                return LeerIniciativas(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Retira o restaura una iniciativa desde administración, con motivo
+        /// obligatorio y fila en la bitácora. Gemelo de moderarPublicacion.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin moderarIniciativa(
+            int codigoUsuario, int codigoIniciativa, bool activo, string motivo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("La cuenta no tiene permiso para moderar iniciativas.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminModerarIniciativa", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoIniciativa", codigoIniciativa);
+                cmd.Parameters.AddWithValue("@activo", activo);
+                cmd.Parameters.AddWithValue("@motivo", (object)motivo ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Confirma que la cuenta existe, está activa y tiene el rol Ciudadano.
+        /// Gemelo de EsAdministrador, por la misma razón: la sesión del
+        /// frontend no es una credencial.
+        /// </summary>
+        private static bool EsCiudadano(SqlConnection conn, int codigoUsuario)
+        {
+            if (codigoUsuario <= 0) return false;
+
+            SqlCommand cmd = new SqlCommand(
+                "SELECT COUNT(*) " +
+                "FROM dbo.Usuarios u " +
+                "INNER JOIN dbo.Roles r ON r.codigoRol = u.codigoRol " +
+                "WHERE u.codigoUsuario = @u AND u.activo = 1 AND r.nombre = @rol", conn);
+            cmd.Parameters.AddWithValue("@u", codigoUsuario);
+            cmd.Parameters.AddWithValue("@rol", RolCiudadano);
+            return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+        }
+
+        /// <summary>
+        /// Lee iniciativas desde cualquiera de los tres procedimientos, que
+        /// devuelven las mismas columnas.
+        /// </summary>
+        private static List<IniciativaPublica> LeerIniciativas(SqlCommand cmd)
+        {
+            List<IniciativaPublica> lista = new List<IniciativaPublica>();
+
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    lista.Add(new IniciativaPublica
+                    {
+                        codigoIniciativa = Convert.ToInt32(reader["codigoIniciativa"]),
+                        autora = Texto(reader, "autora"),
+                        titulo = Texto(reader, "titulo"),
+                        descripcion = Texto(reader, "descripcion"),
+                        codigoCategoria = Convert.ToInt32(reader["codigoCategoria"]),
+                        categoria = Texto(reader, "categoria"),
+                        codigoDepartamento = Convert.ToInt32(reader["codigoDepartamento"]),
+                        departamento = Texto(reader, "departamento"),
+                        meGusta = Convert.ToInt32(reader["meGusta"]),
+                        noMeGusta = Convert.ToInt32(reader["noMeGusta"]),
+                        comentarios = Convert.ToInt32(reader["comentarios"]),
+                        saldo = Convert.ToInt32(reader["saldo"]),
+                        miValoracion = Convert.ToInt32(reader["miValoracion"]),
+                        esMia = Convert.ToBoolean(reader["esMia"]),
+                        activo = Convert.ToBoolean(reader["activo"]),
+                        motivoBaja = Texto(reader, "motivoBaja"),
+                        puedeEditar = Convert.ToBoolean(reader["puedeEditar"]),
+                        fechaRegistro = Convert.ToDateTime(reader["fechaRegistro"]),
+                        fechaEdicion = FechaOVacio(reader, "fechaEdicion")
+                    });
+                }
+            }
+
+            return lista;
         }
 
         // =============================================================
