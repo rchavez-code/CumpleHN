@@ -83,7 +83,7 @@ namespace frontend.Servicios
 
         public IList<Campana> ObtenerCampanas()
         {
-            ws.Campana[] datos = Ejecutar(c => c.listarCampanas(), new ws.Campana[0]);
+            ws.Campana[] datos = Ejecutar(c => c.listarCampanas(Espacios.SlugActual), new ws.Campana[0]);
 
             List<Campana> lista = new List<Campana>();
             foreach (ws.Campana d in datos) lista.Add(AModelo(d));
@@ -92,7 +92,7 @@ namespace frontend.Servicios
 
         public Campana ObtenerCampanaActual()
         {
-            ws.Campana d = Ejecutar(c => c.obtenerCampanaActual(), null);
+            ws.Campana d = Ejecutar(c => c.obtenerCampanaActual(Espacios.SlugActual), null);
             return d == null ? null : AModelo(d);
         }
 
@@ -109,7 +109,7 @@ namespace frontend.Servicios
         public IList<Candidato> ObtenerCandidatos(string campanaSlug)
         {
             ws.Candidato[] datos =
-                Ejecutar(c => c.listarCandidatos(campanaSlug ?? string.Empty), new ws.Candidato[0]);
+                Ejecutar(c => c.listarCandidatos(Espacios.SlugActual, campanaSlug ?? string.Empty), new ws.Candidato[0]);
 
             List<Candidato> lista = new List<Candidato>();
             foreach (ws.Candidato d in datos) lista.Add(AModelo(d));
@@ -156,7 +156,7 @@ namespace frontend.Servicios
         public IList<Propuesta> ObtenerPropuestasDeCampana(string campanaSlug)
         {
             ws.Propuesta[] datos =
-                Ejecutar(c => c.listarPropuestasDeCampana(campanaSlug ?? string.Empty), new ws.Propuesta[0]);
+                Ejecutar(c => c.listarPropuestasDeCampana(Espacios.SlugActual, campanaSlug ?? string.Empty), new ws.Propuesta[0]);
 
             return AModelos(datos);
         }
@@ -181,7 +181,7 @@ namespace frontend.Servicios
         public IList<Publicacion> ObtenerFeed(string campanaSlug)
         {
             ws.Publicacion[] datos =
-                Ejecutar(c => c.listarFeed(campanaSlug ?? string.Empty), new ws.Publicacion[0]);
+                Ejecutar(c => c.listarFeed(Espacios.SlugActual, campanaSlug ?? string.Empty), new ws.Publicacion[0]);
 
             List<Publicacion> lista = new List<Publicacion>();
             foreach (ws.Publicacion d in datos) lista.Add(AModelo(d));
@@ -206,7 +206,7 @@ namespace frontend.Servicios
 
         public IList<Partido> ObtenerPartidos()
         {
-            ws.Partido[] datos = Ejecutar(c => c.listarPartidos(), new ws.Partido[0]);
+            ws.Partido[] datos = Ejecutar(c => c.listarPartidos(Espacios.SlugActual), new ws.Partido[0]);
 
             List<Partido> lista = new List<Partido>();
             foreach (ws.Partido d in datos) lista.Add(AModelo(d));
@@ -304,7 +304,7 @@ namespace frontend.Servicios
         public IList<Encuesta> ObtenerEncuestasVigentes(string campanaSlug, int codigoUsuario)
         {
             ws.EncuestaPublica[] datos = Ejecutar(
-                c => c.listarEncuestasVigentes(campanaSlug, codigoUsuario),
+                c => c.listarEncuestasVigentes(Espacios.SlugActual, campanaSlug, codigoUsuario),
                 new ws.EncuestaPublica[0]);
 
             List<Encuesta> lista = new List<Encuesta>();
@@ -365,7 +365,7 @@ namespace frontend.Servicios
         public IList<Iniciativa> ObtenerIniciativas(int codigoUsuario)
         {
             return AIniciativas(Ejecutar(
-                c => c.listarIniciativas(codigoUsuario), new ws.IniciativaPublica[0]));
+                c => c.listarIniciativas(Espacios.SlugActual, codigoUsuario), new ws.IniciativaPublica[0]));
         }
 
         public IList<Iniciativa> ObtenerIniciativasDeUsuario(int codigoUsuario)
@@ -378,7 +378,7 @@ namespace frontend.Servicios
             string titulo, string descripcion, int codigoCategoria, int codigoDepartamento)
         {
             ws.RespuestaGuardado d = Ejecutar(
-                c => c.guardarIniciativa(codigoUsuario, codigoIniciativa,
+                c => c.guardarIniciativa(Espacios.SlugActual, codigoUsuario, codigoIniciativa,
                     titulo, descripcion, codigoCategoria, codigoDepartamento), null);
 
             if (d == null)
@@ -402,7 +402,7 @@ namespace frontend.Servicios
         public IList<Iniciativa> ObtenerIniciativasAdmin(int codigoUsuario, string estado)
         {
             return AIniciativas(Ejecutar(
-                c => c.listarIniciativasAdmin(codigoUsuario, estado), new ws.IniciativaPublica[0]));
+                c => c.listarIniciativasAdmin(codigoUsuario, Sesion.CodigoEspacio, estado), new ws.IniciativaPublica[0]));
         }
 
         public Resultado ModerarIniciativa(int codigoUsuario, int codigoIniciativa,
@@ -490,6 +490,7 @@ namespace frontend.Servicios
 
             ws.FiltroAnalitica f = new ws.FiltroAnalitica
             {
+                espacioSlug = Espacios.SlugActual,
                 campanaSlug = filtro.CampanaSlug ?? string.Empty,
                 codigoCategoria = filtro.Categoria,
                 codigoPartido = filtro.Partido,
@@ -645,12 +646,12 @@ namespace frontend.Servicios
 
         public IList<string> ObtenerCategorias()
         {
-            return Nombres(Ejecutar(c => c.listarCategorias(), new ws.Catalogo[0]));
+            return Nombres(Ejecutar(c => c.listarCategorias(Espacios.SlugActual), new ws.Catalogo[0]));
         }
 
         public IList<string> ObtenerCargos()
         {
-            return Nombres(Ejecutar(c => c.listarCargos(), new ws.Catalogo[0]));
+            return Nombres(Ejecutar(c => c.listarCargos(Espacios.SlugActual), new ws.Catalogo[0]));
         }
 
         public IList<string> ObtenerDepartamentos()
@@ -851,7 +852,7 @@ namespace frontend.Servicios
             int codigoUsuario, string tipoObjeto, string campanaSlug, bool soloPendientes)
         {
             ws.ItemVerificacion[] datos = Ejecutar(
-                c => c.listarBandejaVerificacion(codigoUsuario, tipoObjeto, campanaSlug, soloPendientes),
+                c => c.listarBandejaVerificacion(codigoUsuario, Sesion.CodigoEspacio, tipoObjeto, campanaSlug, soloPendientes),
                 new ws.ItemVerificacion[0]);
 
             List<ItemVerificacion> lista = new List<ItemVerificacion>();
@@ -894,7 +895,7 @@ namespace frontend.Servicios
             int codigoUsuario, string campanaSlug, string estado)
         {
             ws.PublicacionModerada[] datos = Ejecutar(
-                c => c.listarPublicacionesModeracion(codigoUsuario, campanaSlug, estado),
+                c => c.listarPublicacionesModeracion(codigoUsuario, Sesion.CodigoEspacio, campanaSlug, estado),
                 new ws.PublicacionModerada[0]);
 
             List<PublicacionModerada> lista = new List<PublicacionModerada>();
@@ -936,7 +937,7 @@ namespace frontend.Servicios
         public IList<RegistroAuditoria> ObtenerAuditoria(int codigoUsuario, string accion, int limite)
         {
             ws.RegistroAuditoria[] datos = Ejecutar(
-                c => c.listarAuditoria(codigoUsuario, accion, limite),
+                c => c.listarAuditoria(codigoUsuario, Sesion.CodigoEspacio, accion, limite),
                 new ws.RegistroAuditoria[0]);
 
             List<RegistroAuditoria> lista = new List<RegistroAuditoria>();
@@ -953,7 +954,8 @@ namespace frontend.Servicios
                     TipoObjeto = d.tipoObjeto,
                     CodigoObjeto = d.codigoObjeto,
                     Detalle = d.detalle,
-                    Motivo = d.motivo
+                    Motivo = d.motivo,
+                    Espacio = d.espacio
                 });
             }
 
@@ -981,7 +983,7 @@ namespace frontend.Servicios
         public IList<PartidoAdmin> ObtenerPartidosAdmin(int codigoUsuario, bool soloActivos)
         {
             ws.PartidoAdmin[] datos = Ejecutar(
-                c => c.listarPartidosAdmin(codigoUsuario, soloActivos), new ws.PartidoAdmin[0]);
+                c => c.listarPartidosAdmin(codigoUsuario, Sesion.CodigoEspacio, soloActivos), new ws.PartidoAdmin[0]);
 
             List<PartidoAdmin> lista = new List<PartidoAdmin>();
             if (datos == null) return lista;
@@ -1007,7 +1009,7 @@ namespace frontend.Servicios
             int codigoUsuario, int codigoPartido, string nombre, string siglas, string descripcion)
         {
             ws.RespuestaGuardado d = Ejecutar(
-                c => c.guardarPartido(codigoUsuario, codigoPartido, nombre, siglas, descripcion), null);
+                c => c.guardarPartido(codigoUsuario, Sesion.CodigoEspacio, codigoPartido, nombre, siglas, descripcion), null);
 
             return AGuardado(d);
         }
@@ -1024,7 +1026,7 @@ namespace frontend.Servicios
         public IList<CampanaAdmin> ObtenerCampanasAdmin(int codigoUsuario)
         {
             ws.CampanaAdmin[] datos = Ejecutar(
-                c => c.listarCampanasAdmin(codigoUsuario), new ws.CampanaAdmin[0]);
+                c => c.listarCampanasAdmin(codigoUsuario, Sesion.CodigoEspacio), new ws.CampanaAdmin[0]);
 
             List<CampanaAdmin> lista = new List<CampanaAdmin>();
             if (datos == null) return lista;
@@ -1057,7 +1059,7 @@ namespace frontend.Servicios
             string estado, bool esActual)
         {
             ws.RespuestaGuardado d = Ejecutar(
-                c => c.guardarCampana(codigoUsuario, codigoCampana, nombre, resumen, descripcion,
+                c => c.guardarCampana(codigoUsuario, Sesion.CodigoEspacio, codigoCampana, nombre, resumen, descripcion,
                                       alcance, fechaInicio, fechaEleccion, estado, esActual), null);
 
             return AGuardado(d);
@@ -1067,7 +1069,7 @@ namespace frontend.Servicios
             int codigoUsuario, string campanaSlug, bool soloActivos)
         {
             ws.CandidatoAdmin[] datos = Ejecutar(
-                c => c.listarCandidatosAdmin(codigoUsuario, campanaSlug, soloActivos),
+                c => c.listarCandidatosAdmin(codigoUsuario, Sesion.CodigoEspacio, campanaSlug, soloActivos),
                 new ws.CandidatoAdmin[0]);
 
             List<CandidatoAdmin> lista = new List<CandidatoAdmin>();
@@ -1141,7 +1143,7 @@ namespace frontend.Servicios
             int codigoUsuario, string campanaSlug, string estado)
         {
             ws.EncuestaAdmin[] datos = Ejecutar(
-                c => c.listarEncuestasAdmin(codigoUsuario, campanaSlug, estado),
+                c => c.listarEncuestasAdmin(codigoUsuario, Sesion.CodigoEspacio, campanaSlug, estado),
                 new ws.EncuestaAdmin[0]);
 
             List<EncuestaAdmin> lista = new List<EncuestaAdmin>();
@@ -1204,7 +1206,7 @@ namespace frontend.Servicios
 
         public IList<OpcionCatalogo> ObtenerCargosConCodigo()
         {
-            return AOpciones(Ejecutar(c => c.listarCargos(), new ws.Catalogo[0]));
+            return AOpciones(Ejecutar(c => c.listarCargos(Espacios.SlugActual), new ws.Catalogo[0]));
         }
 
         public IList<OpcionCatalogo> ObtenerDepartamentosConCodigo()
@@ -1214,7 +1216,7 @@ namespace frontend.Servicios
 
         public IList<OpcionCatalogo> ObtenerCategoriasConCodigo()
         {
-            return AOpciones(Ejecutar(c => c.listarCategorias(), new ws.Catalogo[0]));
+            return AOpciones(Ejecutar(c => c.listarCategorias(Espacios.SlugActual), new ws.Catalogo[0]));
         }
 
         private static IList<OpcionCatalogo> AOpciones(ws.Catalogo[] datos)
@@ -1245,6 +1247,80 @@ namespace frontend.Servicios
             return new ResultadoGuardado { Ok = d.ok, Mensaje = d.mensaje, Codigo = d.codigo };
         }
 
+
+        // ------------------------------------------------------ Espacios
+
+        public Espacio ObtenerEspacio(string slug)
+        {
+            ws.Espacio d = Ejecutar(c => c.obtenerEspacio(slug ?? string.Empty), null);
+            return d == null ? null : AEspacio(d);
+        }
+
+        public IList<Espacio> ObtenerEspacios(int codigoUsuario, bool soloActivos)
+        {
+            ws.Espacio[] datos = Ejecutar(
+                c => c.listarEspacios(codigoUsuario, soloActivos), new ws.Espacio[0]);
+
+            List<Espacio> lista = new List<Espacio>();
+            if (datos == null) return lista;
+
+            foreach (ws.Espacio d in datos) lista.Add(AEspacio(d));
+            return lista;
+        }
+
+        public ResultadoGuardado GuardarEspacio(
+            int codigoUsuario, int codigoEspacio, string nombre, string organizacion,
+            string descripcion, bool padronCerrado, string terminoAgrupacion)
+        {
+            ws.RespuestaGuardado d = Ejecutar(
+                c => c.guardarEspacio(codigoUsuario, codigoEspacio, nombre, organizacion,
+                                      descripcion, padronCerrado, terminoAgrupacion), null);
+
+            return AGuardado(d);
+        }
+
+        public Resultado CambiarEstadoEspacio(int codigoUsuario, int codigoEspacio, bool activo, string motivo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.cambiarEstadoEspacio(codigoUsuario, codigoEspacio, activo, motivo), null);
+
+            return ARespuesta(d);
+        }
+
+        public Resultado CrearCuentaEspacio(
+            int codigoUsuario, int codigoEspacio, string login, string nombre, string correo, string clave)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.crearCuentaEspacio(codigoUsuario, codigoEspacio, login, nombre, correo, clave), null);
+
+            return ARespuesta(d);
+        }
+
+        private static Espacio AEspacio(ws.Espacio d)
+        {
+            return new Espacio
+            {
+                Codigo = d.codigoEspacio,
+                Slug = d.slug ?? string.Empty,
+                Nombre = d.nombre ?? string.Empty,
+                Organizacion = d.organizacion ?? string.Empty,
+                Descripcion = d.descripcion ?? string.Empty,
+                EsPlataforma = d.esPlataforma,
+                PadronCerrado = d.padronCerrado,
+                TerminoAgrupacion = d.terminoAgrupacion ?? "Partido",
+                Activo = d.activo,
+                Estado = d.estado ?? string.Empty,
+                MotivoBaja = d.motivoBaja ?? string.Empty,
+                FechaCreacion = d.fechaCreacion,
+                CodigoPropietario = d.codigoUsuarioPropietario,
+                Propietario = d.propietario ?? string.Empty,
+                PropietarioLogin = d.propietarioLogin ?? string.Empty,
+                PropietarioCorreo = d.propietarioCorreo ?? string.Empty,
+                Campanas = d.campanas,
+                Candidaturas = d.candidaturas,
+                Administradores = d.administradores
+            };
+        }
 
         // ------------------------------------------------------- Módulos
 

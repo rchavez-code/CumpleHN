@@ -115,15 +115,19 @@ namespace backend.Servicios
 
             using (SqlConnection conn = Abrir())
             {
-                // Slug y nombre en una sola ida, por procedimiento. El login
-                // del asistente no puede leer Campanas de forma directa.
+                // Slug, nombre y espacio en una sola ida, por procedimiento. El
+                // login del asistente no puede leer Campanas ni Espacios de
+                // forma directa. El espacio es siempre el de la plataforma:
+                // lo fija spIACampana, y de acá solo se transporta a los
+                // indicadores, que lo exigen.
                 string[] campana = Campana(conn, filtro.campanaSlug);
 
-                filtro.campanaSlug = campana[0];
-                a.campanaSlug      = campana[0];
-                a.campanaNombre    = campana[1];
+                filtro.campanaSlug   = campana[0];
+                a.campanaSlug        = campana[0];
+                a.campanaNombre      = campana[1];
+                filtro.codigoEspacio = int.Parse(campana[2]);
 
-                a.opciones      = WebServiceGlobal.LeerOpciones(conn);
+                a.opciones      = WebServiceGlobal.LeerOpciones(conn, filtro.codigoEspacio);
                 a.resumen       = WebServiceGlobal.LeerResumen(conn, filtro);
                 a.categorias    = WebServiceGlobal.LeerCategorias(conn, filtro);
                 a.estados       = WebServiceGlobal.LeerEstados(conn, filtro);
@@ -254,11 +258,14 @@ namespace backend.Servicios
 
             using (SqlDataReader r = cmd.ExecuteReader())
                 if (r.Read())
-                    return new string[] { Texto(r, "slug"), Texto(r, "nombre") };
+                    return new string[] { Texto(r, "slug"), Texto(r, "nombre"),
+                                          Convert.ToString(r["codigoEspacio"]) };
 
             // Slug inexistente. Se devuelve vacío y los indicadores salen en
-            // cero, que la página ya trata como selección sin datos.
-            return new string[] { string.Empty, string.Empty };
+            // cero, que la página ya trata como selección sin datos. El
+            // espacio en cero no corresponde a ninguno, así que ningún
+            // procedimiento devuelve nada.
+            return new string[] { string.Empty, string.Empty, "0" };
         }
 
         /// <summary>

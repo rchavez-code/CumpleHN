@@ -428,6 +428,10 @@ namespace frontend.Modelos
         public string Detalle { get; set; }
         public string Motivo { get; set; }
 
+        /* En qué espacio ocurrió. Solo se muestra cuando la plataforma lee
+           las bitácoras de todos. */
+        public string Espacio { get; set; }
+
         public string FechaTexto
         {
             get { return Vista.FechaHora(Fecha); }

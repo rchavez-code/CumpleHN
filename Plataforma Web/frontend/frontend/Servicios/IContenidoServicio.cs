@@ -292,6 +292,26 @@ namespace frontend.Servicios
         /// </summary>
         IList<OpcionCatalogo> ObtenerCategoriasConCodigo();
 
+        // ------------------------------------------------------- Espacios
+
+        /* Un espacio es un cliente que usa la plataforma para su propio
+           proceso electoral. La ficha es pública: la plantilla la necesita
+           para decir de quién es lo que se ve. Crear, editar y retirar
+           espacios, y crear sus cuentas, es solo de la plataforma.
+
+           El resto del contrato no recibe el espacio. La implementación lo
+           toma de la ruta (Espacios.SlugActual) para las consultas públicas y
+           de la sesión (Sesion.CodigoEspacio) para las de administración, de
+           modo que una página no pueda olvidarse de acotarse al suyo. */
+        Espacio ObtenerEspacio(string slug);
+        IList<Espacio> ObtenerEspacios(int codigoUsuario, bool soloActivos);
+        ResultadoGuardado GuardarEspacio(
+            int codigoUsuario, int codigoEspacio, string nombre, string organizacion,
+            string descripcion, bool padronCerrado, string terminoAgrupacion);
+        Resultado CambiarEstadoEspacio(int codigoUsuario, int codigoEspacio, bool activo, string motivo);
+        Resultado CrearCuentaEspacio(
+            int codigoUsuario, int codigoEspacio, string login, string nombre, string correo, string clave);
+
         // ------------------------------------------------------- Módulos
 
         /// <summary>

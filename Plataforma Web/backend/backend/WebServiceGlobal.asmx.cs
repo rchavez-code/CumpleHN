@@ -92,10 +92,18 @@ namespace backend
                         "SELECT u.codigoUsuario, u.login, u.nombre, u.correo, r.nombre AS rol, " +
                         "       u.correoConfirmado, " +
                         "       ISNULL(u.codigoCandidato, 0) AS codigoCandidato, " +
-                        "       ISNULL(c.slug, '') AS candidatoSlug " +
+                        "       ISNULL(c.slug, '') AS candidatoSlug, " +
+                        /* El espacio que administra. La cuenta de la plataforma lo
+                           tiene en NULL y recibe el de la plataforma, para que la
+                           administración arranque con un espacio elegido. */
+                        "       CASE WHEN r.nombre = 'Administrador' THEN ISNULL(u.codigoEspacio, pl.codigoEspacio) ELSE 0 END AS codigoEspacio, " +
+                        "       CASE WHEN r.nombre = 'Administrador' THEN ISNULL(e.nombre, pl.nombre) ELSE '' END AS espacioNombre, " +
+                        "       CASE WHEN r.nombre = 'Administrador' AND u.codigoEspacio IS NULL THEN 1 ELSE 0 END AS administraPlataforma " +
                         "FROM dbo.Usuarios u " +
                         "INNER JOIN dbo.Roles r ON r.codigoRol = u.codigoRol " +
                         "LEFT JOIN dbo.Candidatos c ON c.codigoCandidato = u.codigoCandidato " +
+                        "LEFT JOIN dbo.Espacios e ON e.codigoEspacio = u.codigoEspacio " +
+                        "CROSS JOIN (SELECT TOP (1) codigoEspacio, nombre FROM dbo.Espacios WHERE esPlataforma = 1) pl " +
                         "WHERE (u.login = @usuario OR u.correo = @usuario) " +
                         "  AND u.clave = @clave AND u.activo = 1";
 
@@ -117,7 +125,10 @@ namespace backend
                             rol = Texto(reader, "rol"),
                             correoConfirmado = Convert.ToBoolean(reader["correoConfirmado"]),
                             codigoCandidato = Convert.ToInt32(reader["codigoCandidato"]),
-                            candidatoSlug = Texto(reader, "candidatoSlug")
+                            candidatoSlug = Texto(reader, "candidatoSlug"),
+                            codigoEspacio = Convert.ToInt32(reader["codigoEspacio"]),
+                            espacioNombre = Texto(reader, "espacioNombre"),
+                            administraPlataforma = Convert.ToInt32(reader["administraPlataforma"]) == 1
                         };
                         respuesta.ok = true;
                     }
@@ -455,18 +466,21 @@ namespace backend
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public List<Campana> listarCampanas()
+        public List<Campana> listarCampanas(string espacioSlug)
         {
             List<Campana> lista = new List<Campana>();
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
+                conn.Open();
+
                 string query = SelectCampana +
+                    "WHERE c.codigoEspacio = @espacio " +
                     "ORDER BY CASE c.estado WHEN 'Activa' THEN 0 WHEN 'Proxima' THEN 1 ELSE 2 END, " +
                     "         c.fechaEleccion DESC";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
-                conn.Open();
+                cmd.Parameters.AddWithValue("@espacio", CodigoEspacio(conn, espacioSlug));
                 SqlDataReader reader = cmd.ExecuteReader();
 
                 while (reader.Read())
@@ -480,14 +494,17 @@ namespace backend
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public Campana obtenerCampanaActual()
+        public Campana obtenerCampanaActual(string espacioSlug)
         {
             Campana campana = null;
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
-                SqlCommand cmd = new SqlCommand(SelectCampana + "WHERE c.esActual = 1", conn);
                 conn.Open();
+
+                SqlCommand cmd = new SqlCommand(
+                    SelectCampana + "WHERE c.esActual = 1 AND c.codigoEspacio = @espacio", conn);
+                cmd.Parameters.AddWithValue("@espacio", CodigoEspacio(conn, espacioSlug));
                 SqlDataReader reader = cmd.ExecuteReader();
 
                 while (reader.Read())
@@ -503,7 +520,9 @@ namespace backend
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public Campana obtenerCampana(string slug)
         {
-            if (string.IsNullOrEmpty(slug)) return obtenerCampanaActual();
+            // Sin slug, la destacada de la plataforma: esta consulta no lleva
+            // espacio porque el slug ya identifica la campaña y su espacio.
+            if (string.IsNullOrEmpty(slug)) return obtenerCampanaActual(string.Empty);
 
             Campana campana = null;
 
@@ -555,27 +574,29 @@ namespace backend
 
         /// <summary>
         /// Candidatos de una campaña. Con <paramref name="campanaSlug"/> vacío
-        /// devuelve todos los de la plataforma.
+        /// devuelve todos los del espacio.
         /// </summary>
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public List<Candidato> listarCandidatos(string campanaSlug)
+        public List<Candidato> listarCandidatos(string espacioSlug, string campanaSlug)
         {
             List<Candidato> lista = new List<Candidato>();
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
+                conn.Open();
+
                 string filtro = string.IsNullOrEmpty(campanaSlug)
-                    ? "WHERE k.activo = 1 "
-                    : "WHERE k.activo = 1 AND ca.slug = @campana ";
+                    ? "WHERE k.activo = 1 AND ca.codigoEspacio = @espacio "
+                    : "WHERE k.activo = 1 AND ca.codigoEspacio = @espacio AND ca.slug = @campana ";
 
                 SqlCommand cmd = new SqlCommand(
                     SelectCandidato + filtro + "ORDER BY k.apellidos, k.nombres", conn);
+                cmd.Parameters.AddWithValue("@espacio", CodigoEspacio(conn, espacioSlug));
 
                 if (!string.IsNullOrEmpty(campanaSlug))
                     cmd.Parameters.AddWithValue("@campana", campanaSlug);
 
-                conn.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
 
                 while (reader.Read())
@@ -663,21 +684,27 @@ namespace backend
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public List<Propuesta> listarPropuestasDeCampana(string campanaSlug)
+        public List<Propuesta> listarPropuestasDeCampana(string espacioSlug, string campanaSlug)
         {
             List<Propuesta> lista = new List<Propuesta>();
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
-                string filtro = string.IsNullOrEmpty(campanaSlug) ? "" : "AND ca.slug = @campana ";
+                conn.Open();
+
+                /* SelectPropuesta termina sin WHERE, así que el filtro lo abre acá.
+                   La versión anterior pegaba «AND ca.slug» directo y solo
+                   funcionaba con la campaña vacía. */
+                string filtro = "WHERE ca.codigoEspacio = @espacio " +
+                    (string.IsNullOrEmpty(campanaSlug) ? "" : "AND ca.slug = @campana ");
 
                 SqlCommand cmd = new SqlCommand(
                     SelectPropuesta + filtro + "ORDER BY p.fechaRegistro DESC", conn);
+                cmd.Parameters.AddWithValue("@espacio", CodigoEspacio(conn, espacioSlug));
 
                 if (!string.IsNullOrEmpty(campanaSlug))
                     cmd.Parameters.AddWithValue("@campana", campanaSlug);
 
-                conn.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
 
                 while (reader.Read())
@@ -746,21 +773,24 @@ namespace backend
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public List<Publicacion> listarFeed(string campanaSlug)
+        public List<Publicacion> listarFeed(string espacioSlug, string campanaSlug)
         {
             List<Publicacion> lista = new List<Publicacion>();
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
-                string filtro = string.IsNullOrEmpty(campanaSlug) ? "" : "AND ca.slug = @campana ";
+                conn.Open();
+
+                string filtro = "AND ca.codigoEspacio = @espacio " +
+                    (string.IsNullOrEmpty(campanaSlug) ? "" : "AND ca.slug = @campana ");
 
                 SqlCommand cmd = new SqlCommand(
                     SelectPublicacion + filtro + "ORDER BY b.fecha DESC", conn);
+                cmd.Parameters.AddWithValue("@espacio", CodigoEspacio(conn, espacioSlug));
 
                 if (!string.IsNullOrEmpty(campanaSlug))
                     cmd.Parameters.AddWithValue("@campana", campanaSlug);
 
-                conn.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
 
                 while (reader.Read())
@@ -802,20 +832,24 @@ namespace backend
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public List<Catalogo> listarCategorias()
+        public List<Catalogo> listarCategorias(string espacioSlug)
         {
+            /* Las compartidas (codigoEspacio en NULL) más las propias del
+               espacio. Un espacio nunca ve las categorías de otro. */
             return LeerCatalogo(
                 "SELECT codigoCategoria AS codigo, nombre, ISNULL(descripcion,'') AS detalle " +
-                "FROM dbo.Categorias ORDER BY orden");
+                "FROM dbo.Categorias WHERE codigoEspacio IS NULL OR codigoEspacio = @espacio ORDER BY orden",
+                espacioSlug);
         }
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public List<Catalogo> listarCargos()
+        public List<Catalogo> listarCargos(string espacioSlug)
         {
             return LeerCatalogo(
                 "SELECT codigoCargo AS codigo, nombre, nivelGobierno AS detalle " +
-                "FROM dbo.Cargos ORDER BY orden");
+                "FROM dbo.Cargos WHERE codigoEspacio IS NULL OR codigoEspacio = @espacio ORDER BY orden",
+                espacioSlug);
         }
 
         [WebMethod]
@@ -847,15 +881,17 @@ namespace backend
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public List<Partido> listarPartidos()
+        public List<Partido> listarPartidos(string espacioSlug)
         {
             List<Partido> lista = new List<Partido>();
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
-                SqlCommand cmd = new SqlCommand(
-                    SelectPartido + "WHERE pa.activo = 1 ORDER BY pa.nombre", conn);
                 conn.Open();
+
+                SqlCommand cmd = new SqlCommand(
+                    SelectPartido + "WHERE pa.activo = 1 AND pa.codigoEspacio = @espacio ORDER BY pa.nombre", conn);
+                cmd.Parameters.AddWithValue("@espacio", CodigoEspacio(conn, espacioSlug));
                 SqlDataReader reader = cmd.ExecuteReader();
 
                 while (reader.Read()) lista.Add(LeerPartido(reader));
@@ -990,14 +1026,75 @@ namespace backend
         {
             if (codigoUsuario <= 0) return false;
 
+            /* Con Usuarios.codigoEspacio en NULL: administra la plataforma
+               entera. La cuenta de un cliente, que administra solo su
+               espacio, no pasa por acá sino por EsAdministradorDe. Es la
+               misma distinción que hacen fnEsAdministrador y
+               fnEsAdministradorDe en la base (script 09). */
             SqlCommand cmd = new SqlCommand(
                 "SELECT COUNT(*) " +
                 "FROM dbo.Usuarios u " +
                 "INNER JOIN dbo.Roles r ON r.codigoRol = u.codigoRol " +
-                "WHERE u.codigoUsuario = @u AND u.activo = 1 AND r.nombre = @rol", conn);
+                "WHERE u.codigoUsuario = @u AND u.activo = 1 AND r.nombre = @rol " +
+                "  AND u.codigoEspacio IS NULL", conn);
             cmd.Parameters.AddWithValue("@u", codigoUsuario);
             cmd.Parameters.AddWithValue("@rol", RolAdministrador);
             return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+        }
+
+        /// <summary>
+        /// Confirma que la cuenta administra ese espacio: la de la plataforma
+        /// los administra todos, la de un cliente solo el suyo. Delega en
+        /// fnEsAdministradorDe para que el Web Service y los procedimientos
+        /// respondan lo mismo por definición y no por coincidencia.
+        ///
+        /// Cero o nulo como espacio es «objeto inexistente», y la función
+        /// responde que no: «no existe» y «no es tuyo» se rechazan igual.
+        /// </summary>
+        private static bool EsAdministradorDe(SqlConnection conn, int codigoUsuario, int codigoEspacio)
+        {
+            if (codigoUsuario <= 0 || codigoEspacio <= 0) return false;
+
+            SqlCommand cmd = new SqlCommand("SELECT dbo.fnEsAdministradorDe(@u, @e)", conn);
+            cmd.Parameters.AddWithValue("@u", codigoUsuario);
+            cmd.Parameters.AddWithValue("@e", codigoEspacio);
+            return Convert.ToBoolean(cmd.ExecuteScalar());
+        }
+
+        /// <summary>
+        /// El espacio al que pertenece un objeto, por su par polimórfico.
+        /// Cero cuando no existe. Es lo que las acciones de administración
+        /// usan para saber contra qué espacio comprobar el permiso: el
+        /// espacio nunca se recibe de quien llama, se deriva del objeto.
+        /// </summary>
+        private static int EspacioDeObjeto(SqlConnection conn, string tipoObjeto, int codigoObjeto)
+        {
+            SqlCommand cmd = new SqlCommand("SELECT dbo.fnEspacioDeObjeto(@t, @c)", conn);
+            cmd.Parameters.AddWithValue("@t", tipoObjeto ?? string.Empty);
+            cmd.Parameters.AddWithValue("@c", codigoObjeto);
+            object v = cmd.ExecuteScalar();
+            return v == null || v == DBNull.Value ? 0 : Convert.ToInt32(v);
+        }
+
+        /// <summary>
+        /// Resuelve el slug de un espacio a su código. Vacío es la plataforma,
+        /// que es lo que el sitio público pide mientras no lleva prefijo de
+        /// espacio en la dirección. Cero si el slug no existe o el espacio
+        /// fue retirado: con cero, ninguna consulta devuelve nada, que es lo
+        /// que corresponde a un espacio que ya no está.
+        /// </summary>
+        private static int CodigoEspacio(SqlConnection conn, string espacioSlug)
+        {
+            string slug = Limpio(espacioSlug);
+
+            SqlCommand cmd = new SqlCommand(
+                slug.Length == 0
+                    ? "SELECT codigoEspacio FROM dbo.Espacios WHERE esPlataforma = 1"
+                    : "SELECT codigoEspacio FROM dbo.Espacios WHERE slug = @slug AND activo = 1", conn);
+            if (slug.Length > 0) cmd.Parameters.AddWithValue("@slug", slug);
+
+            object v = cmd.ExecuteScalar();
+            return v == null || v == DBNull.Value ? 0 : Convert.ToInt32(v);
         }
 
         /// <summary>
@@ -1421,13 +1518,19 @@ namespace backend
             {
                 conn.Open();
 
+                // El espacio se resuelve acá y viaja ya resuelto a los diez
+                // procedimientos. Lo que el frontend haya puesto en
+                // codigoEspacio se ignora: el slug es lo que se recibe.
+                filtro.codigoEspacio = CodigoEspacio(conn, filtro.espacioSlug);
+
                 // Sin campaña indicada se usa la destacada. El filtro se
                 // completa acá para que todos los procedimientos reciban el
                 // mismo valor y el tablero declare cuál está mostrando.
                 if (string.IsNullOrEmpty(Limpio(filtro.campanaSlug)))
                 {
                     SqlCommand cmdActual = new SqlCommand(
-                        "SELECT TOP (1) slug FROM dbo.Campanas WHERE esActual = 1", conn);
+                        "SELECT TOP (1) slug FROM dbo.Campanas WHERE esActual = 1 AND codigoEspacio = @espacio", conn);
+                    cmdActual.Parameters.AddWithValue("@espacio", filtro.codigoEspacio);
                     object v = cmdActual.ExecuteScalar();
                     filtro.campanaSlug = v == null ? string.Empty : Convert.ToString(v);
                 }
@@ -1440,7 +1543,7 @@ namespace backend
                 object nombre = cmdNombre.ExecuteScalar();
                 a.campanaNombre = nombre == null ? string.Empty : Convert.ToString(nombre);
 
-                a.opciones      = LeerOpciones(conn);
+                a.opciones      = LeerOpciones(conn, filtro.codigoEspacio);
                 a.resumen       = LeerResumen(conn, filtro);
                 a.categorias    = LeerCategorias(conn, filtro);
                 a.estados       = LeerEstados(conn, filtro);
@@ -1520,6 +1623,7 @@ namespace backend
             SqlCommand cmd = new SqlCommand(nombre, conn);
             cmd.CommandType = CommandType.StoredProcedure;
 
+            cmd.Parameters.AddWithValue("@codigoEspacio", f.codigoEspacio);
             cmd.Parameters.AddWithValue("@campanaSlug", Opcional(f.campanaSlug));
 
             if (categoria)    cmd.Parameters.AddWithValue("@codigoCategoria", Opcional(f.codigoCategoria));
@@ -1538,12 +1642,13 @@ namespace backend
 
         // ------------------------------------------------------- Indicadores
 
-        internal static OpcionFiltro[] LeerOpciones(SqlConnection conn)
+        internal static OpcionFiltro[] LeerOpciones(SqlConnection conn, int codigoEspacio)
         {
             List<OpcionFiltro> lista = new List<OpcionFiltro>();
 
             SqlCommand cmd = new SqlCommand("dbo.spAnaliticaCatalogos", conn);
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
 
             using (SqlDataReader reader = cmd.ExecuteReader())
             {
@@ -1855,14 +1960,21 @@ namespace backend
             };
         }
 
-        private static List<Catalogo> LeerCatalogo(string query)
+        /// <summary>
+        /// Lee un catálogo. Con espacio, la consulta lleva el parámetro @espacio
+        /// y se resuelve del slug. Sin él (departamentos, niveles) la consulta
+        /// no lo declara y no se agrega, porque un parámetro de más es error.
+        /// </summary>
+        private static List<Catalogo> LeerCatalogo(string query, string espacioSlug = null)
         {
             List<Catalogo> lista = new List<Catalogo>();
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
-                SqlCommand cmd = new SqlCommand(query, conn);
                 conn.Open();
+                SqlCommand cmd = new SqlCommand(query, conn);
+                if (espacioSlug != null)
+                    cmd.Parameters.AddWithValue("@espacio", CodigoEspacio(conn, espacioSlug));
                 SqlDataReader reader = cmd.ExecuteReader();
 
                 while (reader.Read())
@@ -2016,7 +2128,7 @@ namespace backend
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public List<ItemVerificacion> listarBandejaVerificacion(
-            int codigoUsuario, string tipoObjeto, string campanaSlug, bool soloPendientes)
+            int codigoUsuario, int codigoEspacio, string tipoObjeto, string campanaSlug, bool soloPendientes)
         {
             List<ItemVerificacion> lista = new List<ItemVerificacion>();
 
@@ -2024,10 +2136,11 @@ namespace backend
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+                if (!EsAdministradorDe(conn, codigoUsuario, codigoEspacio)) return lista;
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminBandejaVerificacion", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
                 cmd.Parameters.AddWithValue("@tipoObjeto", (object)tipoObjeto ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@campanaSlug", (object)campanaSlug ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@soloPendientes", soloPendientes);
@@ -2074,7 +2187,7 @@ namespace backend
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario))
+                if (!EsAdministradorDe(conn, codigoUsuario, EspacioDeObjeto(conn, tipoObjeto, codigoObjeto)))
                     return Rechazo("La cuenta no tiene permiso para verificar contenido.");
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminCambiarVerificacion", conn);
@@ -2098,7 +2211,7 @@ namespace backend
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public List<PublicacionModerada> listarPublicacionesModeracion(
-            int codigoUsuario, string campanaSlug, string estado)
+            int codigoUsuario, int codigoEspacio, string campanaSlug, string estado)
         {
             List<PublicacionModerada> lista = new List<PublicacionModerada>();
 
@@ -2106,10 +2219,11 @@ namespace backend
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+                if (!EsAdministradorDe(conn, codigoUsuario, codigoEspacio)) return lista;
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminPublicaciones", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
                 cmd.Parameters.AddWithValue("@campanaSlug", (object)campanaSlug ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@estado", (object)estado ?? DBNull.Value);
 
@@ -2155,7 +2269,7 @@ namespace backend
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario))
+                if (!EsAdministradorDe(conn, codigoUsuario, EspacioDeObjeto(conn, "Publicacion", codigoPublicacion)))
                     return Rechazo("La cuenta no tiene permiso para moderar publicaciones.");
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminModerarPublicacion", conn);
@@ -2174,7 +2288,7 @@ namespace backend
         /// </summary>
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public List<RegistroAuditoria> listarAuditoria(int codigoUsuario, string accion, int limite)
+        public List<RegistroAuditoria> listarAuditoria(int codigoUsuario, int codigoEspacio, string accion, int limite)
         {
             List<RegistroAuditoria> lista = new List<RegistroAuditoria>();
 
@@ -2182,10 +2296,16 @@ namespace backend
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+                /* Con espacio en cero se leen todas las bitácoras, y eso solo
+                   puede hacerlo la plataforma. Un cliente recibe la suya. */
+                bool permitido = codigoEspacio <= 0
+                    ? EsAdministrador(conn, codigoUsuario)
+                    : EsAdministradorDe(conn, codigoUsuario, codigoEspacio);
+                if (!permitido) return lista;
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminAuditoria", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio <= 0 ? (object)DBNull.Value : codigoEspacio);
                 cmd.Parameters.AddWithValue("@accion", (object)accion ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@limite", limite);
 
@@ -2202,7 +2322,8 @@ namespace backend
                         tipoObjeto = Texto(reader, "tipoObjeto"),
                         codigoObjeto = Convert.ToInt32(reader["codigoObjeto"]),
                         detalle = Texto(reader, "detalle"),
-                        motivo = Texto(reader, "motivo")
+                        motivo = Texto(reader, "motivo"),
+                        espacio = Texto(reader, "espacio")
                     });
                 }
             }
@@ -2273,17 +2394,18 @@ namespace backend
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public List<PartidoAdmin> listarPartidosAdmin(int codigoUsuario, bool soloActivos)
+        public List<PartidoAdmin> listarPartidosAdmin(int codigoUsuario, int codigoEspacio, bool soloActivos)
         {
             List<PartidoAdmin> lista = new List<PartidoAdmin>();
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
                 conn.Open();
-                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+                if (!EsAdministradorDe(conn, codigoUsuario, codigoEspacio)) return lista;
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminPartidos", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
                 cmd.Parameters.AddWithValue("@soloActivos", soloActivos);
 
                 SqlDataReader reader = cmd.ExecuteReader();
@@ -2313,18 +2435,19 @@ namespace backend
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public RespuestaGuardado guardarPartido(
-            int codigoUsuario, int codigoPartido, string nombre, string siglas, string descripcion)
+            int codigoUsuario, int codigoEspacio, int codigoPartido, string nombre, string siglas, string descripcion)
         {
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario))
-                    return RechazoGuardado("La cuenta no tiene permiso para administrar partidos.");
+                if (!EsAdministradorDe(conn, codigoUsuario, codigoPartido > 0 ? EspacioDeObjeto(conn, "Partido", codigoPartido) : codigoEspacio))
+                    return RechazoGuardado("La cuenta no tiene permiso para administrar partidos en este espacio.");
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminGuardarPartido", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
                 cmd.Parameters.AddWithValue("@codigoPartido", codigoPartido);
                 cmd.Parameters.AddWithValue("@nombre", (object)nombre ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@siglas", (object)siglas ?? DBNull.Value);
@@ -2348,8 +2471,8 @@ namespace backend
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario))
-                    return Rechazo("La cuenta no tiene permiso para administrar partidos.");
+                if (!EsAdministradorDe(conn, codigoUsuario, EspacioDeObjeto(conn, "Partido", codigoPartido)))
+                    return Rechazo("La cuenta no tiene permiso para administrar partidos en este espacio.");
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminEstadoPartido", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
@@ -2364,17 +2487,18 @@ namespace backend
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public List<CampanaAdmin> listarCampanasAdmin(int codigoUsuario)
+        public List<CampanaAdmin> listarCampanasAdmin(int codigoUsuario, int codigoEspacio)
         {
             List<CampanaAdmin> lista = new List<CampanaAdmin>();
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
                 conn.Open();
-                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+                if (!EsAdministradorDe(conn, codigoUsuario, codigoEspacio)) return lista;
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminCampanas", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
 
                 SqlDataReader reader = cmd.ExecuteReader();
 
@@ -2404,7 +2528,7 @@ namespace backend
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public RespuestaGuardado guardarCampana(
-            int codigoUsuario, int codigoCampana, string nombre, string resumen,
+            int codigoUsuario, int codigoEspacio, int codigoCampana, string nombre, string resumen,
             string descripcion, string alcance, DateTime fechaInicio, DateTime fechaEleccion,
             string estado, bool esActual)
         {
@@ -2412,12 +2536,13 @@ namespace backend
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario))
-                    return RechazoGuardado("La cuenta no tiene permiso para administrar campañas.");
+                if (!EsAdministradorDe(conn, codigoUsuario, codigoCampana > 0 ? EspacioDeObjeto(conn, "Campana", codigoCampana) : codigoEspacio))
+                    return RechazoGuardado("La cuenta no tiene permiso para administrar campañas en este espacio.");
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminGuardarCampana", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
                 cmd.Parameters.AddWithValue("@codigoCampana", codigoCampana);
                 cmd.Parameters.AddWithValue("@nombre", (object)nombre ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@resumen", (object)resumen ?? DBNull.Value);
@@ -2435,17 +2560,18 @@ namespace backend
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public List<CandidatoAdmin> listarCandidatosAdmin(
-            int codigoUsuario, string campanaSlug, bool soloActivos)
+            int codigoUsuario, int codigoEspacio, string campanaSlug, bool soloActivos)
         {
             List<CandidatoAdmin> lista = new List<CandidatoAdmin>();
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
                 conn.Open();
-                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+                if (!EsAdministradorDe(conn, codigoUsuario, codigoEspacio)) return lista;
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminCandidatos", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
                 cmd.Parameters.AddWithValue("@campanaSlug", (object)campanaSlug ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@soloActivos", soloActivos);
 
@@ -2499,7 +2625,7 @@ namespace backend
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario))
+                if (!EsAdministradorDe(conn, codigoUsuario, EspacioDeObjeto(conn, "Campana", codigoCampana)))
                     return RechazoGuardado("La cuenta no tiene permiso para administrar candidaturas.");
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminGuardarCandidato", conn);
@@ -2533,7 +2659,7 @@ namespace backend
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario))
+                if (!EsAdministradorDe(conn, codigoUsuario, EspacioDeObjeto(conn, "Candidato", codigoCandidato)))
                     return Rechazo("La cuenta no tiene permiso para administrar candidaturas.");
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminEstadoCandidato", conn);
@@ -2563,7 +2689,7 @@ namespace backend
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario))
+                if (!EsAdministradorDe(conn, codigoUsuario, EspacioDeObjeto(conn, "Candidato", codigoCandidato)))
                     return Rechazo("La cuenta no tiene permiso para crear cuentas de acceso.");
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminCrearCuentaCandidato", conn);
@@ -2638,7 +2764,7 @@ namespace backend
         /// </summary>
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public List<EncuestaPublica> listarEncuestasVigentes(string campanaSlug, int codigoUsuario)
+        public List<EncuestaPublica> listarEncuestasVigentes(string espacioSlug, string campanaSlug, int codigoUsuario)
         {
             List<EncuestaPublica> lista = new List<EncuestaPublica>();
 
@@ -2646,8 +2772,11 @@ namespace backend
             {
                 conn.Open();
 
+                int codigoEspacio = CodigoEspacio(conn, espacioSlug);
+
                 SqlCommand cmd = new SqlCommand("dbo.spEncuestasVigentes", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
                 cmd.Parameters.AddWithValue("@campanaSlug",
                     string.IsNullOrEmpty(campanaSlug) ? (object)DBNull.Value : campanaSlug);
                 cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
@@ -2675,7 +2804,7 @@ namespace backend
 
                 if (lista.Count == 0) return lista;
 
-                RepartirOpciones(conn, campanaSlug, codigoUsuario, lista);
+                RepartirOpciones(conn, codigoEspacio, campanaSlug, codigoUsuario, lista);
             }
 
             return lista;
@@ -2685,7 +2814,7 @@ namespace backend
         /// Reparte entre las encuestas las opciones que llegan en un solo
         /// resultado, agrupadas por su código.
         /// </summary>
-        private static void RepartirOpciones(SqlConnection conn, string campanaSlug,
+        private static void RepartirOpciones(SqlConnection conn, int codigoEspacio, string campanaSlug,
             int codigoUsuario, List<EncuestaPublica> lista)
         {
             Dictionary<int, List<OpcionEncuesta>> porEncuesta =
@@ -2693,6 +2822,7 @@ namespace backend
 
             SqlCommand cmd = new SqlCommand("dbo.spEncuestasVigentesOpciones", conn);
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
             cmd.Parameters.AddWithValue("@campanaSlug",
                 string.IsNullOrEmpty(campanaSlug) ? (object)DBNull.Value : campanaSlug);
             cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
@@ -2869,17 +2999,18 @@ namespace backend
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public List<EncuestaAdmin> listarEncuestasAdmin(
-            int codigoUsuario, string campanaSlug, string estado)
+            int codigoUsuario, int codigoEspacio, string campanaSlug, string estado)
         {
             List<EncuestaAdmin> lista = new List<EncuestaAdmin>();
 
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
                 conn.Open();
-                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+                if (!EsAdministradorDe(conn, codigoUsuario, codigoEspacio)) return lista;
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminEncuestas", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
                 cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
                 cmd.Parameters.AddWithValue("@campanaSlug",
                     string.IsNullOrEmpty(campanaSlug) ? (object)DBNull.Value : campanaSlug);
@@ -2921,7 +3052,7 @@ namespace backend
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
                 conn.Open();
-                if (!EsAdministrador(conn, codigoUsuario)) return new List<OpcionEncuesta>();
+                if (!EsAdministradorDe(conn, codigoUsuario, EspacioDeObjeto(conn, "Encuesta", codigoEncuesta))) return new List<OpcionEncuesta>();
 
                 return LeerOpciones(conn, "dbo.spAdminEncuestaOpciones", codigoUsuario, codigoEncuesta);
             }
@@ -2966,7 +3097,7 @@ namespace backend
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario))
+                if (!EsAdministradorDe(conn, codigoUsuario, EspacioDeObjeto(conn, "Campana", codigoCampana)))
                     return RechazoGuardado("La cuenta no tiene permiso para administrar encuestas.");
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminGuardarEncuesta", conn);
@@ -3002,7 +3133,7 @@ namespace backend
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario))
+                if (!EsAdministradorDe(conn, codigoUsuario, EspacioDeObjeto(conn, "Encuesta", codigoEncuesta)))
                     return Rechazo("La cuenta no tiene permiso para administrar encuestas.");
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminEstadoEncuesta", conn);
@@ -3016,6 +3147,201 @@ namespace backend
             }
         }
 
+
+        // =============================================================
+        //  Espacios
+        //
+        //  Un espacio es un cliente que usa la plataforma para su propio
+        //  proceso electoral. Consultar la ficha de un espacio es público:
+        //  la plantilla la necesita para decir de quién es lo que se está
+        //  viendo. Crear, editar y retirar espacios y crear sus cuentas es
+        //  solo de la plataforma (EsAdministrador, no la versión por
+        //  espacio): un cliente no puede crear otros clientes.
+        // =============================================================
+
+        /// <summary>
+        /// La ficha pública de un espacio. Con slug vacío, la plataforma.
+        /// Nulo si no existe o fue retirado. Los campos de administración
+        /// viajan vacíos: la plantilla no los necesita y no son públicos.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public Espacio obtenerEspacio(string slug)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                string s = Limpio(slug);
+                SqlCommand cmd = new SqlCommand(
+                    "SELECT codigoEspacio, slug, nombre, organizacion, descripcion, esPlataforma, " +
+                    "       padronCerrado, terminoAgrupacion, activo, estado " +
+                    "FROM dbo.vwEspacios " +
+                    (s.Length == 0 ? "WHERE esPlataforma = 1" : "WHERE slug = @slug AND activo = 1"), conn);
+                if (s.Length > 0) cmd.Parameters.AddWithValue("@slug", s);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read()) return LeerEspacio(reader, false);
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Los espacios que la cuenta puede ver: todos para la plataforma,
+        /// el propio para el cliente. Lo decide el procedimiento.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<Espacio> listarEspacios(int codigoUsuario, bool soloActivos)
+        {
+            List<Espacio> lista = new List<Espacio>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminEspacios", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@soloActivos", soloActivos);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read()) lista.Add(LeerEspacio(reader, true));
+                }
+            }
+
+            return lista;
+        }
+
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaGuardado guardarEspacio(
+            int codigoUsuario, int codigoEspacio, string nombre, string organizacion,
+            string descripcion, bool padronCerrado, string terminoAgrupacion)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return RechazoGuardado("Solo la administración de la plataforma puede registrar espacios.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminGuardarEspacio", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
+                cmd.Parameters.AddWithValue("@nombre", (object)nombre ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@organizacion", (object)organizacion ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@descripcion", (object)descripcion ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@padronCerrado", padronCerrado);
+                cmd.Parameters.AddWithValue("@terminoAgrupacion", (object)terminoAgrupacion ?? DBNull.Value);
+
+                return LeerGuardado(cmd);
+            }
+        }
+
+        /// <summary>
+        /// Retira o restaura un espacio. Al retirarlo, sus cuentas de
+        /// administración se desactivan con él. Lo hace el procedimiento.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin cambiarEstadoEspacio(
+            int codigoUsuario, int codigoEspacio, bool activo, string motivo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("Solo la administración de la plataforma puede retirar espacios.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminEstadoEspacio", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
+                cmd.Parameters.AddWithValue("@activo", activo);
+                cmd.Parameters.AddWithValue("@motivo", (object)motivo ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
+        /// <summary>
+        /// La cuenta con la que el cliente administra su espacio. La
+        /// contraseña se cifra acá, con el mismo EncriptarSHA256 que después
+        /// la valida, y el procedimiento recibe solo el hash: es lo que evita
+        /// el desacuerdo entre HASHBYTES y UTF-8 con una tilde en la clave
+        /// (ver el registro ciudadano).
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin crearCuentaEspacio(
+            int codigoUsuario, int codigoEspacio, string login, string nombre,
+            string correo, string clave)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("Solo la administración de la plataforma puede crear cuentas de espacio.");
+
+                if (string.IsNullOrEmpty(clave) || clave.Length < 8)
+                    return Rechazo("La contraseña debe tener al menos ocho caracteres.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminCrearCuentaEspacio", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
+                cmd.Parameters.AddWithValue("@login", (object)login ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@nombre", (object)nombre ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@correo", (object)correo ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@claveHash", EncriptarSHA256(clave));
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
+        private static Espacio LeerEspacio(IDataRecord reader, bool administracion)
+        {
+            Espacio e = new Espacio
+            {
+                codigoEspacio = Convert.ToInt32(reader["codigoEspacio"]),
+                slug = Texto(reader, "slug"),
+                nombre = Texto(reader, "nombre"),
+                organizacion = Texto(reader, "organizacion"),
+                descripcion = Texto(reader, "descripcion"),
+                esPlataforma = Convert.ToBoolean(reader["esPlataforma"]),
+                padronCerrado = Convert.ToBoolean(reader["padronCerrado"]),
+                terminoAgrupacion = Texto(reader, "terminoAgrupacion"),
+                activo = Convert.ToBoolean(reader["activo"]),
+                estado = Texto(reader, "estado"),
+                motivoBaja = string.Empty,
+                propietario = string.Empty,
+                propietarioLogin = string.Empty,
+                propietarioCorreo = string.Empty
+            };
+
+            if (administracion)
+            {
+                e.motivoBaja = Texto(reader, "motivoBaja");
+                e.fechaCreacion = Convert.ToDateTime(reader["fechaCreacion"]);
+                e.codigoUsuarioPropietario = Convert.ToInt32(reader["codigoUsuarioPropietario"]);
+                e.propietario = Texto(reader, "propietario");
+                e.propietarioLogin = Texto(reader, "propietarioLogin");
+                e.propietarioCorreo = Texto(reader, "propietarioCorreo");
+                e.campanas = Convert.ToInt32(reader["campanas"]);
+                e.candidaturas = Convert.ToInt32(reader["candidaturas"]);
+                e.administradores = Convert.ToInt32(reader["administradores"]);
+            }
+
+            return e;
+        }
 
         // =============================================================
         //  Módulos
@@ -3157,7 +3483,7 @@ namespace backend
         /// </summary>
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public List<IniciativaPublica> listarIniciativas(int codigoUsuario)
+        public List<IniciativaPublica> listarIniciativas(string espacioSlug, int codigoUsuario)
         {
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
@@ -3165,6 +3491,7 @@ namespace backend
 
                 SqlCommand cmd = new SqlCommand("dbo.spIniciativasPublicas", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoEspacio", CodigoEspacio(conn, espacioSlug));
                 cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
 
                 return LeerIniciativas(cmd);
@@ -3205,7 +3532,7 @@ namespace backend
         /// </summary>
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public RespuestaGuardado guardarIniciativa(int codigoUsuario, int codigoIniciativa,
+        public RespuestaGuardado guardarIniciativa(string espacioSlug, int codigoUsuario, int codigoIniciativa,
             string titulo, string descripcion, int codigoCategoria, int codigoDepartamento)
         {
             RespuestaGuardado r = new RespuestaGuardado { ok = false, codigo = 0 };
@@ -3239,6 +3566,7 @@ namespace backend
                     SqlCommand cmd = new SqlCommand("dbo.spIniciativaGuardar", conn);
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                    cmd.Parameters.AddWithValue("@codigoEspacio", CodigoEspacio(conn, espacioSlug));
                     cmd.Parameters.AddWithValue("@codigoIniciativa", codigoIniciativa);
                     cmd.Parameters.AddWithValue("@titulo", (object)titulo ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@descripcion", (object)descripcion ?? DBNull.Value);
@@ -3286,16 +3614,17 @@ namespace backend
         /// </summary>
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public List<IniciativaPublica> listarIniciativasAdmin(int codigoUsuario, string estado)
+        public List<IniciativaPublica> listarIniciativasAdmin(int codigoUsuario, int codigoEspacio, string estado)
         {
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario)) return new List<IniciativaPublica>();
+                if (!EsAdministradorDe(conn, codigoUsuario, codigoEspacio)) return new List<IniciativaPublica>();
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminIniciativas", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
                 cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
                 cmd.Parameters.AddWithValue("@estado",
                     string.IsNullOrEmpty(estado) ? (object)DBNull.Value : estado);
@@ -3317,7 +3646,7 @@ namespace backend
             {
                 conn.Open();
 
-                if (!EsAdministrador(conn, codigoUsuario))
+                if (!EsAdministradorDe(conn, codigoUsuario, EspacioDeObjeto(conn, "Iniciativa", codigoIniciativa)))
                     return Rechazo("La cuenta no tiene permiso para moderar iniciativas.");
 
                 SqlCommand cmd = new SqlCommand("dbo.spAdminModerarIniciativa", conn);

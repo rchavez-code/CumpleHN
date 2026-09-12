@@ -24,7 +24,22 @@ namespace backend.Modelos
     /// </summary>
     public class FiltroAnalitica
     {
-        /// <summary>Campaña. Vacío usa la campaña destacada.</summary>
+        /// <summary>
+        /// Espacio cuyo tablero se pide. Vacío es la plataforma. A diferencia
+        /// del resto, no es un filtro sino el universo: los procedimientos lo
+        /// exigen y ningún valor significa «todos los espacios».
+        /// </summary>
+        public string espacioSlug { get; set; }
+
+        /// <summary>
+        /// El espacio ya resuelto a su código. Lo llena el Web Service a
+        /// partir de espacioSlug antes de llamar a los procedimientos, y el
+        /// asistente lo recibe de spIACampana. Lo que llegue acá desde el
+        /// frontend se ignora.
+        /// </summary>
+        public int codigoEspacio { get; set; }
+
+        /// <summary>Campaña. Vacío usa la campaña destacada del espacio.</summary>
         public string campanaSlug { get; set; }
 
         /// <summary>Categoría temática. Cero son todas.</summary>

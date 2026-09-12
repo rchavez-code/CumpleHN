@@ -492,6 +492,40 @@ namespace frontend.Servicios
             return SinAdministracion();
         }
 
+        public Espacio ObtenerEspacio(string slug)
+        {
+            /* El origen de demostración solo conoce la plataforma. */
+            return new Espacio
+            {
+                Codigo = 1, Slug = "cumplehn", Nombre = "CumpleHN", Organizacion = "CumpleHN",
+                Descripcion = string.Empty, EsPlataforma = true, PadronCerrado = false,
+                TerminoAgrupacion = "Partido", Activo = true, Estado = "Plataforma"
+            };
+        }
+
+        public IList<Espacio> ObtenerEspacios(int codigoUsuario, bool soloActivos)
+        {
+            return new List<Espacio>();
+        }
+
+        public ResultadoGuardado GuardarEspacio(
+            int codigoUsuario, int codigoEspacio, string nombre, string organizacion,
+            string descripcion, bool padronCerrado, string terminoAgrupacion)
+        {
+            return SinAdministracionGuardado();
+        }
+
+        public Resultado CambiarEstadoEspacio(int codigoUsuario, int codigoEspacio, bool activo, string motivo)
+        {
+            return SinAdministracion();
+        }
+
+        public Resultado CrearCuentaEspacio(
+            int codigoUsuario, int codigoEspacio, string login, string nombre, string correo, string clave)
+        {
+            return SinAdministracion();
+        }
+
         public IList<EstadoModulo> ObtenerModulosVisibles()
         {
             return new List<EstadoModulo>();

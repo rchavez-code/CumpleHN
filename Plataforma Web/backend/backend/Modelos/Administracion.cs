@@ -205,5 +205,9 @@ namespace backend.Modelos
         public int codigoObjeto { get; set; }
         public string detalle { get; set; }
         public string motivo { get; set; }
+
+        /* En qué espacio ocurrió. Solo dice algo cuando la plataforma lee
+           las bitácoras de todos. */
+        public string espacio { get; set; }
     }
 }

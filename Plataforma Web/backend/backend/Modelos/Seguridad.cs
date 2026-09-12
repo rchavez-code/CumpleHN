@@ -21,6 +21,16 @@ namespace backend.Modelos
         /* Solo con rol Candidato. Enlaza la cuenta con su ficha pública. */
         public int codigoCandidato { get; set; }
         public string candidatoSlug { get; set; }
+
+        /* Solo con rol Administrador: el espacio que administra. Para la
+           cuenta de la plataforma (Usuarios.codigoEspacio en NULL) viaja el
+           espacio de la plataforma, y administraPlataforma en verdadero le
+           permite cambiar de espacio desde la administración. Igual que
+           correoConfirmado, viaja para que la interfaz sepa qué mostrar:
+           quien autoriza es el Web Service contra la base. */
+        public int codigoEspacio { get; set; }
+        public string espacioNombre { get; set; }
+        public bool administraPlataforma { get; set; }
     }
 
     /// <summary>

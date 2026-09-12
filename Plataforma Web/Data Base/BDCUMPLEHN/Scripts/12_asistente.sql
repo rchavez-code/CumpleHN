@@ -390,12 +390,12 @@ BEGIN
     DECLARE @plataforma INT = (SELECT codigoEspacio FROM dbo.Espacios WHERE esPlataforma = 1);
 
     IF @campanaSlug IS NULL OR LTRIM(RTRIM(@campanaSlug)) = N''
-        SELECT TOP (1) slug, nombre
+        SELECT TOP (1) slug, nombre, codigoEspacio
         FROM dbo.Campanas
         WHERE esActual = 1 AND codigoEspacio = @plataforma
         ORDER BY codigoCampana;
     ELSE
-        SELECT slug, nombre
+        SELECT slug, nombre, codigoEspacio
         FROM dbo.Campanas
         WHERE slug = @campanaSlug AND codigoEspacio = @plataforma;
 END

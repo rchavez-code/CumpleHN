@@ -17,6 +17,9 @@ namespace frontend.Servicios
         private const string ClaveRol = "rol";
         private const string ClaveCandidato = "candidatoSlug";
         private const string ClaveConfirmado = "correoConfirmado";
+        private const string ClaveEspacio = "codigoEspacio";
+        private const string ClaveEspacioNombre = "espacioNombre";
+        private const string ClaveAdministraPlataforma = "administraPlataforma";
         private const string ClaveAviso = "avisoCuenta";
 
         /// <summary>
@@ -48,6 +51,24 @@ namespace frontend.Servicios
             ctx.Session[ClaveRol] = usuario.rol;
             ctx.Session[ClaveCandidato] = usuario.candidatoSlug;
             ctx.Session[ClaveConfirmado] = usuario.correoConfirmado;
+            ctx.Session[ClaveEspacio] = usuario.codigoEspacio;
+            ctx.Session[ClaveEspacioNombre] = usuario.espacioNombre;
+            ctx.Session[ClaveAdministraPlataforma] = usuario.administraPlataforma;
+        }
+
+        /// <summary>
+        /// Cambia el espacio que la administración está mirando. Solo tiene
+        /// sentido para la cuenta de la plataforma, que administra todos: la de
+        /// un cliente queda fija en el suyo, y aunque cambiara este valor el
+        /// Web Service la rechazaría contra la base.
+        /// </summary>
+        public static void CambiarEspacio(int codigoEspacio, string nombre)
+        {
+            HttpContext ctx = HttpContext.Current;
+            if (ctx == null || ctx.Session == null || !AdministraPlataforma) return;
+
+            ctx.Session[ClaveEspacio] = codigoEspacio;
+            ctx.Session[ClaveEspacioNombre] = nombre;
         }
 
         /// <summary>
@@ -134,6 +155,39 @@ namespace frontend.Servicios
         public static string CandidatoSlug
         {
             get { return Convert.ToString(Leer(ClaveCandidato)); }
+        }
+
+        /// <summary>
+        /// El espacio que la cuenta administra, o cero fuera del rol
+        /// Administrador. Es lo que las páginas de Admin/ pasan al Web Service
+        /// en cada consulta de listado. Decide qué se muestra, no qué se
+        /// permite: el servicio lo vuelve a comprobar contra la base.
+        /// </summary>
+        public static int CodigoEspacio
+        {
+            get
+            {
+                object v = Leer(ClaveEspacio);
+                if (v == null) return 0;
+
+                int codigo;
+                return int.TryParse(Convert.ToString(v), out codigo) ? codigo : 0;
+            }
+        }
+
+        public static string EspacioNombre
+        {
+            get { return Convert.ToString(Leer(ClaveEspacioNombre)); }
+        }
+
+        /// <summary>La cuenta administra la plataforma entera y puede cambiar de espacio.</summary>
+        public static bool AdministraPlataforma
+        {
+            get
+            {
+                object v = Leer(ClaveAdministraPlataforma);
+                return v != null && Convert.ToBoolean(v);
+            }
         }
 
         /// <summary>

@@ -345,6 +345,7 @@
     <Compile Include="Modelos\Propuesta.cs" />
     <Compile Include="Modelos\Encuesta.cs" />
     <Compile Include="Modelos\Iniciativa.cs" />
+    <Compile Include="Modelos\Espacio.cs" />
     <Compile Include="Modelos\Publicacion.cs" />
     <Compile Include="Modelos\Vista.cs" />
     <Compile Include="Servicios\Contenido.cs" />
@@ -352,6 +353,7 @@
     <Compile Include="Servicios\ContenidoServicio.cs" />
     <Compile Include="Servicios\Autorizacion.cs" />
     <Compile Include="Servicios\Modulos.cs" />
+    <Compile Include="Servicios\Espacios.cs" />
     <Compile Include="Servicios\IContenidoServicio.cs" />
   </ItemGroup>
   <ItemGroup>
