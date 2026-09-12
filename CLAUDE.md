@@ -69,7 +69,7 @@ Tres soluciones `.slnx` independientes:
 
 - `Plataforma Web/frontend/` → `frontend.csproj`. IIS Express en el puerto 5080.
 - `Plataforma Web/backend/` → `backend.csproj`. Vacío por ahora, ya referencia `System.Web.Services`.
-- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`, `09_administracion`, `10_catalogos_admin`, `11_modulos`, `12_asistente`, `13_permisos_ia`, `14_encuestas`, `15_datos_encuestas`, `16_registro`, `17_confirmacion`.
+- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`, `09_administracion`, `10_catalogos_admin`, `11_modulos`, `12_asistente`, `13_permisos_ia`, `14_encuestas`, `15_datos_encuestas`, `16_registro`, `17_confirmacion`, `18_iniciativas`. **`07_vistas` depende ahora de la tabla `Iniciativas` del script 18** (la quinta rama de sus dos vistas de valoraciones y comentarios), así que en una base nueva el 18 se ejecuta antes del 07 —o el 07 se vuelve a correr después, que es idempotente.
 
 Los scripts están en UTF-8 **sin BOM**, así que por línea de comandos hay que pasarle la página de códigos a sqlcmd o las tildes entran corruptas:
 
@@ -88,7 +88,7 @@ Dentro del frontend:
 
 ### Roles y control de acceso
 
-Tres roles en el catálogo `Roles`: **Administrador**, **Candidato** y **Ciudadano**. El ciudadano participa en las páginas públicas y no tiene área privada, así que `Autorizacion.InicioDe` lo manda a la portada.
+Tres roles en el catálogo `Roles`: **Administrador**, **Candidato** y **Ciudadano**. El ciudadano tiene una página propia (`MiCuenta.aspx`, para proponer y ver sus iniciativas) pero **entra a la portada, no a esa página**: inicia sesión para participar en las páginas públicas, y `?volver=` lo regresa a donde estaba, así que `Autorizacion.InicioDe` lo manda a `~/`. Su cuenta queda a un clic en la barra. La clase base `PaginaCiudadano` exige el rol Ciudadano, igual que `PaginaAdmin` y `PaginaPanel` exigen los suyos.
 
 Cada rol entra a su propia área. La correspondencia rol → área vive **solo** en `Autorizacion.InicioDe`, que usan tanto `Acceso.aspx.cs` al entrar como las páginas al rechazar a quien no corresponde. Si estuviera en los dos lados podrían discrepar.
 
@@ -415,6 +415,28 @@ La franja de aviso usa el prefijo **`gc-franja`**, verificado con grep antes de 
 
 Configuración: `ConfirmacionUrlBase` (apunta al **frontend**, porque el backend arma el enlace y no conoce la dirección del sitio público), `ConfirmacionHoras`, `CorreoHost`, `CorreoPuerto`, `CorreoNombre` y `CorreoTimeoutMs` en el Web.config del backend. `CorreoRemitente` y `CorreoClaveApp` en `secrets.config` — la clave **no** es la contraseña de Gmail sino una contraseña de aplicación de dieciséis caracteres, que exige verificación en dos pasos. Sin esos dos valores el backend arranca igual y el registro sigue creando cuentas: lo único que falla es el envío, y queda anotado con su motivo.
 
+### Módulo de iniciativas ciudadanas
+
+La otra mitad de la participación ciudadana: además de reaccionar (valorar, comentar, responder encuestas), la ciudadanía **propone**. Una **iniciativa** es una propuesta de proyecto escrita por una cuenta con rol Ciudadano, que el resto valora y comenta. El Avance#3 lo compromete y el asesor lo aprobó. Todo en `18_iniciativas.sql`.
+
+**Se llama `Iniciativa` y no `Propuesta` a propósito.** `Propuesta` ya es la promesa de campaña de una candidatura, con su estado de cumplimiento y su nivel de verificación. Una iniciativa no es nada de eso: no la prometió nadie y no hay nada que verificar. Se muestra siempre con la marca **«Propuesta ciudadana»** —en el lugar del nivel de verificación de las otras tarjetas—, que es lo que sostiene la neutralidad frente a un texto que escribió cualquiera. Mezclarlas en una tabla habría contaminado el seguimiento de cumplimiento del capítulo IX.
+
+Decisiones que no se deben romper:
+
+1. **Solo el rol Ciudadano propone**, con correo confirmado (la misma puerta `MotivoSinParticipacion` de votar y comentar). Una candidatura o la administración escribiendo «como ciudadano» sería una parte interesada dentro de una plataforma neutral, el mismo argumento de las encuestas. Lo exige `spIniciativaGuardar` y el Web Service comprueba además el rol contra la base (`EsCiudadano`, gemelo de `EsAdministrador`) — llamar al ASMX con un código de candidato no crea nada. Verificado.
+2. **El texto se edita solo mientras nadie reaccionó.** Con un voto o un comentario encima, cambiarlo dejaría reacciones apuntando a algo que nadie leyó — la regla de las opciones de encuesta aplicada al texto. La base calcula `puedeEditar` en `vwIniciativas`, para que la pantalla y el procedimiento no discrepen.
+3. **Nada se borra.** La autora retira la suya cuando quiera (`spIniciativaRetirarPropia`), y la administración retira o restaura cualquiera con motivo (`spAdminModerarIniciativa`), siempre por baja lógica con las cuatro columnas de `Publicaciones`. Un `DELETE` se llevaría las valoraciones y los comentarios.
+4. **No pertenece a una campaña.** Es una demanda ciudadana, no un compromiso de un ciclo electoral: atarla a la campaña destacada la haría desaparecer al cerrarse. Lleva categoría (obligatoria) y departamento (opcional), que son las dimensiones por las que el tablero la cruza.
+5. **Los contadores no se guardan.** Me gusta, no me gusta y comentarios se derivan de `Valoraciones` y `Comentarios` con el par polimórfico, igual que en `Publicaciones`. La **popularidad es el saldo** (`meGusta − noMeGusta`, desempate por la más reciente) y se calcula en un solo lugar, `vwIniciativas`, que leen la portada y la administración.
+
+**Quinta rama en el tablero.** `Iniciativa` entró en `TiposObjeto`, en `TipoValido` y `ExisteObjeto` (filtrando `activo = 1`, como `Encuesta`), así que recibe valoraciones y comentarios sin tocar el módulo de interacción. Sus reacciones entran a la analítica por la quinta rama de `vwAnaliticaValoraciones` y `vwAnaliticaComentarios` (sin candidatura ni partido, con categoría y departamento). Esas dos vistas pasaron a `CREATE OR ALTER`: el `DROP + CREATE` anterior se llevaba en silencio el `DENY` del script 13 al login del asistente en cada ejecución. **`Iniciativas` y `vwIniciativas` llevan `DENY SELECT` para `cumplehn_ia`** —la vista vincula a una persona con lo que propuso— y no se le concede `EXECUTE` sobre ningún procedimiento del script 18.
+
+**En el frontend.** `Controles/IniciativaCard.ascx` es la tarjeta, calcada de `PublicacionCard`, con `TiposObjeto.Iniciativa`. Vive en dos lugares: `MiCuenta.aspx` (el ciudadano crea, edita y retira las suyas) y `Default.aspx` (las populares, cuatro a la vista y el resto tras «Ver más» de cuatro en cuatro, con el contador «8 de 24»). El módulo `iniciativas` tiene su interruptor: oculto desaparece para el público y el administrador lo ve marcado. La moderación es un segundo bloque en `Admin/Moderacion.aspx` que comparte el panel de decisión con las publicaciones —el tipo viaja en la sesión y `btnConfirmar` despacha al método correcto—, con motivo obligatorio y bitácora.
+
+**Cuidado con los hilos de comentarios dentro de un repetidor.** Una tarjeta con `<gc:Comentarios>` dentro de un `Repeater` **debe enlazarse en `OnInit`, no en `Page_Load`.** Enlazar en `Page_Load` recrea la tarjeta después de que ASP.NET ya procesó el postback, y publicar un comentario rompe con «Algo salió mal» (falla de validación de eventos: la caja de texto y el botón caen en un contenedor invisible y se pierde lo tecleado). Lo aplican `MiCuenta.aspx`, `Default.aspx` y `Campana.aspx` (su feed arrastraba el mismo fallo desde antes). Las tarjetas sin hilo inline —`CandidatoCard`, `CampanaCard`, `EncuestaCard`— siguen en `Page_Load`.
+
+**El «Ver más» de la portada despliega por bloques y su estado lo reaplica el cliente.** El input oculto `hdnIniciativas` guarda cuántos bloques de cuatro están abiertos, y el script los reaplica al cargar —también tras un postback de votar o comentar—. La clase que oculta un bloque **no puede** depender del estado del servidor: es un enlace de datos `<%# %>` dentro del repetidor, y como se enlaza en `OnInit`, el `LoadViewState` posterior lo pisaría con el valor del render anterior (el síntoma fue el contador en «8» con solo cuatro tarjetas). El servidor siempre rinde el primer bloque, el cliente expande. El contador y el botón sí son expresiones de render y reflejan el estado real.
+
 ### Pendiente
 
 Guardado del perfil y de los proyectos desde el panel del candidato: los formularios ya validan del lado del servidor pero todavía no persisten.
@@ -425,7 +447,7 @@ De las encuestas quedan tres cosas anotadas y ninguna urgente: que el candidato 
 
 Del asistente quedan tres decisiones anotadas y ninguna urgente: que una consulta fallida no consuma cuota, un techo diario para toda la plataforma además del tope por persona, y que `consultar_tablero` deje elegir indicadores. Gráficos y PDF generados por el modelo **se descartaron a propósito**: la página ya dibuja los doce gráficos en el servidor y el backend puede armar un informe sin gastar un token, mientras que un gráfico dibujado por el modelo podría contradecir al del tablero.
 
-Las cuatro etapas del área de administración están hechas: roles y control de acceso, verificación y moderación, catálogos con sus cuentas, e interruptores de módulos. Cada facultad tiene su procedimiento almacenado, su método en el Web Service, su sección en `Admin/` y su registro en bitácora, y el permiso se comprueba en las dos capas.
+Las cuatro etapas del área de administración están hechas: roles y control de acceso, verificación y moderación —de publicaciones y de iniciativas ciudadanas—, catálogos con sus cuentas, e interruptores de módulos. Cada facultad tiene su procedimiento almacenado, su método en el Web Service, su sección en `Admin/` y su registro en bitácora, y el permiso se comprueba en las dos capas.
 
 Mientras una sección no exista, aparece **deshabilitada** en el menú de `Admin/` en lugar de mostrar una pantalla que no guarda.
 
