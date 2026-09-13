@@ -129,6 +129,7 @@
     <Content Include="Admin\Default.aspx" />
     <Content Include="Admin\Espacios.aspx" />
     <Content Include="Admin\Padron.aspx" />
+    <Content Include="Admin\Solicitudes.aspx" />
     <Content Include="Admin\Verificacion.aspx" />
     <Content Include="Admin\Moderacion.aspx" />
     <Content Include="Admin\Bitacora.aspx" />
@@ -155,6 +156,8 @@
     <Content Include="Content\bootstrap.rtl.min.css" />
     <Content Include="Content\Site.css" />
     <Content Include="Default.aspx" />
+    <Content Include="Organizaciones.aspx" />
+    <Content Include="Content\cumplehn-organizaciones.css" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Scripts\bootstrap.bundle.js" />
@@ -445,6 +448,13 @@
     <Compile Include="Admin\Padron.aspx.designer.cs">
       <DependentUpon>Padron.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Admin\Solicitudes.aspx.cs">
+      <DependentUpon>Solicitudes.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Admin\Solicitudes.aspx.designer.cs">
+      <DependentUpon>Solicitudes.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Admin\Modulos.aspx.cs">
       <DependentUpon>Modulos.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -563,6 +573,13 @@
     </Compile>
     <Compile Include="Panel\Configuracion.aspx.designer.cs">
       <DependentUpon>Configuracion.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Organizaciones.aspx.cs">
+      <DependentUpon>Organizaciones.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Organizaciones.aspx.designer.cs">
+      <DependentUpon>Organizaciones.aspx</DependentUpon>
     </Compile>
     <Compile Include="Default.aspx.cs">
       <DependentUpon>Default.aspx</DependentUpon>

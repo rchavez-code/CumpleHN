@@ -323,7 +323,18 @@ namespace frontend.Servicios
         IList<Suscripcion> ObtenerSuscripciones(int codigoUsuario, int codigoEspacio);
         ResultadoGuardado RegistrarPago(
             int codigoUsuario, int codigoEspacio, string plan, DateTime vigenteDesde, DateTime vigenteHasta,
-            decimal monto, string moneda, string referencia, string notas);
+            decimal monto, string moneda, string referencia, string notas, int codigoPlan, int maxMiembros);
+
+        /* La oferta y las solicitudes. Los planes son públicos (la página
+           para organizaciones los muestra desde la base). Enviar una solicitud
+           no exige cuenta. La bandeja y su atención son solo de la plataforma. */
+        IList<Plan> ObtenerPlanes();
+        ResultadoGuardado EnviarSolicitud(
+            string organizacion, string contacto, string correo, string telefono,
+            int codigoPlan, string proceso, string fechaAproximada, string mensaje);
+        IList<Solicitud> ObtenerSolicitudes(int codigoUsuario, string estado);
+        Resultado AtenderSolicitud(int codigoUsuario, int codigoSolicitud, string estado, int codigoEspacio, string notas);
+
 
         // ------------------------------------------------------- Módulos
 

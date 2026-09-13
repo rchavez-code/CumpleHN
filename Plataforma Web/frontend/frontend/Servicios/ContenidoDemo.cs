@@ -549,9 +549,31 @@ namespace frontend.Servicios
 
         public ResultadoGuardado RegistrarPago(
             int codigoUsuario, int codigoEspacio, string plan, DateTime vigenteDesde, DateTime vigenteHasta,
-            decimal monto, string moneda, string referencia, string notas)
+            decimal monto, string moneda, string referencia, string notas, int codigoPlan, int maxMiembros)
         {
             return SinAdministracionGuardado();
+        }
+
+        public IList<Plan> ObtenerPlanes()
+        {
+            return new List<Plan>();
+        }
+
+        public ResultadoGuardado EnviarSolicitud(
+            string organizacion, string contacto, string correo, string telefono,
+            int codigoPlan, string proceso, string fechaAproximada, string mensaje)
+        {
+            return SinAdministracionGuardado();
+        }
+
+        public IList<Solicitud> ObtenerSolicitudes(int codigoUsuario, string estado)
+        {
+            return new List<Solicitud>();
+        }
+
+        public Resultado AtenderSolicitud(int codigoUsuario, int codigoSolicitud, string estado, int codigoEspacio, string notas)
+        {
+            return SinAdministracion();
         }
 
         public IList<EstadoModulo> ObtenerModulosVisibles()

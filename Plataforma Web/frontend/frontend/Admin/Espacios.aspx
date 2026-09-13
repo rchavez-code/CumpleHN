@@ -220,6 +220,11 @@
                 <h4 style="margin-top: 18px;">Registrar un pago</h4>
 
                 <div class="gc-form">
+                    <div class="gc-field">
+                        <label for="<%= ddlPlanPago.ClientID %>">Plan vendido</label>
+                        <asp:DropDownList ID="ddlPlanPago" runat="server" CssClass="gc-input gc-select" AutoPostBack="true" OnSelectedIndexChanged="ddlPlanPago_Changed" />
+                        <span class="gc-muted gc-small">Al elegirlo se completan el nombre, el monto, la fecha de fin y el tope del padrón. Se pueden corregir antes de registrar.</span>
+                    </div>
                     <div class="gc-row2">
                         <div class="gc-field">
                             <label for="<%= txtPlan.ClientID %>">Plan</label>
@@ -251,6 +256,11 @@
                             <label for="<%= txtMoneda.ClientID %>">Moneda</label>
                             <asp:TextBox ID="txtMoneda" runat="server" CssClass="gc-input" MaxLength="3" Text="HNL" />
                         </div>
+                    </div>
+                    <div class="gc-field">
+                        <label for="<%= txtMaxMiembros.ClientID %>">Tope del padrón</label>
+                        <asp:TextBox ID="txtMaxMiembros" runat="server" CssClass="gc-input" TextMode="Number" min="0" />
+                        <span class="gc-muted gc-small">Cuántos correos admite el padrón con este pago. Cero es sin tope.</span>
                     </div>
                     <div class="gc-field">
                         <label for="<%= txtNotas.ClientID %>">Notas</label>

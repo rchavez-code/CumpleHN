@@ -136,4 +136,82 @@ namespace frontend.Modelos
             get { return Moneda + " " + Monto.ToString("N2"); }
         }
     }
+
+    /// <summary>Un plan de la oferta: precio en lempiras, duración y tope del padrón.</summary>
+    public class Plan
+    {
+        public int Codigo { get; set; }
+        public string Clave { get; set; }
+        public string Nombre { get; set; }
+        public string Lema { get; set; }
+        public string Descripcion { get; set; }
+        public decimal Precio { get; set; }
+        public string Moneda { get; set; }
+        public int Dias { get; set; }
+        /// <summary>Cero es sin tope.</summary>
+        public int MaxMiembros { get; set; }
+        public bool Destacado { get; set; }
+
+        public string PrecioTexto
+        {
+            get { return "L " + Precio.ToString("N0"); }
+        }
+
+        public string DuracionTexto
+        {
+            get
+            {
+                if (Dias % 365 == 0) return Dias / 365 == 1 ? "un año" : (Dias / 365) + " años";
+                if (Dias % 30 == 0 && Dias >= 60) return (Dias / 30) + " meses";
+                return Dias + " días";
+            }
+        }
+
+        public string MiembrosTexto
+        {
+            get { return MaxMiembros <= 0 ? "Padrón sin tope" : "Padrón de hasta " + MaxMiembros.ToString("N0") + " miembros"; }
+        }
+    }
+
+    /// <summary>Lo que una organización dejó en el formulario público, y cómo se resolvió.</summary>
+    public class Solicitud
+    {
+        public int Codigo { get; set; }
+        public string Organizacion { get; set; }
+        public string Contacto { get; set; }
+        public string Correo { get; set; }
+        public string Telefono { get; set; }
+        public int CodigoPlan { get; set; }
+        public string Plan { get; set; }
+        public string Proceso { get; set; }
+        public DateTime FechaAproximada { get; set; }
+        public string Mensaje { get; set; }
+        public string Estado { get; set; }
+        public DateTime FechaRegistro { get; set; }
+        public int CodigoEspacio { get; set; }
+        public string Espacio { get; set; }
+        public string AtendidaPor { get; set; }
+        public DateTime FechaAtencion { get; set; }
+        public string Notas { get; set; }
+
+        public bool Nueva { get { return Estado == "Nueva"; } }
+
+        public string FechaAproximadaTexto
+        {
+            get { return FechaAproximada == DateTime.MinValue ? "sin fecha" : FechaAproximada.ToString("d MMM yyyy"); }
+        }
+
+        public string EstadoClase
+        {
+            get
+            {
+                switch (Estado)
+                {
+                    case "Nueva":     return "gc-chip gc-chip--proceso";
+                    case "Atendida":  return "gc-chip gc-chip--cumplida";
+                    default:          return "gc-chip gc-chip--estancada";
+                }
+            }
+        }
+    }
 }

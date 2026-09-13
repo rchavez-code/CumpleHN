@@ -27,6 +27,7 @@ namespace frontend.Admin
 
         private const string ClaveModo = "admin.espacios.modo";
         private const string ClaveCodigo = "admin.espacios.codigo";
+        private const string ClaveSolicitud = "admin.espacios.solicitud";
 
         private const string ModoForm = "form";
         private const string ModoEstado = "estado";
@@ -36,7 +37,36 @@ namespace frontend.Admin
         protected void Page_Load(object sender, EventArgs e)
         {
             CargarEspacios();
+
+            // Desde la bandeja de solicitudes: el alta arranca precargada con lo
+            // que la organización escribió, y al guardar la solicitud queda
+            // atendida con el espacio nuevo. La solicitud viaja en la sesión
+            // para sobrevivir al postback del guardado.
+            int solicitud;
+            if (!IsPostBack && int.TryParse(Request.QueryString["solicitud"], out solicitud) && solicitud > 0)
+            {
+                Session[ClaveModo] = ModoForm;
+                Session[ClaveCodigo] = 0;
+                Session[ClaveSolicitud] = solicitud;
+            }
+
             MostrarPaneles(!IsPostBack);
+        }
+
+        /// <summary>La solicitud desde la que se está creando el espacio, o nula.</summary>
+        private Solicitud SolicitudOrigen
+        {
+            get
+            {
+                int codigo = Session[ClaveSolicitud] == null ? 0 : Convert.ToInt32(Session[ClaveSolicitud]);
+                if (codigo <= 0) return null;
+
+                foreach (Solicitud x in Contenido.Datos.ObtenerSolicitudes(Sesion.CodigoUsuario, "Nueva"))
+                {
+                    if (x.Codigo == codigo) return x;
+                }
+                return null;
+            }
         }
 
         // ------------------------------------------------------- Lista
@@ -133,6 +163,14 @@ namespace frontend.Admin
                 txtDescripcion.Text = _seleccion == null ? string.Empty : _seleccion.Descripcion;
                 txtTermino.Text = _seleccion == null ? "Planilla" : _seleccion.TerminoAgrupacion;
                 chkPadron.Checked = _seleccion == null || _seleccion.PadronCerrado;
+
+                Solicitud origen = _seleccion == null ? SolicitudOrigen : null;
+                if (origen != null)
+                {
+                    txtNombre.Text = origen.Organizacion;
+                    txtOrganizacion.Text = origen.Organizacion;
+                    txtDescripcion.Text = origen.Proceso;
+                }
             }
 
             if (modo == ModoEstado)
@@ -161,6 +199,44 @@ namespace frontend.Admin
                 txtMonto.Text = string.Empty;
                 txtMoneda.Text = "HNL";
                 txtNotas.Text = string.Empty;
+                txtMaxMiembros.Text = string.Empty;
+                CargarPlanes();
+            }
+        }
+
+        private void CargarPlanes()
+        {
+            ddlPlanPago.Items.Clear();
+            ddlPlanPago.Items.Add(new ListItem("Elegir un plan…", "0"));
+            foreach (Plan p in Contenido.Datos.ObtenerPlanes())
+            {
+                ddlPlanPago.Items.Add(new ListItem(p.Nombre + " · " + p.PrecioTexto + " por " + p.DuracionTexto, p.Codigo.ToString()));
+            }
+        }
+
+        /// <summary>
+        /// Al elegir un plan se completan los campos del pago con lo que el
+        /// plan dice. Se pueden corregir antes de registrar: el plan es la
+        /// oferta, y el recibo manda.
+        /// </summary>
+        protected void ddlPlanPago_Changed(object sender, EventArgs e)
+        {
+            int codigo;
+            if (!int.TryParse(ddlPlanPago.SelectedValue, out codigo) || codigo <= 0) return;
+
+            foreach (Plan p in Contenido.Datos.ObtenerPlanes())
+            {
+                if (p.Codigo != codigo) continue;
+
+                DateTime desde;
+                if (!DateTime.TryParse(txtDesde.Text, out desde)) desde = DateTime.Today;
+
+                txtPlan.Text = p.Nombre;
+                txtMonto.Text = p.Precio.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                txtMoneda.Text = p.Moneda;
+                txtDesde.Text = desde.ToString("yyyy-MM-dd");
+                txtHasta.Text = desde.AddDays(p.Dias - 1).ToString("yyyy-MM-dd");
+                txtMaxMiembros.Text = p.MaxMiembros > 0 ? p.MaxMiembros.ToString() : "0";
             }
         }
 
@@ -180,6 +256,7 @@ namespace frontend.Admin
         {
             Session.Remove(ClaveModo);
             Session.Remove(ClaveCodigo);
+            Session.Remove(ClaveSolicitud);
             phForm.Visible = false;
             phEstado.Visible = false;
             phCuenta.Visible = false;
@@ -219,9 +296,24 @@ namespace frontend.Admin
 
             if (!r.Ok) return;
 
+            // Si el alta vino de una solicitud, queda atendida con este espacio.
+            int solicitud = Session[ClaveSolicitud] == null ? 0 : Convert.ToInt32(Session[ClaveSolicitud]);
+            if (codigo == 0 && solicitud > 0)
+                Contenido.Datos.AtenderSolicitud(Sesion.CodigoUsuario, solicitud, "Atendida", r.Codigo, "Espacio creado desde la solicitud.");
+
             Cerrar();
             CargarEspacios();
             RecargarSelector();
+
+            // Un espacio recién creado no está vigente hasta su primer pago:
+            // se abre el panel de pagos enseguida, que es el paso que sigue.
+            if (codigo == 0 && r.Codigo > 0)
+            {
+                Session[ClaveModo] = ModoPagos;
+                Session[ClaveCodigo] = r.Codigo;
+                MostrarPaneles(true);
+                MostrarMensaje(r.Mensaje + " Registrá el pago para dejarlo vigente.", true);
+            }
         }
 
         protected void btnConfirmarEstado_Click(object sender, EventArgs e)
@@ -296,9 +388,14 @@ namespace frontend.Admin
                 return;
             }
 
+            int codigoPlan, maxMiembros;
+            int.TryParse(ddlPlanPago.SelectedValue, out codigoPlan);
+            int.TryParse(txtMaxMiembros.Text, out maxMiembros);
+
             ResultadoGuardado r = Contenido.Datos.RegistrarPago(
                 Sesion.CodigoUsuario, _seleccion.Codigo, txtPlan.Text.Trim(), desde, hasta, monto,
-                txtMoneda.Text.Trim(), txtReferencia.Text.Trim(), txtNotas.Text.Trim());
+                txtMoneda.Text.Trim(), txtReferencia.Text.Trim(), txtNotas.Text.Trim(),
+                codigoPlan, maxMiembros);
 
             MostrarMensaje(r.Mensaje, r.Ok);
 

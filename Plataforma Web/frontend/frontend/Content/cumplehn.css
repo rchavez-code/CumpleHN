@@ -228,6 +228,10 @@ hr {
     text-decoration: none;
 }
 
+/* El enlace a la oferta para organizaciones se distingue del resto de la
+   navegación: es una invitación, no una sección de consulta. */
+.gc-nav a.gc-nav__org { color: var(--gc-turquesa); font-weight: 600; }
+
 .gc-nav a:hover {
     color: var(--gc-ink);
     text-decoration: none;

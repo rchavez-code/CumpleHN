@@ -65,6 +65,11 @@
                     <asp:PlaceHolder ID="phNavAnalitica" runat="server">
                         <li><a class="<%= ClaseNav("Analitica") %>" href="<%= UrlEspacio("~/Analitica") %>">Analítica</a></li>
                     </asp:PlaceHolder>
+                    <%-- La oferta para organizaciones es de la plataforma: dentro de
+                         un espacio no se vende otro espacio. --%>
+                    <% if (!EnEspacio) { %>
+                    <li><a class="<%= ClaseNav("Organizaciones") %> gc-nav__org" href="<%= ResolveUrl("~/Organizaciones") %>">Organizaciones</a></li>
+                    <% } %>
                 </ul>
 
                 <div class="gc-header__actions">
@@ -154,6 +159,9 @@
                             <li><a href="<%= UrlEspacio("~/Campanas") %>">Campañas electorales</a></li>
                             <li><a href="<%= UrlEspacio("~/Candidatos") %>">Candidatos</a></li>
                             <li><a href="<%= UrlEspacio("~/Propuestas") %>">Propuestas y proyectos</a></li>
+                            <% if (!EnEspacio) { %>
+                            <li><a href="<%= ResolveUrl("~/Organizaciones") %>">Para organizaciones</a></li>
+                            <% } %>
                         </ul>
                     </div>
 

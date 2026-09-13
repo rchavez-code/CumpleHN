@@ -62,6 +62,8 @@ namespace frontend.Admin
 
         protected global::System.Web.UI.WebControls.PlaceHolder phPagosVacio;
 
+        protected global::System.Web.UI.WebControls.DropDownList ddlPlanPago;
+
         protected global::System.Web.UI.WebControls.TextBox txtPlan;
 
         protected global::System.Web.UI.WebControls.TextBox txtReferencia;
@@ -75,6 +77,8 @@ namespace frontend.Admin
         protected global::System.Web.UI.WebControls.TextBox txtMoneda;
 
         protected global::System.Web.UI.WebControls.TextBox txtNotas;
+
+        protected global::System.Web.UI.WebControls.TextBox txtMaxMiembros;
 
         protected global::System.Web.UI.WebControls.Button btnRegistrarPago;
 

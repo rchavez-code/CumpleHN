@@ -1375,13 +1375,94 @@ namespace frontend.Servicios
 
         public ResultadoGuardado RegistrarPago(
             int codigoUsuario, int codigoEspacio, string plan, DateTime vigenteDesde, DateTime vigenteHasta,
-            decimal monto, string moneda, string referencia, string notas)
+            decimal monto, string moneda, string referencia, string notas, int codigoPlan, int maxMiembros)
         {
             ws.RespuestaGuardado d = Ejecutar(
                 c => c.registrarPago(codigoUsuario, codigoEspacio, plan, vigenteDesde, vigenteHasta,
-                                     monto, moneda, referencia, notas), null);
+                                     monto, moneda, referencia, notas, codigoPlan, maxMiembros), null);
 
             return AGuardado(d);
+        }
+
+        public IList<Plan> ObtenerPlanes()
+        {
+            ws.Plan[] datos = Ejecutar(c => c.listarPlanes(), new ws.Plan[0]);
+
+            List<Plan> lista = new List<Plan>();
+            if (datos == null) return lista;
+
+            foreach (ws.Plan d in datos)
+            {
+                lista.Add(new Plan
+                {
+                    Codigo = d.codigoPlan,
+                    Clave = d.clave ?? string.Empty,
+                    Nombre = d.nombre ?? string.Empty,
+                    Lema = d.lema ?? string.Empty,
+                    Descripcion = d.descripcion ?? string.Empty,
+                    Precio = d.precio,
+                    Moneda = d.moneda ?? "HNL",
+                    Dias = d.dias,
+                    MaxMiembros = d.maxMiembros,
+                    Destacado = d.destacado
+                });
+            }
+
+            return lista;
+        }
+
+        public ResultadoGuardado EnviarSolicitud(
+            string organizacion, string contacto, string correo, string telefono,
+            int codigoPlan, string proceso, string fechaAproximada, string mensaje)
+        {
+            ws.RespuestaGuardado d = Ejecutar(
+                c => c.enviarSolicitud(organizacion, contacto, correo, telefono,
+                                       codigoPlan, proceso, fechaAproximada, mensaje), null);
+
+            return AGuardado(d);
+        }
+
+        public IList<Solicitud> ObtenerSolicitudes(int codigoUsuario, string estado)
+        {
+            ws.Solicitud[] datos = Ejecutar(
+                c => c.listarSolicitudes(codigoUsuario, estado ?? string.Empty), new ws.Solicitud[0]);
+
+            List<Solicitud> lista = new List<Solicitud>();
+            if (datos == null) return lista;
+
+            foreach (ws.Solicitud d in datos)
+            {
+                lista.Add(new Solicitud
+                {
+                    Codigo = d.codigoSolicitud,
+                    Organizacion = d.organizacion ?? string.Empty,
+                    Contacto = d.nombreContacto ?? string.Empty,
+                    Correo = d.correo ?? string.Empty,
+                    Telefono = d.telefono ?? string.Empty,
+                    CodigoPlan = d.codigoPlan,
+                    Plan = d.plan ?? string.Empty,
+                    Proceso = d.proceso ?? string.Empty,
+                    FechaAproximada = d.fechaAproximada,
+                    Mensaje = d.mensaje ?? string.Empty,
+                    Estado = d.estado ?? string.Empty,
+                    FechaRegistro = d.fechaRegistro,
+                    CodigoEspacio = d.codigoEspacio,
+                    Espacio = d.espacio ?? string.Empty,
+                    AtendidaPor = d.atendidaPor ?? string.Empty,
+                    FechaAtencion = d.fechaAtencion,
+                    Notas = d.notas ?? string.Empty
+                });
+            }
+
+            return lista;
+        }
+
+        public Resultado AtenderSolicitud(int codigoUsuario, int codigoSolicitud, string estado, int codigoEspacio, string notas)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.atenderSolicitud(codigoUsuario, codigoSolicitud, estado, codigoEspacio, notas), null);
+
+            return ARespuesta(d);
         }
 
         private static Espacio AEspacio(ws.Espacio d)

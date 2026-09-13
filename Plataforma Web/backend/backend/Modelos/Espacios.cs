@@ -101,4 +101,42 @@ namespace backend.Modelos
         public DateTime fechaRegistro { get; set; }
         public bool vigente { get; set; }
     }
+
+    /// <summary>Un plan de la oferta: precio, duración y tope del padrón.</summary>
+    public class Plan
+    {
+        public int codigoPlan { get; set; }
+        public string clave { get; set; }
+        public string nombre { get; set; }
+        public string lema { get; set; }
+        public string descripcion { get; set; }
+        public decimal precio { get; set; }
+        public string moneda { get; set; }
+        public int dias { get; set; }
+        /// <summary>Cero es sin tope.</summary>
+        public int maxMiembros { get; set; }
+        public bool destacado { get; set; }
+    }
+
+    /// <summary>Lo que una organización dejó en el formulario público, y cómo se resolvió.</summary>
+    public class Solicitud
+    {
+        public int codigoSolicitud { get; set; }
+        public string organizacion { get; set; }
+        public string nombreContacto { get; set; }
+        public string correo { get; set; }
+        public string telefono { get; set; }
+        public int codigoPlan { get; set; }
+        public string plan { get; set; }
+        public string proceso { get; set; }
+        public DateTime fechaAproximada { get; set; }
+        public string mensaje { get; set; }
+        public string estado { get; set; }
+        public DateTime fechaRegistro { get; set; }
+        public int codigoEspacio { get; set; }
+        public string espacio { get; set; }
+        public string atendidaPor { get; set; }
+        public DateTime fechaAtencion { get; set; }
+        public string notas { get; set; }
+    }
 }

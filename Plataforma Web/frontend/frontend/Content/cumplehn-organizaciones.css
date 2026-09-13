@@ -1,0 +1,332 @@
+/* ============================================================
+   CumpleHN — Página «Para organizaciones»
+   ------------------------------------------------------------
+   La oferta comercial del espacio. Va en su propia hoja porque
+   ninguna otra página la necesita, y se enlaza con Recursos.Url
+   para que el navegador no sirva una versión vieja.
+
+   Prefijo gc-org, verificado con grep antes de nombrarlo. Los
+   colores son los de cumplehn.css: el escarlata para la acción,
+   el turquesa y el verde para los acentos, el azul de identidad
+   solo en el mock de la barra.
+   ============================================================ */
+
+/* ------------------------------------------------------ Hero */
+
+.gc-org__hero {
+    padding: 64px 0 56px;
+    border-bottom: 1px solid var(--gc-line);
+    background:
+        radial-gradient(900px 420px at 8% -20%, rgba(195, 55, 44, .07), transparent 60%),
+        radial-gradient(800px 380px at 92% 10%, rgba(23, 112, 138, .09), transparent 60%),
+        radial-gradient(600px 300px at 60% 110%, rgba(211, 144, 31, .06), transparent 60%),
+        var(--gc-surface);
+}
+
+.gc-org__hero-in {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+    gap: 48px;
+    align-items: center;
+}
+
+.gc-org__hero h1 {
+    font-size: 2.9rem;
+    line-height: 1.08;
+    max-width: 18ch;
+    margin: .2em 0 .5em;
+}
+
+.gc-org__lead {
+    font-size: 1.12rem;
+    line-height: 1.6;
+    color: var(--gc-ink-2);
+    max-width: 52ch;
+    margin: 0 0 22px;
+}
+
+.gc-org__cta { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.gc-org__fine {
+    margin: 14px 0 0;
+    font-size: .84rem;
+    color: var(--gc-muted);
+}
+
+/* Un dibujo de la portada de un espacio. Todo es CSS: sin imagen que
+   se desactualice cuando cambie el sitio real. */
+.gc-org__mock {
+    border: 1px solid var(--gc-line);
+    border-radius: 14px;
+    background: var(--gc-surface);
+    box-shadow: 0 24px 60px rgba(20, 23, 28, .12), 0 2px 6px rgba(20, 23, 28, .06);
+    overflow: hidden;
+    transform: rotate(-1.2deg);
+}
+
+.gc-org__mock-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gc-line);
+    background: var(--gc-surface-2);
+}
+
+.gc-org__mock-brand {
+    display: flex;
+    flex-direction: column;
+    font-family: var(--gc-display);
+    font-size: .98rem;
+    line-height: 1.05;
+}
+
+.gc-org__mock-brand small {
+    font-family: var(--gc-sans);
+    font-size: .6rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--gc-muted);
+}
+
+.gc-org__mock-nav { display: flex; gap: 6px; }
+.gc-org__mock-nav i { display: block; width: 34px; height: 6px; border-radius: 3px; background: var(--gc-line); }
+.gc-org__mock-nav i:first-child { background: var(--gc-azul); }
+
+.gc-org__mock-body { padding: 16px; }
+
+.gc-org__mock-title {
+    font-family: var(--gc-display);
+    font-size: 1.25rem;
+    margin-bottom: 10px;
+}
+
+.gc-org__mock-row { display: flex; gap: 6px; margin-bottom: 14px; }
+
+.gc-org__mock-chip {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: var(--gc-r-pill);
+    border: 1px solid transparent;
+}
+.gc-org__mock-chip--a { background: var(--gc-turquesa-l); color: #12586c; border-color: #d7e8ed; }
+.gc-org__mock-chip--v { background: var(--gc-verde-l); color: #1f5d42; border-color: #cfe8db; }
+
+.gc-org__mock-bars div {
+    display: grid;
+    grid-template-columns: 1fr;
+    margin-bottom: 9px;
+    font-size: .74rem;
+    color: var(--gc-muted);
+}
+.gc-org__mock-bars b {
+    display: block;
+    height: 9px;
+    border-radius: 5px;
+    background: var(--gc-turquesa);
+    margin-bottom: 3px;
+}
+
+.gc-org__mock-foot {
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--gc-line);
+    font-size: .72rem;
+    color: var(--gc-faint);
+}
+
+/* -------------------------------------------------- Secciones */
+
+.gc-org__sec { padding: 56px 0; }
+.gc-org__sec--alt { background: var(--gc-bg); border-top: 1px solid var(--gc-line); border-bottom: 1px solid var(--gc-line); }
+
+.gc-org__head { text-align: center; max-width: 60ch; margin: 0 auto 32px; }
+.gc-org__head--left { text-align: left; margin: 0 0 24px; }
+.gc-org__head h2 { font-size: 1.9rem; margin: 0 0 .35em; }
+.gc-org__head p { color: var(--gc-muted); margin: 0; font-size: 1.02rem; }
+
+/* ----------------------------------------------- Para quién */
+
+.gc-org__quien > div { margin-bottom: 18px; }
+
+.gc-org__quien-it {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 18px 18px 18px 20px;
+    border-left: 3px solid var(--gc-line);
+    height: 100%;
+}
+.gc-org__quien-it strong { font-size: 1rem; }
+.gc-org__quien-it > span:last-child { font-size: .9rem; color: var(--gc-muted); line-height: 1.5; }
+
+.gc-org__ico { font-size: .8rem; line-height: 1; margin-bottom: 4px; }
+.gc-org__ico--t { color: var(--gc-turquesa); }
+.gc-org__ico--v { color: var(--gc-verde); }
+.gc-org__ico--a { color: var(--gc-ambar); }
+.gc-org__ico--e { color: var(--gc-escarlata); }
+
+/* ------------------------------------------------ Qué incluye */
+
+.gc-org__feats > div { margin-bottom: var(--gc-gap); }
+
+.gc-org__feat {
+    height: 100%;
+    padding: 22px 22px 20px;
+    border: 1px solid var(--gc-line);
+    border-radius: var(--gc-r);
+    background: var(--gc-surface);
+    box-shadow: var(--gc-sh);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+.gc-org__feat:hover { transform: translateY(-2px); box-shadow: var(--gc-sh-2); }
+.gc-org__feat h3 { font-size: 1.08rem; margin: 0 0 .4em; }
+.gc-org__feat p { margin: 0; color: var(--gc-ink-2); font-size: .93rem; line-height: 1.55; }
+.gc-org__feat code { font-size: .82em; }
+
+/* --------------------------------------------- Cómo funciona */
+
+.gc-org__pasos {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 22px;
+    counter-reset: paso;
+}
+
+.gc-org__pasos li { position: relative; padding-top: 6px; }
+.gc-org__pasos li > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--gc-escarlata);
+    color: #fff;
+    font-weight: 700;
+    font-size: .9rem;
+    margin-bottom: 10px;
+}
+.gc-org__pasos li strong { display: block; font-size: 1.02rem; margin-bottom: 4px; }
+.gc-org__pasos li p { margin: 0; font-size: .92rem; color: var(--gc-muted); line-height: 1.55; }
+
+/* --------------------------------------------------- Planes */
+
+.gc-org__planes { align-items: stretch; }
+.gc-org__planes > div { margin-bottom: var(--gc-gap); }
+
+.gc-org__plan {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 26px 24px 24px;
+    border: 1px solid var(--gc-line);
+    border-radius: 14px;
+    background: var(--gc-surface);
+    box-shadow: var(--gc-sh);
+}
+
+.gc-org__plan.is-destacado {
+    border-color: var(--gc-escarlata);
+    box-shadow: 0 0 0 3px rgba(195, 55, 44, .1), var(--gc-sh-2);
+}
+
+.gc-org__plan-tag {
+    position: absolute;
+    top: -12px; left: 24px;
+    padding: 4px 11px;
+    border-radius: var(--gc-r-pill);
+    background: var(--gc-escarlata);
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.gc-org__plan h3 { font-size: 1.35rem; margin: 0 0 .15em; }
+.gc-org__plan-lema { color: var(--gc-muted); font-size: .92rem; margin: 0 0 16px; min-height: 2.8em; }
+
+.gc-org__plan-precio {
+    font-family: var(--gc-sans);
+    font-size: 2.3rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    line-height: 1;
+    margin-bottom: 18px;
+}
+.gc-org__plan-precio small {
+    display: block;
+    font-size: .8rem;
+    font-weight: 500;
+    color: var(--gc-muted);
+    letter-spacing: 0;
+    margin-top: 6px;
+}
+
+.gc-org__plan ul { list-style: none; padding: 0; margin: 0 0 16px; }
+.gc-org__plan li {
+    position: relative;
+    padding: 6px 0 6px 24px;
+    font-size: .92rem;
+    border-bottom: 1px solid var(--gc-line-2);
+}
+.gc-org__plan li::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: 11px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--gc-verde-l);
+    box-shadow: inset 0 0 0 2px var(--gc-verde);
+}
+.gc-org__plan li:first-child,
+.gc-org__plan li:nth-child(2) { font-weight: 600; }
+
+.gc-org__plan-desc { font-size: .86rem; color: var(--gc-muted); line-height: 1.55; margin: 0 0 18px; flex: 1 1 auto; }
+
+.gc-org__pago {
+    max-width: 72ch;
+    margin: 8px auto 0;
+    padding: 16px 20px;
+    border-radius: var(--gc-r);
+    background: var(--gc-ambar-l);
+    border: 1px solid #f2e4c6;
+    font-size: .92rem;
+    line-height: 1.55;
+    color: #5d4a1c;
+}
+
+/* ------------------------------------------------ Solicitud */
+
+.gc-org__form { box-shadow: var(--gc-sh-2); }
+.gc-org__form .gc-formfoot { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+.gc-org__faq { margin: 0; }
+.gc-org__faq dt { font-weight: 700; margin-top: 14px; font-size: .95rem; }
+.gc-org__faq dd { margin: 4px 0 0; color: var(--gc-muted); font-size: .9rem; line-height: 1.55; }
+
+/* El campo trampa: fuera de la vista, no display:none, porque algunos
+   bots saltan lo oculto. */
+.gc-org__hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+/* -------------------------------------------------- Responsive */
+
+@media (max-width: 991px) {
+    .gc-org__hero-in { grid-template-columns: 1fr; gap: 32px; }
+    .gc-org__hero h1 { font-size: 2.3rem; }
+    .gc-org__mock { transform: none; max-width: 480px; }
+    .gc-org__pasos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 575px) {
+    .gc-org__hero { padding: 40px 0 36px; }
+    .gc-org__hero h1 { font-size: 1.9rem; }
+    .gc-org__sec { padding: 40px 0; }
+    .gc-org__pasos { grid-template-columns: 1fr; }
+    .gc-org__plan-precio { font-size: 2rem; }
+}

@@ -5,6 +5,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
+using System.Web;
 using System.Web.Script.Services;
 using System.Web.Services;
 using backend.Modelos;
@@ -3527,7 +3528,7 @@ namespace backend
         public RespuestaGuardado registrarPago(
             int codigoUsuario, int codigoEspacio, string plan,
             DateTime vigenteDesde, DateTime vigenteHasta, decimal monto,
-            string moneda, string referenciaPago, string notas)
+            string moneda, string referenciaPago, string notas, int codigoPlan, int maxMiembros)
         {
             using (SqlConnection conn = new SqlConnection(cadenaConexion))
             {
@@ -3547,8 +3548,198 @@ namespace backend
                 cmd.Parameters.AddWithValue("@moneda", (object)moneda ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@referenciaPago", (object)referenciaPago ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@notas", (object)notas ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@codigoPlan", codigoPlan);
+                cmd.Parameters.AddWithValue("@maxMiembros", maxMiembros);
 
                 return LeerGuardado(cmd);
+            }
+        }
+
+        // ------------------------------------------------ Planes y solicitudes
+
+        /// <summary>
+        /// La oferta: los planes con su precio en lempiras, duración y tope
+        /// del padrón. Pública: es lo que muestra la página para
+        /// organizaciones, y la base es quien fija el precio.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<Plan> listarPlanes()
+        {
+            List<Plan> lista = new List<Plan>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand("dbo.spPlanes", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lista.Add(new Plan
+                        {
+                            codigoPlan = Convert.ToInt32(reader["codigoPlan"]),
+                            clave = Texto(reader, "clave"),
+                            nombre = Texto(reader, "nombre"),
+                            lema = Texto(reader, "lema"),
+                            descripcion = Texto(reader, "descripcion"),
+                            precio = Convert.ToDecimal(reader["precio"]),
+                            moneda = Texto(reader, "moneda"),
+                            dias = Convert.ToInt32(reader["dias"]),
+                            maxMiembros = Convert.ToInt32(reader["maxMiembros"]),
+                            destacado = Convert.ToBoolean(reader["destacado"])
+                        });
+                    }
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Una organización pide un espacio desde el sitio público. Sin cuenta:
+        /// es el primer contacto. Queda en la bandeja de la plataforma y, si el
+        /// correo saliente está configurado, se avisa por correo. Que el aviso
+        /// falle no pierde la solicitud: ya está guardada.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaGuardado enviarSolicitud(
+            string organizacion, string nombreContacto, string correo, string telefono,
+            int codigoPlan, string proceso, string fechaAproximada, string mensaje)
+        {
+            RespuestaGuardado r;
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand("dbo.spSolicitudCrear", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@organizacion", (object)organizacion ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@nombreContacto", (object)nombreContacto ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@correo", (object)correo ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@telefono", (object)telefono ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@codigoPlan", codigoPlan);
+                cmd.Parameters.AddWithValue("@proceso", (object)proceso ?? DBNull.Value);
+                cmd.Parameters.Add("@fechaAproximada", SqlDbType.Date).Value = OpcionalFecha(fechaAproximada);
+                cmd.Parameters.AddWithValue("@mensaje", (object)mensaje ?? DBNull.Value);
+
+                r = LeerGuardado(cmd);
+            }
+
+            if (r.ok && r.codigo > 0) AvisarSolicitud(r.codigo, organizacion, nombreContacto, correo, telefono, proceso);
+
+            return r;
+        }
+
+        /// <summary>
+        /// Correo a la propia plataforma con la solicitud nueva. Va a
+        /// CorreoSolicitudes del Web.config y, si no está, al remitente. Nunca
+        /// lanza: el aviso es una comodidad, la solicitud ya quedó guardada.
+        /// </summary>
+        private static void AvisarSolicitud(int codigo, string organizacion, string contacto,
+                                            string correo, string telefono, string proceso)
+        {
+            try
+            {
+                string destino = ConfigurationManager.AppSettings["CorreoSolicitudes"];
+                if (string.IsNullOrEmpty(destino)) destino = ConfigurationManager.AppSettings["CorreoRemitente"];
+                if (string.IsNullOrEmpty(destino)) return;
+
+                string html =
+                    "<p>Llegó una solicitud de espacio (#" + codigo + ").</p>" +
+                    "<p><strong>" + HttpUtility.HtmlEncode(organizacion) + "</strong><br/>" +
+                    HttpUtility.HtmlEncode(contacto) + " · " + HttpUtility.HtmlEncode(correo) +
+                    (string.IsNullOrEmpty(telefono) ? "" : " · " + HttpUtility.HtmlEncode(telefono)) + "</p>" +
+                    "<p>" + HttpUtility.HtmlEncode(proceso) + "</p>" +
+                    "<p>Se atiende desde Administración → Solicitudes.</p>";
+
+                string error;
+                CorreoSaliente.Enviar(destino, "Solicitud de espacio: " + organizacion, html, out error);
+            }
+            catch
+            {
+                // Sin registro: el aviso no forma parte de la solicitud.
+            }
+        }
+
+        /// <summary>La bandeja de solicitudes. Solo la plataforma.</summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<Solicitud> listarSolicitudes(int codigoUsuario, string estado)
+        {
+            List<Solicitud> lista = new List<Solicitud>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminSolicitudes", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@estado", (object)estado ?? DBNull.Value);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lista.Add(new Solicitud
+                        {
+                            codigoSolicitud = Convert.ToInt32(reader["codigoSolicitud"]),
+                            organizacion = Texto(reader, "organizacion"),
+                            nombreContacto = Texto(reader, "nombreContacto"),
+                            correo = Texto(reader, "correo"),
+                            telefono = Texto(reader, "telefono"),
+                            codigoPlan = Convert.ToInt32(reader["codigoPlan"]),
+                            plan = Texto(reader, "nombrePlan"),
+                            proceso = Texto(reader, "proceso"),
+                            fechaAproximada = reader["fechaAproximada"] == DBNull.Value
+                                ? DateTime.MinValue : Convert.ToDateTime(reader["fechaAproximada"]),
+                            mensaje = Texto(reader, "mensaje"),
+                            estado = Texto(reader, "estado"),
+                            fechaRegistro = Convert.ToDateTime(reader["fechaRegistro"]),
+                            codigoEspacio = Convert.ToInt32(reader["codigoEspacio"]),
+                            espacio = Texto(reader, "espacio"),
+                            atendidaPor = Texto(reader, "atendidaPor"),
+                            fechaAtencion = reader["fechaAtencion"] == DBNull.Value
+                                ? DateTime.MinValue : Convert.ToDateTime(reader["fechaAtencion"]),
+                            notas = Texto(reader, "notas")
+                        });
+                    }
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>Atendida (con el espacio creado) o descartada (con motivo). Solo la plataforma.</summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin atenderSolicitud(
+            int codigoUsuario, int codigoSolicitud, string estado, int codigoEspacio, string notas)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return Rechazo("Solo la administración de la plataforma atiende solicitudes.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminAtenderSolicitud", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoSolicitud", codigoSolicitud);
+                cmd.Parameters.AddWithValue("@estado", (object)estado ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
+                cmd.Parameters.AddWithValue("@notas", (object)notas ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
             }
         }
 

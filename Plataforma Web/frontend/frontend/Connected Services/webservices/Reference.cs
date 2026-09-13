@@ -117,10 +117,38 @@ namespace frontend.webservices
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/registrarPago", ReplyAction="*")]
         [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.RespuestaGuardado registrarPago(int codigoUsuario, int codigoEspacio, string plan, System.DateTime vigenteDesde, System.DateTime vigenteHasta, decimal monto, string moneda, string referenciaPago, string notas);
+        frontend.webservices.RespuestaGuardado registrarPago(int codigoUsuario, int codigoEspacio, string plan, System.DateTime vigenteDesde, System.DateTime vigenteHasta, decimal monto, string moneda, string referenciaPago, string notas, int codigoPlan, int maxMiembros);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/registrarPago", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> registrarPagoAsync(int codigoUsuario, int codigoEspacio, string plan, System.DateTime vigenteDesde, System.DateTime vigenteHasta, decimal monto, string moneda, string referenciaPago, string notas);
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> registrarPagoAsync(int codigoUsuario, int codigoEspacio, string plan, System.DateTime vigenteDesde, System.DateTime vigenteHasta, decimal monto, string moneda, string referenciaPago, string notas, int codigoPlan, int maxMiembros);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarPlanes", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.Plan[] listarPlanes();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarPlanes", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.Plan[]> listarPlanesAsync();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/enviarSolicitud", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaGuardado enviarSolicitud(string organizacion, string nombreContacto, string correo, string telefono, int codigoPlan, string proceso, string fechaAproximada, string mensaje);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/enviarSolicitud", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> enviarSolicitudAsync(string organizacion, string nombreContacto, string correo, string telefono, int codigoPlan, string proceso, string fechaAproximada, string mensaje);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarSolicitudes", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.Solicitud[] listarSolicitudes(int codigoUsuario, string estado);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarSolicitudes", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.Solicitud[]> listarSolicitudesAsync(int codigoUsuario, string estado);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/atenderSolicitud", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin atenderSolicitud(int codigoUsuario, int codigoSolicitud, string estado, int codigoEspacio, string notas);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/atenderSolicitud", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> atenderSolicitudAsync(int codigoUsuario, int codigoSolicitud, string estado, int codigoEspacio, string notas);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosVisibles", ReplyAction="*")]
         [System.ServiceModel.XmlSerializerFormatAttribute()]
@@ -6495,6 +6523,458 @@ namespace frontend.webservices
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class Solicitud
+    {
+        
+        private int codigoSolicitudField;
+        
+        private string organizacionField;
+        
+        private string nombreContactoField;
+        
+        private string correoField;
+        
+        private string telefonoField;
+        
+        private int codigoPlanField;
+        
+        private string planField;
+        
+        private string procesoField;
+        
+        private System.DateTime fechaAproximadaField;
+        
+        private string mensajeField;
+        
+        private string estadoField;
+        
+        private System.DateTime fechaRegistroField;
+        
+        private int codigoEspacioField;
+        
+        private string espacioField;
+        
+        private string atendidaPorField;
+        
+        private System.DateTime fechaAtencionField;
+        
+        private string notasField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoSolicitud
+        {
+            get
+            {
+                return this.codigoSolicitudField;
+            }
+            set
+            {
+                this.codigoSolicitudField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string organizacion
+        {
+            get
+            {
+                return this.organizacionField;
+            }
+            set
+            {
+                this.organizacionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string nombreContacto
+        {
+            get
+            {
+                return this.nombreContactoField;
+            }
+            set
+            {
+                this.nombreContactoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public string correo
+        {
+            get
+            {
+                return this.correoField;
+            }
+            set
+            {
+                this.correoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public string telefono
+        {
+            get
+            {
+                return this.telefonoField;
+            }
+            set
+            {
+                this.telefonoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        public int codigoPlan
+        {
+            get
+            {
+                return this.codigoPlanField;
+            }
+            set
+            {
+                this.codigoPlanField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        public string plan
+        {
+            get
+            {
+                return this.planField;
+            }
+            set
+            {
+                this.planField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        public string proceso
+        {
+            get
+            {
+                return this.procesoField;
+            }
+            set
+            {
+                this.procesoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        public System.DateTime fechaAproximada
+        {
+            get
+            {
+                return this.fechaAproximadaField;
+            }
+            set
+            {
+                this.fechaAproximadaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
+        public string mensaje
+        {
+            get
+            {
+                return this.mensajeField;
+            }
+            set
+            {
+                this.mensajeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
+        public string estado
+        {
+            get
+            {
+                return this.estadoField;
+            }
+            set
+            {
+                this.estadoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
+        public System.DateTime fechaRegistro
+        {
+            get
+            {
+                return this.fechaRegistroField;
+            }
+            set
+            {
+                this.fechaRegistroField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=12)]
+        public int codigoEspacio
+        {
+            get
+            {
+                return this.codigoEspacioField;
+            }
+            set
+            {
+                this.codigoEspacioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=13)]
+        public string espacio
+        {
+            get
+            {
+                return this.espacioField;
+            }
+            set
+            {
+                this.espacioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=14)]
+        public string atendidaPor
+        {
+            get
+            {
+                return this.atendidaPorField;
+            }
+            set
+            {
+                this.atendidaPorField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=15)]
+        public System.DateTime fechaAtencion
+        {
+            get
+            {
+                return this.fechaAtencionField;
+            }
+            set
+            {
+                this.fechaAtencionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=16)]
+        public string notas
+        {
+            get
+            {
+                return this.notasField;
+            }
+            set
+            {
+                this.notasField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class Plan
+    {
+        
+        private int codigoPlanField;
+        
+        private string claveField;
+        
+        private string nombreField;
+        
+        private string lemaField;
+        
+        private string descripcionField;
+        
+        private decimal precioField;
+        
+        private string monedaField;
+        
+        private int diasField;
+        
+        private int maxMiembrosField;
+        
+        private bool destacadoField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoPlan
+        {
+            get
+            {
+                return this.codigoPlanField;
+            }
+            set
+            {
+                this.codigoPlanField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string clave
+        {
+            get
+            {
+                return this.claveField;
+            }
+            set
+            {
+                this.claveField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string nombre
+        {
+            get
+            {
+                return this.nombreField;
+            }
+            set
+            {
+                this.nombreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public string lema
+        {
+            get
+            {
+                return this.lemaField;
+            }
+            set
+            {
+                this.lemaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public string descripcion
+        {
+            get
+            {
+                return this.descripcionField;
+            }
+            set
+            {
+                this.descripcionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        public decimal precio
+        {
+            get
+            {
+                return this.precioField;
+            }
+            set
+            {
+                this.precioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        public string moneda
+        {
+            get
+            {
+                return this.monedaField;
+            }
+            set
+            {
+                this.monedaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        public int dias
+        {
+            get
+            {
+                return this.diasField;
+            }
+            set
+            {
+                this.diasField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        public int maxMiembros
+        {
+            get
+            {
+                return this.maxMiembrosField;
+            }
+            set
+            {
+                this.maxMiembrosField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
+        public bool destacado
+        {
+            get
+            {
+                return this.destacadoField;
+            }
+            set
+            {
+                this.destacadoField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
     public partial class Suscripcion
     {
         
@@ -7757,14 +8237,54 @@ namespace frontend.webservices
             return base.Channel.listarSuscripcionesAsync(codigoUsuario, codigoEspacio);
         }
         
-        public frontend.webservices.RespuestaGuardado registrarPago(int codigoUsuario, int codigoEspacio, string plan, System.DateTime vigenteDesde, System.DateTime vigenteHasta, decimal monto, string moneda, string referenciaPago, string notas)
+        public frontend.webservices.RespuestaGuardado registrarPago(int codigoUsuario, int codigoEspacio, string plan, System.DateTime vigenteDesde, System.DateTime vigenteHasta, decimal monto, string moneda, string referenciaPago, string notas, int codigoPlan, int maxMiembros)
         {
-            return base.Channel.registrarPago(codigoUsuario, codigoEspacio, plan, vigenteDesde, vigenteHasta, monto, moneda, referenciaPago, notas);
+            return base.Channel.registrarPago(codigoUsuario, codigoEspacio, plan, vigenteDesde, vigenteHasta, monto, moneda, referenciaPago, notas, codigoPlan, maxMiembros);
         }
         
-        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> registrarPagoAsync(int codigoUsuario, int codigoEspacio, string plan, System.DateTime vigenteDesde, System.DateTime vigenteHasta, decimal monto, string moneda, string referenciaPago, string notas)
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> registrarPagoAsync(int codigoUsuario, int codigoEspacio, string plan, System.DateTime vigenteDesde, System.DateTime vigenteHasta, decimal monto, string moneda, string referenciaPago, string notas, int codigoPlan, int maxMiembros)
         {
-            return base.Channel.registrarPagoAsync(codigoUsuario, codigoEspacio, plan, vigenteDesde, vigenteHasta, monto, moneda, referenciaPago, notas);
+            return base.Channel.registrarPagoAsync(codigoUsuario, codigoEspacio, plan, vigenteDesde, vigenteHasta, monto, moneda, referenciaPago, notas, codigoPlan, maxMiembros);
+        }
+        
+        public frontend.webservices.Plan[] listarPlanes()
+        {
+            return base.Channel.listarPlanes();
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.Plan[]> listarPlanesAsync()
+        {
+            return base.Channel.listarPlanesAsync();
+        }
+        
+        public frontend.webservices.RespuestaGuardado enviarSolicitud(string organizacion, string nombreContacto, string correo, string telefono, int codigoPlan, string proceso, string fechaAproximada, string mensaje)
+        {
+            return base.Channel.enviarSolicitud(organizacion, nombreContacto, correo, telefono, codigoPlan, proceso, fechaAproximada, mensaje);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> enviarSolicitudAsync(string organizacion, string nombreContacto, string correo, string telefono, int codigoPlan, string proceso, string fechaAproximada, string mensaje)
+        {
+            return base.Channel.enviarSolicitudAsync(organizacion, nombreContacto, correo, telefono, codigoPlan, proceso, fechaAproximada, mensaje);
+        }
+        
+        public frontend.webservices.Solicitud[] listarSolicitudes(int codigoUsuario, string estado)
+        {
+            return base.Channel.listarSolicitudes(codigoUsuario, estado);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.Solicitud[]> listarSolicitudesAsync(int codigoUsuario, string estado)
+        {
+            return base.Channel.listarSolicitudesAsync(codigoUsuario, estado);
+        }
+        
+        public frontend.webservices.RespuestaAdmin atenderSolicitud(int codigoUsuario, int codigoSolicitud, string estado, int codigoEspacio, string notas)
+        {
+            return base.Channel.atenderSolicitud(codigoUsuario, codigoSolicitud, estado, codigoEspacio, notas);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> atenderSolicitudAsync(int codigoUsuario, int codigoSolicitud, string estado, int codigoEspacio, string notas)
+        {
+            return base.Channel.atenderSolicitudAsync(codigoUsuario, codigoSolicitud, estado, codigoEspacio, notas);
         }
         
         public frontend.webservices.EstadoModulo[] listarModulosVisibles()

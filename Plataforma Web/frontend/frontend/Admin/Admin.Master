@@ -66,6 +66,7 @@
                     <a class="gc-side__link" href="<%= ResolveUrl("~/Analitica") %>">Tablero de analítica</a>
                     <% if (AdministraPlataforma) { %>
                     <a class="gc-side__link <%= ClaseNav("Espacios") %>" href="<%= ResolveUrl("~/Admin/Espacios") %>">Espacios</a>
+                    <a class="gc-side__link <%= ClaseNav("Solicitudes") %>" href="<%= ResolveUrl("~/Admin/Solicitudes") %>">Solicitudes</a>
                     <% } %>
 
                     <div class="gc-side__lbl">Revisión de contenido</div>
