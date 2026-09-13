@@ -49,6 +49,11 @@ namespace backend.Modelos
         public int campanas { get; set; }
         public int candidaturas { get; set; }
         public int administradores { get; set; }
+
+        /* Hasta cuándo está (o estuvo) vigente. Sin suscripción viaja en
+           DateTime.MinValue, y pagos en cero. */
+        public DateTime vigenteHasta { get; set; }
+        public int pagos { get; set; }
     }
 
     /// <summary>
@@ -78,5 +83,22 @@ namespace backend.Modelos
         public bool ok { get; set; }
         public string mensaje { get; set; }
         public string rechazados { get; set; }
+    }
+
+    /// <summary>Un pago registrado y el período que cubre.</summary>
+    public class Suscripcion
+    {
+        public int codigoSuscripcion { get; set; }
+        public int codigoEspacio { get; set; }
+        public string plan { get; set; }
+        public DateTime vigenteDesde { get; set; }
+        public DateTime vigenteHasta { get; set; }
+        public decimal monto { get; set; }
+        public string moneda { get; set; }
+        public string referenciaPago { get; set; }
+        public string notas { get; set; }
+        public string registradoPor { get; set; }
+        public DateTime fechaRegistro { get; set; }
+        public bool vigente { get; set; }
     }
 }

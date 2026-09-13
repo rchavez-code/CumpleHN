@@ -109,6 +109,18 @@
             </div>
         </asp:PlaceHolder>
 
+        <%-- Espacio sin suscripción vigente: se lee, no se participa. Se dice
+             acá para que nadie descubra la puerta cerrada al intentar votar. --%>
+        <% if (EnEspacio && !EspacioActual.Vigente) { %>
+        <div class="gc-franja">
+            <div class="container gc-franja__in">
+                <span class="gc-franja__txt">
+                    Este espacio no tiene una suscripción vigente. Se puede consultar, pero no participar.
+                </span>
+            </div>
+        </div>
+        <% } %>
+
         <asp:ContentPlaceHolder ID="MainContent" runat="server" />
 
         <footer class="gc-footer">

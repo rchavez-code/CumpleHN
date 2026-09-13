@@ -42,6 +42,26 @@ namespace frontend.Modelos
         public int Candidaturas { get; set; }
         public int Administradores { get; set; }
 
+        /* Hasta cuándo está (o estuvo) vigente. MinValue sin suscripción. */
+        public DateTime VigenteHasta { get; set; }
+        public int Pagos { get; set; }
+
+        /// <summary>El espacio admite participación y administración ahora.</summary>
+        public bool Vigente
+        {
+            get { return EsPlataforma || Estado == "Vigente"; }
+        }
+
+        public string VigenteTexto
+        {
+            get
+            {
+                if (EsPlataforma) return "—";
+                if (VigenteHasta == DateTime.MinValue) return "Sin pagos";
+                return (Vigente ? "Hasta el " : "Venció el ") + VigenteHasta.ToString("d MMM yyyy");
+            }
+        }
+
         /// <summary>La dirección pública del espacio. Vacía para la plataforma, que es la raíz.</summary>
         public string Url
         {
@@ -89,5 +109,31 @@ namespace frontend.Modelos
         public bool Ok { get; set; }
         public string Mensaje { get; set; }
         public string Rechazados { get; set; }
+    }
+
+    /// <summary>Un pago registrado y el período que cubre.</summary>
+    public class Suscripcion
+    {
+        public int Codigo { get; set; }
+        public string Plan { get; set; }
+        public DateTime VigenteDesde { get; set; }
+        public DateTime VigenteHasta { get; set; }
+        public decimal Monto { get; set; }
+        public string Moneda { get; set; }
+        public string Referencia { get; set; }
+        public string Notas { get; set; }
+        public string RegistradoPor { get; set; }
+        public DateTime FechaRegistro { get; set; }
+        public bool Vigente { get; set; }
+
+        public string PeriodoTexto
+        {
+            get { return VigenteDesde.ToString("d MMM yyyy") + " – " + VigenteHasta.ToString("d MMM yyyy"); }
+        }
+
+        public string MontoTexto
+        {
+            get { return Moneda + " " + Monto.ToString("N2"); }
+        }
     }
 }

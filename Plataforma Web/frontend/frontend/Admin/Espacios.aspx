@@ -165,6 +165,111 @@
 
     </asp:PlaceHolder>
 
+    <%-- ================================================== Pagos --%>
+
+    <asp:PlaceHolder ID="phPagos" runat="server" Visible="false">
+
+        <div class="gc-card gc-mb">
+            <div class="gc-card__head">
+                <h3>Pagos de <%: NombreSeleccion %></h3>
+            </div>
+            <div class="gc-card__body">
+
+                <p class="gc-muted" style="margin-top: 0;">
+                    No hay pasarela de pago. Se registra acá el pago que se recibió, con su referencia, y el
+                    espacio queda vigente por el período que cubre. Renovar es registrar otro pago.
+                </p>
+
+                <asp:PlaceHolder ID="phPagosLista" runat="server">
+                    <div class="gc-tablewrap gc-mb">
+                        <table class="gc-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Plan</th>
+                                    <th scope="col">Período</th>
+                                    <th scope="col">Monto</th>
+                                    <th scope="col">Referencia</th>
+                                    <th scope="col">Registrado</th>
+                                    <th scope="col"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <asp:Repeater ID="rptPagos" runat="server">
+                                    <ItemTemplate>
+                                        <tr>
+                                            <td><%#: Eval("Plan") %></td>
+                                            <td class="gc-nowrap"><%#: Eval("PeriodoTexto") %></td>
+                                            <td class="gc-nowrap"><%#: Eval("MontoTexto") %></td>
+                                            <td><code><%#: Eval("Referencia") %></code></td>
+                                            <td class="gc-muted gc-small"><%#: Eval("RegistradoPor") %> · <%#: ((DateTime)Eval("FechaRegistro")).ToString("d MMM yyyy") %></td>
+                                            <td class="gc-nowrap">
+                                                <%# (bool)Eval("Vigente") ? "<span class=\"gc-chip gc-chip--cumplida\">Vigente</span>" : "" %>
+                                            </td>
+                                        </tr>
+                                    </ItemTemplate>
+                                </asp:Repeater>
+                            </tbody>
+                        </table>
+                    </div>
+                </asp:PlaceHolder>
+
+                <asp:PlaceHolder ID="phPagosVacio" runat="server" Visible="false">
+                    <p class="gc-muted gc-small">Todavía no hay pagos registrados. Hasta el primero, el espacio se puede consultar pero no participar en él ni administrarlo.</p>
+                </asp:PlaceHolder>
+
+                <h4 style="margin-top: 18px;">Registrar un pago</h4>
+
+                <div class="gc-form">
+                    <div class="gc-row2">
+                        <div class="gc-field">
+                            <label for="<%= txtPlan.ClientID %>">Plan</label>
+                            <asp:TextBox ID="txtPlan" runat="server" CssClass="gc-input" MaxLength="60" />
+                            <span class="gc-muted gc-small">Como dice el recibo: «Proceso electoral», «Mensual», «Anual».</span>
+                        </div>
+                        <div class="gc-field">
+                            <label for="<%= txtReferencia.ClientID %>">Referencia del pago</label>
+                            <asp:TextBox ID="txtReferencia" runat="server" CssClass="gc-input" MaxLength="120" />
+                            <span class="gc-muted gc-small">Número de transferencia, depósito o recibo. Obligatoria.</span>
+                        </div>
+                    </div>
+                    <div class="gc-row2">
+                        <div class="gc-field">
+                            <label for="<%= txtDesde.ClientID %>">Vigente desde</label>
+                            <asp:TextBox ID="txtDesde" runat="server" CssClass="gc-input" TextMode="Date" />
+                        </div>
+                        <div class="gc-field">
+                            <label for="<%= txtHasta.ClientID %>">Vigente hasta</label>
+                            <asp:TextBox ID="txtHasta" runat="server" CssClass="gc-input" TextMode="Date" />
+                        </div>
+                    </div>
+                    <div class="gc-row2">
+                        <div class="gc-field">
+                            <label for="<%= txtMonto.ClientID %>">Monto</label>
+                            <asp:TextBox ID="txtMonto" runat="server" CssClass="gc-input" TextMode="Number" step="0.01" min="0" />
+                        </div>
+                        <div class="gc-field">
+                            <label for="<%= txtMoneda.ClientID %>">Moneda</label>
+                            <asp:TextBox ID="txtMoneda" runat="server" CssClass="gc-input" MaxLength="3" Text="HNL" />
+                        </div>
+                    </div>
+                    <div class="gc-field">
+                        <label for="<%= txtNotas.ClientID %>">Notas</label>
+                        <asp:TextBox ID="txtNotas" runat="server" CssClass="gc-input" TextMode="MultiLine" Rows="2" MaxLength="500" />
+                    </div>
+                </div>
+
+                <div class="gc-formfoot">
+                    <asp:Button ID="btnRegistrarPago" runat="server" CssClass="gc-btn" Text="Registrar pago"
+                                OnClick="btnRegistrarPago_Click" />
+                    <asp:Button ID="btnCancelarPago" runat="server" CssClass="gc-btn gc-btn--quiet"
+                                Text="Cerrar" OnClick="btnCancelar_Click" CausesValidation="false" />
+                </div>
+
+            </div>
+        </div>
+
+    </asp:PlaceHolder>
+
     <%-- =================================================== Lista --%>
 
     <div class="gc-card gc-filters">
@@ -185,6 +290,7 @@
                             <th scope="col">Candidaturas</th>
                             <th scope="col">Cuenta</th>
                             <th scope="col">Estado</th>
+                            <th scope="col">Vigencia</th>
                             <th scope="col"></th>
                         </tr>
                     </thead>
@@ -209,6 +315,7 @@
                                     <td class="gc-nowrap">
                                         <span class="<%# EstadoClase((string)Eval("Estado")) %>"><%#: Eval("Estado") %></span>
                                     </td>
+                                    <td class="gc-nowrap gc-muted gc-small"><%#: Eval("VigenteTexto") %></td>
                                     <td class="gc-nowrap" style="text-align: right;">
                                         <asp:LinkButton runat="server" CssClass="gc-small" Text="Administrar"
                                                         CommandName="administrar" CommandArgument='<%# Eval("Codigo") %>'
@@ -217,6 +324,9 @@
                                             <span class="gc-faint" aria-hidden="true"> · </span>
                                             <asp:LinkButton runat="server" CssClass="gc-small" Text="Editar"
                                                             CommandName="editar" CommandArgument='<%# Eval("Codigo") %>' />
+                                            <span class="gc-faint" aria-hidden="true"> · </span>
+                                            <asp:LinkButton runat="server" CssClass="gc-small" Text="Pagos"
+                                                            CommandName="pagos" CommandArgument='<%# Eval("Codigo") %>' />
                                             <asp:PlaceHolder runat="server" Visible='<%# (bool)Eval("Activo") && string.IsNullOrEmpty((string)Eval("PropietarioLogin")) %>'>
                                                 <span class="gc-faint" aria-hidden="true"> · </span>
                                                 <asp:LinkButton runat="server" CssClass="gc-small" Text="Crear cuenta"

@@ -1344,6 +1344,46 @@ namespace frontend.Servicios
             return ARespuesta(d);
         }
 
+        public IList<Suscripcion> ObtenerSuscripciones(int codigoUsuario, int codigoEspacio)
+        {
+            ws.Suscripcion[] datos = Ejecutar(
+                c => c.listarSuscripciones(codigoUsuario, codigoEspacio), new ws.Suscripcion[0]);
+
+            List<Suscripcion> lista = new List<Suscripcion>();
+            if (datos == null) return lista;
+
+            foreach (ws.Suscripcion d in datos)
+            {
+                lista.Add(new Suscripcion
+                {
+                    Codigo = d.codigoSuscripcion,
+                    Plan = d.plan ?? string.Empty,
+                    VigenteDesde = d.vigenteDesde,
+                    VigenteHasta = d.vigenteHasta,
+                    Monto = d.monto,
+                    Moneda = d.moneda ?? string.Empty,
+                    Referencia = d.referenciaPago ?? string.Empty,
+                    Notas = d.notas ?? string.Empty,
+                    RegistradoPor = d.registradoPor ?? string.Empty,
+                    FechaRegistro = d.fechaRegistro,
+                    Vigente = d.vigente
+                });
+            }
+
+            return lista;
+        }
+
+        public ResultadoGuardado RegistrarPago(
+            int codigoUsuario, int codigoEspacio, string plan, DateTime vigenteDesde, DateTime vigenteHasta,
+            decimal monto, string moneda, string referencia, string notas)
+        {
+            ws.RespuestaGuardado d = Ejecutar(
+                c => c.registrarPago(codigoUsuario, codigoEspacio, plan, vigenteDesde, vigenteHasta,
+                                     monto, moneda, referencia, notas), null);
+
+            return AGuardado(d);
+        }
+
         private static Espacio AEspacio(ws.Espacio d)
         {
             return new Espacio
@@ -1366,7 +1406,9 @@ namespace frontend.Servicios
                 PropietarioCorreo = d.propietarioCorreo ?? string.Empty,
                 Campanas = d.campanas,
                 Candidaturas = d.candidaturas,
-                Administradores = d.administradores
+                Administradores = d.administradores,
+                VigenteHasta = d.vigenteHasta,
+                Pagos = d.pagos
             };
         }
 

@@ -31,6 +31,7 @@ namespace frontend.Admin
         private const string ModoForm = "form";
         private const string ModoEstado = "estado";
         private const string ModoCuenta = "cuenta";
+        private const string ModoPagos = "pagos";
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -76,6 +77,7 @@ namespace frontend.Admin
             if (e.CommandName == "editar") Session[ClaveModo] = ModoForm;
             else if (e.CommandName == "estado") Session[ClaveModo] = ModoEstado;
             else if (e.CommandName == "cuenta") Session[ClaveModo] = ModoCuenta;
+            else if (e.CommandName == "pagos") Session[ClaveModo] = ModoPagos;
             else return;
 
             Session[ClaveCodigo] = codigo;
@@ -115,6 +117,12 @@ namespace frontend.Admin
             phForm.Visible = modo == ModoForm;
             phEstado.Visible = modo == ModoEstado;
             phCuenta.Visible = modo == ModoCuenta;
+            phPagos.Visible = modo == ModoPagos;
+
+            // El historial de pagos se enlaza siempre que el panel esté abierto,
+            // también en el postback que registra uno: es lo que muestra el
+            // recién registrado.
+            if (modo == ModoPagos) CargarPagos();
 
             if (!cargarCampos) return;
 
@@ -141,6 +149,19 @@ namespace frontend.Admin
                 txtNombreCuenta.Text = string.Empty;
                 txtCorreo.Text = string.Empty;
             }
+
+            if (modo == ModoPagos)
+            {
+                // Un proceso electoral que empieza hoy es el caso más común, y
+                // el fin queda en blanco a propósito: lo dice el recibo.
+                txtPlan.Text = "Proceso electoral";
+                txtReferencia.Text = string.Empty;
+                txtDesde.Text = DateTime.Today.ToString("yyyy-MM-dd");
+                txtHasta.Text = string.Empty;
+                txtMonto.Text = string.Empty;
+                txtMoneda.Text = "HNL";
+                txtNotas.Text = string.Empty;
+            }
         }
 
         private Espacio BuscarEspacio(int codigo)
@@ -162,6 +183,20 @@ namespace frontend.Admin
             phForm.Visible = false;
             phEstado.Visible = false;
             phCuenta.Visible = false;
+            phPagos.Visible = false;
+        }
+
+        private void CargarPagos()
+        {
+            if (_seleccion == null) return;
+
+            IList<Suscripcion> pagos = Contenido.Datos.ObtenerSuscripciones(Sesion.CodigoUsuario, _seleccion.Codigo);
+
+            phPagosLista.Visible = pagos.Count > 0;
+            phPagosVacio.Visible = pagos.Count == 0;
+
+            rptPagos.DataSource = pagos;
+            rptPagos.DataBind();
         }
 
         protected void btnCancelar_Click(object sender, EventArgs e)
@@ -235,6 +270,48 @@ namespace frontend.Admin
         {
             AdminMaster m = Master as AdminMaster;
             if (m != null) m.RecargarEspacios();
+        }
+
+        protected void btnRegistrarPago_Click(object sender, EventArgs e)
+        {
+            if (_seleccion == null)
+            {
+                MostrarMensaje("Elegí primero el espacio.", false);
+                return;
+            }
+
+            DateTime desde, hasta;
+            decimal monto;
+
+            if (!DateTime.TryParse(txtDesde.Text, out desde) || !DateTime.TryParse(txtHasta.Text, out hasta))
+            {
+                MostrarMensaje("Indicá desde y hasta cuándo cubre el pago.", false);
+                return;
+            }
+
+            if (!decimal.TryParse(txtMonto.Text, System.Globalization.NumberStyles.Number,
+                                  System.Globalization.CultureInfo.InvariantCulture, out monto))
+            {
+                MostrarMensaje("El monto no es un número válido.", false);
+                return;
+            }
+
+            ResultadoGuardado r = Contenido.Datos.RegistrarPago(
+                Sesion.CodigoUsuario, _seleccion.Codigo, txtPlan.Text.Trim(), desde, hasta, monto,
+                txtMoneda.Text.Trim(), txtReferencia.Text.Trim(), txtNotas.Text.Trim());
+
+            MostrarMensaje(r.Mensaje, r.Ok);
+
+            if (!r.Ok) return;
+
+            // El panel sigue abierto con el pago recién registrado en la lista.
+            // La lista de espacios se vuelve a leer para que la vigencia cambie.
+            CargarEspacios();
+            _seleccion = BuscarEspacio(_seleccion.Codigo);
+            CargarPagos();
+            txtReferencia.Text = string.Empty;
+            txtMonto.Text = string.Empty;
+            txtNotas.Text = string.Empty;
         }
 
         // ------------------------------------------------- Presentación

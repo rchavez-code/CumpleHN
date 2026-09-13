@@ -1169,6 +1169,16 @@ namespace backend
 
             if (codigoEspacio > 0)
             {
+                // Un espacio vencido se lee pero no admite participación (script
+                // 21). Va antes del padrón: no tiene sentido decirle a alguien
+                // que no está en la lista de un espacio que no está en línea.
+                SqlCommand vigente = new SqlCommand("SELECT dbo.fnEspacioVigente(@e)", conn);
+                vigente.Parameters.AddWithValue("@e", codigoEspacio);
+
+                if (!Convert.ToBoolean(vigente.ExecuteScalar()))
+                    return "Este espacio no tiene una suscripción vigente: se puede consultar, "
+                         + "pero no participar.";
+
                 SqlCommand miembro = new SqlCommand("SELECT dbo.fnEsMiembro(@u, @e)", conn);
                 miembro.Parameters.AddWithValue("@u", codigoUsuario);
                 miembro.Parameters.AddWithValue("@e", codigoEspacio);
@@ -3460,6 +3470,88 @@ namespace backend
             }
         }
 
+        // -------------------------------------------------- Suscripciones
+
+        /// <summary>
+        /// Los pagos registrados de un espacio y el período que cubre cada
+        /// uno. La cuenta del cliente ve los suyos aunque el espacio esté
+        /// vencido: es lo que le dice hasta cuándo pagó.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<Suscripcion> listarSuscripciones(int codigoUsuario, int codigoEspacio)
+        {
+            List<Suscripcion> lista = new List<Suscripcion>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminSuscripciones", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lista.Add(new Suscripcion
+                        {
+                            codigoSuscripcion = Convert.ToInt32(reader["codigoSuscripcion"]),
+                            codigoEspacio = Convert.ToInt32(reader["codigoEspacio"]),
+                            plan = Texto(reader, "nombrePlan"),
+                            vigenteDesde = Convert.ToDateTime(reader["vigenteDesde"]),
+                            vigenteHasta = Convert.ToDateTime(reader["vigenteHasta"]),
+                            monto = Convert.ToDecimal(reader["monto"]),
+                            moneda = Texto(reader, "moneda"),
+                            referenciaPago = Texto(reader, "referenciaPago"),
+                            notas = Texto(reader, "notas"),
+                            registradoPor = Texto(reader, "registradoPor"),
+                            fechaRegistro = Convert.ToDateTime(reader["fechaRegistro"]),
+                            vigente = Convert.ToBoolean(reader["vigente"])
+                        });
+                    }
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Registra un pago recibido y el período que cubre. Solo la
+        /// plataforma: es quien cobró. No hay pasarela, y no se simula una.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaGuardado registrarPago(
+            int codigoUsuario, int codigoEspacio, string plan,
+            DateTime vigenteDesde, DateTime vigenteHasta, decimal monto,
+            string moneda, string referenciaPago, string notas)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministrador(conn, codigoUsuario))
+                    return RechazoGuardado("Solo la administración de la plataforma registra pagos.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminRegistrarPago", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
+                cmd.Parameters.AddWithValue("@nombrePlan", (object)plan ?? DBNull.Value);
+                cmd.Parameters.Add("@vigenteDesde", SqlDbType.Date).Value = vigenteDesde.Date;
+                cmd.Parameters.Add("@vigenteHasta", SqlDbType.Date).Value = vigenteHasta.Date;
+                cmd.Parameters.AddWithValue("@monto", monto);
+                cmd.Parameters.AddWithValue("@moneda", (object)moneda ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@referenciaPago", (object)referenciaPago ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@notas", (object)notas ?? DBNull.Value);
+
+                return LeerGuardado(cmd);
+            }
+        }
+
         private static Espacio LeerEspacio(IDataRecord reader, bool administracion)
         {
             Espacio e = new Espacio
@@ -3491,6 +3583,9 @@ namespace backend
                 e.campanas = Convert.ToInt32(reader["campanas"]);
                 e.candidaturas = Convert.ToInt32(reader["candidaturas"]);
                 e.administradores = Convert.ToInt32(reader["administradores"]);
+                e.vigenteHasta = reader["vigenteHasta"] == DBNull.Value
+                    ? DateTime.MinValue : Convert.ToDateTime(reader["vigenteHasta"]);
+                e.pagos = Convert.ToInt32(reader["pagos"]);
             }
 
             return e;

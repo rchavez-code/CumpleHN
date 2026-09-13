@@ -9,6 +9,12 @@
         </div>
     </div>
 
+    <% if (!string.IsNullOrEmpty(AvisoVigencia)) { %>
+    <div class="gc-note gc-note--ambar gc-mb">
+        <span><%: AvisoVigencia %></span>
+    </div>
+    <% } %>
+
     <div class="row">
         <div class="col-lg-8">
 

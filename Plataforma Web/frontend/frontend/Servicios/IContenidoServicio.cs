@@ -318,6 +318,13 @@ namespace frontend.Servicios
         ResultadoPadron CargarPadron(int codigoUsuario, int codigoEspacio, string correos);
         Resultado CambiarEstadoMiembro(int codigoUsuario, int codigoMiembro, bool activo);
 
+        /* Suscripciones: la vigencia del espacio y los pagos que la sostienen.
+           Registrar un pago es solo de la plataforma. No hay pasarela. */
+        IList<Suscripcion> ObtenerSuscripciones(int codigoUsuario, int codigoEspacio);
+        ResultadoGuardado RegistrarPago(
+            int codigoUsuario, int codigoEspacio, string plan, DateTime vigenteDesde, DateTime vigenteHasta,
+            decimal monto, string moneda, string referencia, string notas);
+
         // ------------------------------------------------------- Módulos
 
         /// <summary>

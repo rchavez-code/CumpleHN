@@ -39,6 +39,32 @@ namespace frontend.Admin
             }
         }
 
+        /// <summary>
+        /// Qué pasa con la vigencia del espacio administrado. Vacío cuando no
+        /// hay nada que decir (la plataforma, o un espacio vigente). Sale de la
+        /// ficha del espacio, que la cuenta del cliente puede leer aunque su
+        /// espacio esté vencido: es justamente lo que necesita saber.
+        /// </summary>
+        protected string AvisoVigencia
+        {
+            get
+            {
+                foreach (Modelos.Espacio x in Contenido.Datos.ObtenerEspacios(Sesion.CodigoUsuario, false))
+                {
+                    if (x.Codigo != Sesion.CodigoEspacio || x.EsPlataforma || x.Vigente) continue;
+
+                    string estado = x.VigenteHasta == DateTime.MinValue
+                        ? "todavía no tiene un pago registrado"
+                        : "venció el " + x.VigenteHasta.ToString("d MMM yyyy");
+
+                    return "El espacio " + estado + ". Se puede consultar, pero no participar en él ni "
+                         + "administrar su contenido hasta que la plataforma registre un pago."
+                         + (Sesion.AdministraPlataforma ? " Se registra desde Espacios." : " Contactá a CumpleHN.");
+                }
+                return string.Empty;
+            }
+        }
+
         protected string Alcance
         {
             get

@@ -124,6 +124,10 @@ GO
        partir del objeto (publicación -> campaña -> espacio),
        nunca lo recibe de quien llama: recibirlo sería dejar que
        el cliente diga sobre qué espacio tiene permiso.
+
+     El 21 vuelve a definir fnEsAdministradorDe para exigirle a la
+     cuenta del cliente que su espacio esté vigente. La versión de
+     acá es la que rige entre el 09 y el 21.
    ============================================================ */
 
 IF OBJECT_ID('dbo.fnEsAdministrador') IS NOT NULL

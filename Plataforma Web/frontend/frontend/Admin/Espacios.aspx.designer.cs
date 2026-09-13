@@ -54,6 +54,32 @@ namespace frontend.Admin
 
         protected global::System.Web.UI.WebControls.Button btnCancelarCuenta;
 
+        protected global::System.Web.UI.WebControls.PlaceHolder phPagos;
+
+        protected global::System.Web.UI.WebControls.PlaceHolder phPagosLista;
+
+        protected global::System.Web.UI.WebControls.Repeater rptPagos;
+
+        protected global::System.Web.UI.WebControls.PlaceHolder phPagosVacio;
+
+        protected global::System.Web.UI.WebControls.TextBox txtPlan;
+
+        protected global::System.Web.UI.WebControls.TextBox txtReferencia;
+
+        protected global::System.Web.UI.WebControls.TextBox txtDesde;
+
+        protected global::System.Web.UI.WebControls.TextBox txtHasta;
+
+        protected global::System.Web.UI.WebControls.TextBox txtMonto;
+
+        protected global::System.Web.UI.WebControls.TextBox txtMoneda;
+
+        protected global::System.Web.UI.WebControls.TextBox txtNotas;
+
+        protected global::System.Web.UI.WebControls.Button btnRegistrarPago;
+
+        protected global::System.Web.UI.WebControls.Button btnCancelarPago;
+
         protected global::System.Web.UI.WebControls.Button btnNuevo;
 
         protected global::System.Web.UI.WebControls.PlaceHolder phLista;

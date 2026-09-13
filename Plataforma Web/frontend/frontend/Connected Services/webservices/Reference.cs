@@ -108,6 +108,20 @@ namespace frontend.webservices
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoMiembro", ReplyAction="*")]
         System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoMiembroAsync(int codigoUsuario, int codigoMiembro, bool activo);
         
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarSuscripciones", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.Suscripcion[] listarSuscripciones(int codigoUsuario, int codigoEspacio);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarSuscripciones", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.Suscripcion[]> listarSuscripcionesAsync(int codigoUsuario, int codigoEspacio);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/registrarPago", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaGuardado registrarPago(int codigoUsuario, int codigoEspacio, string plan, System.DateTime vigenteDesde, System.DateTime vigenteHasta, decimal monto, string moneda, string referenciaPago, string notas);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/registrarPago", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> registrarPagoAsync(int codigoUsuario, int codigoEspacio, string plan, System.DateTime vigenteDesde, System.DateTime vigenteHasta, decimal monto, string moneda, string referenciaPago, string notas);
+        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosVisibles", ReplyAction="*")]
         [System.ServiceModel.XmlSerializerFormatAttribute()]
         frontend.webservices.EstadoModulo[] listarModulosVisibles();
@@ -6481,6 +6495,208 @@ namespace frontend.webservices
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class Suscripcion
+    {
+        
+        private int codigoSuscripcionField;
+        
+        private int codigoEspacioField;
+        
+        private string planField;
+        
+        private System.DateTime vigenteDesdeField;
+        
+        private System.DateTime vigenteHastaField;
+        
+        private decimal montoField;
+        
+        private string monedaField;
+        
+        private string referenciaPagoField;
+        
+        private string notasField;
+        
+        private string registradoPorField;
+        
+        private System.DateTime fechaRegistroField;
+        
+        private bool vigenteField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoSuscripcion
+        {
+            get
+            {
+                return this.codigoSuscripcionField;
+            }
+            set
+            {
+                this.codigoSuscripcionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public int codigoEspacio
+        {
+            get
+            {
+                return this.codigoEspacioField;
+            }
+            set
+            {
+                this.codigoEspacioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string plan
+        {
+            get
+            {
+                return this.planField;
+            }
+            set
+            {
+                this.planField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public System.DateTime vigenteDesde
+        {
+            get
+            {
+                return this.vigenteDesdeField;
+            }
+            set
+            {
+                this.vigenteDesdeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public System.DateTime vigenteHasta
+        {
+            get
+            {
+                return this.vigenteHastaField;
+            }
+            set
+            {
+                this.vigenteHastaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        public decimal monto
+        {
+            get
+            {
+                return this.montoField;
+            }
+            set
+            {
+                this.montoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        public string moneda
+        {
+            get
+            {
+                return this.monedaField;
+            }
+            set
+            {
+                this.monedaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        public string referenciaPago
+        {
+            get
+            {
+                return this.referenciaPagoField;
+            }
+            set
+            {
+                this.referenciaPagoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        public string notas
+        {
+            get
+            {
+                return this.notasField;
+            }
+            set
+            {
+                this.notasField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
+        public string registradoPor
+        {
+            get
+            {
+                return this.registradoPorField;
+            }
+            set
+            {
+                this.registradoPorField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
+        public System.DateTime fechaRegistro
+        {
+            get
+            {
+                return this.fechaRegistroField;
+            }
+            set
+            {
+                this.fechaRegistroField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
+        public bool vigente
+        {
+            get
+            {
+                return this.vigenteField;
+            }
+            set
+            {
+                this.vigenteField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
     public partial class RespuestaPadron
     {
         
@@ -6717,6 +6933,10 @@ namespace frontend.webservices
         private int candidaturasField;
         
         private int administradoresField;
+        
+        private System.DateTime vigenteHastaField;
+        
+        private int pagosField;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=0)]
@@ -6981,6 +7201,34 @@ namespace frontend.webservices
             set
             {
                 this.administradoresField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=19)]
+        public System.DateTime vigenteHasta
+        {
+            get
+            {
+                return this.vigenteHastaField;
+            }
+            set
+            {
+                this.vigenteHastaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=20)]
+        public int pagos
+        {
+            get
+            {
+                return this.pagosField;
+            }
+            set
+            {
+                this.pagosField = value;
             }
         }
     }
@@ -7497,6 +7745,26 @@ namespace frontend.webservices
         public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoMiembroAsync(int codigoUsuario, int codigoMiembro, bool activo)
         {
             return base.Channel.cambiarEstadoMiembroAsync(codigoUsuario, codigoMiembro, activo);
+        }
+        
+        public frontend.webservices.Suscripcion[] listarSuscripciones(int codigoUsuario, int codigoEspacio)
+        {
+            return base.Channel.listarSuscripciones(codigoUsuario, codigoEspacio);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.Suscripcion[]> listarSuscripcionesAsync(int codigoUsuario, int codigoEspacio)
+        {
+            return base.Channel.listarSuscripcionesAsync(codigoUsuario, codigoEspacio);
+        }
+        
+        public frontend.webservices.RespuestaGuardado registrarPago(int codigoUsuario, int codigoEspacio, string plan, System.DateTime vigenteDesde, System.DateTime vigenteHasta, decimal monto, string moneda, string referenciaPago, string notas)
+        {
+            return base.Channel.registrarPago(codigoUsuario, codigoEspacio, plan, vigenteDesde, vigenteHasta, monto, moneda, referenciaPago, notas);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> registrarPagoAsync(int codigoUsuario, int codigoEspacio, string plan, System.DateTime vigenteDesde, System.DateTime vigenteHasta, decimal monto, string moneda, string referenciaPago, string notas)
+        {
+            return base.Channel.registrarPagoAsync(codigoUsuario, codigoEspacio, plan, vigenteDesde, vigenteHasta, monto, moneda, referenciaPago, notas);
         }
         
         public frontend.webservices.EstadoModulo[] listarModulosVisibles()

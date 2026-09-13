@@ -542,6 +542,18 @@ namespace frontend.Servicios
             return SinAdministracion();
         }
 
+        public IList<Suscripcion> ObtenerSuscripciones(int codigoUsuario, int codigoEspacio)
+        {
+            return new List<Suscripcion>();
+        }
+
+        public ResultadoGuardado RegistrarPago(
+            int codigoUsuario, int codigoEspacio, string plan, DateTime vigenteDesde, DateTime vigenteHasta,
+            decimal monto, string moneda, string referencia, string notas)
+        {
+            return SinAdministracionGuardado();
+        }
+
         public IList<EstadoModulo> ObtenerModulosVisibles()
         {
             return new List<EstadoModulo>();
