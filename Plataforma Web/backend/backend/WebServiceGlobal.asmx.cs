@@ -1141,9 +1141,16 @@ namespace backend
         /// valorar y preguntarle al asistente no se nombran igual. El de la
         /// confirmación pendiente es uno solo: la explicación de qué hacer no
         /// cambia según lo que se intentaba.
+        ///
+        /// La tercera causa es el padrón (script 20): en un espacio con padrón
+        /// cerrado solo participa quien esté en su lista de miembros. El
+        /// espacio es el del objeto sobre el que se actúa, derivado y no
+        /// recibido, y con cero no se comprueba: es un objeto inexistente que
+        /// otra comprobación rechaza por su lado.
         /// </summary>
         private static string MotivoSinParticipacion(SqlConnection conn, int codigoUsuario,
-                                                     string sinCuenta)
+                                                     string sinCuenta,
+                                                     int codigoEspacio)
         {
             if (codigoUsuario <= 0) return sinCuenta;
 
@@ -1159,6 +1166,17 @@ namespace backend
             if (!Convert.ToBoolean(v))
                 return "Confirmá tu correo para participar. "
                      + "Podés pedir el enlace de nuevo desde el aviso de tu cuenta.";
+
+            if (codigoEspacio > 0)
+            {
+                SqlCommand miembro = new SqlCommand("SELECT dbo.fnEsMiembro(@u, @e)", conn);
+                miembro.Parameters.AddWithValue("@u", codigoUsuario);
+                miembro.Parameters.AddWithValue("@e", codigoEspacio);
+
+                if (!Convert.ToBoolean(miembro.ExecuteScalar()))
+                    return "Tu cuenta no está en el padrón de este espacio. "
+                         + "Participa quien la organización registró con el mismo correo de su cuenta.";
+            }
 
             return null;
         }
@@ -1257,7 +1275,8 @@ namespace backend
                     }
 
                     string motivo = MotivoSinParticipacion(conn, codigoUsuario,
-                        "Necesitás una cuenta activa para participar.");
+                        "Necesitás una cuenta activa para participar.",
+                        EspacioDeObjeto(conn, tipoObjeto, codigoObjeto));
                     if (motivo != null)
                     {
                         r.mensaje = motivo;
@@ -1425,7 +1444,8 @@ namespace backend
                     }
 
                     string motivo = MotivoSinParticipacion(conn, codigoUsuario,
-                        "Necesitás una cuenta activa para comentar.");
+                        "Necesitás una cuenta activa para comentar.",
+                        EspacioDeObjeto(conn, tipoObjeto, codigoObjeto));
                     if (motivo != null)
                     {
                         r.mensaje = motivo;
@@ -2908,7 +2928,8 @@ namespace backend
                     }
 
                     string motivo = MotivoSinParticipacion(conn, codigoUsuario,
-                        "Necesitás una cuenta activa para participar.");
+                        "Necesitás una cuenta activa para participar.",
+                        EspacioDeObjeto(conn, "Encuesta", codigoEncuesta));
                     if (motivo != null)
                     {
                         r.mensaje = motivo;
@@ -3319,6 +3340,126 @@ namespace backend
             }
         }
 
+        // ------------------------------------------------------- Padrón
+
+        /// <summary>
+        /// El padrón del espacio: quién puede participar cuando el padrón está
+        /// cerrado. Lo administra la cuenta del espacio o la plataforma.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<Miembro> listarPadron(int codigoUsuario, int codigoEspacio)
+        {
+            List<Miembro> lista = new List<Miembro>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministradorDe(conn, codigoUsuario, codigoEspacio)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminPadron", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lista.Add(new Miembro
+                        {
+                            codigoMiembro = Convert.ToInt32(reader["codigoMiembro"]),
+                            codigoEspacio = Convert.ToInt32(reader["codigoEspacio"]),
+                            correo = Texto(reader, "correo"),
+                            activo = Convert.ToBoolean(reader["activo"]),
+                            fechaAlta = Convert.ToDateTime(reader["fechaAlta"]),
+                            nombre = Texto(reader, "nombre"),
+                            tieneCuenta = Convert.ToBoolean(reader["tieneCuenta"]),
+                            puedeParticipar = Convert.ToBoolean(reader["puedeParticipar"])
+                        });
+                    }
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Carga una lista pegada, un correo por línea. El procedimiento la
+        /// separa, la normaliza y dice cuántos entraron y cuáles no eran
+        /// correos.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaPadron cargarPadron(int codigoUsuario, int codigoEspacio, string correos)
+        {
+            RespuestaPadron r = new RespuestaPadron
+            {
+                ok = false, mensaje = "No se pudo completar la acción.", rechazados = string.Empty
+            };
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministradorDe(conn, codigoUsuario, codigoEspacio))
+                {
+                    r.mensaje = "La cuenta no tiene permiso para administrar el padrón de este espacio.";
+                    return r;
+                }
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminCargarPadron", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
+                cmd.Parameters.AddWithValue("@correos", (object)correos ?? DBNull.Value);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        r.ok = Convert.ToBoolean(reader["ok"]);
+                        r.mensaje = Texto(reader, "mensaje");
+                        r.rechazados = Texto(reader, "rechazados");
+                    }
+                }
+            }
+
+            return r;
+        }
+
+        /// <summary>
+        /// Quita un correo del padrón o lo devuelve. Baja lógica: lo que ya
+        /// votó se conserva. El espacio se deriva del miembro.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin cambiarEstadoMiembro(int codigoUsuario, int codigoMiembro, bool activo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                SqlCommand espacio = new SqlCommand(
+                    "SELECT codigoEspacio FROM dbo.EspacioMiembros WHERE codigoMiembro = @m", conn);
+                espacio.Parameters.AddWithValue("@m", codigoMiembro);
+                object e = espacio.ExecuteScalar();
+                int codigoEspacio = e == null || e == DBNull.Value ? 0 : Convert.ToInt32(e);
+
+                if (!EsAdministradorDe(conn, codigoUsuario, codigoEspacio))
+                    return Rechazo("La cuenta no tiene permiso para administrar este padrón.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminEstadoMiembro", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoMiembro", codigoMiembro);
+                cmd.Parameters.AddWithValue("@activo", activo);
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
         private static Espacio LeerEspacio(IDataRecord reader, bool administracion)
         {
             Espacio e = new Espacio
@@ -3562,7 +3703,8 @@ namespace backend
                     }
 
                     string motivo = MotivoSinParticipacion(conn, codigoUsuario,
-                        "Necesitás una cuenta activa para proponer una iniciativa.");
+                        "Necesitás una cuenta activa para proponer una iniciativa.",
+                        CodigoEspacio(conn, espacioSlug));
                     if (motivo != null)
                     {
                         r.mensaje = motivo;
@@ -3784,8 +3926,10 @@ namespace backend
                     return r;
                 }
 
+                // Sin espacio: el asistente responde solo sobre la plataforma, que
+                // tiene el padrón abierto.
                 string motivo = MotivoSinParticipacion(conn, codigoUsuario,
-                    "Para preguntarle al asistente hay que iniciar sesión.");
+                    "Para preguntarle al asistente hay que iniciar sesión.", 0);
                 if (motivo != null)
                 {
                     r.mensaje = motivo;

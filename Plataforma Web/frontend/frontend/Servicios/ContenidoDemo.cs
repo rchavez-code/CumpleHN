@@ -526,6 +526,22 @@ namespace frontend.Servicios
             return SinAdministracion();
         }
 
+        public IList<Miembro> ObtenerPadron(int codigoUsuario, int codigoEspacio)
+        {
+            return new List<Miembro>();
+        }
+
+        public ResultadoPadron CargarPadron(int codigoUsuario, int codigoEspacio, string correos)
+        {
+            Resultado r = SinAdministracion();
+            return new ResultadoPadron { Ok = false, Mensaje = r.Mensaje, Rechazados = string.Empty };
+        }
+
+        public Resultado CambiarEstadoMiembro(int codigoUsuario, int codigoMiembro, bool activo)
+        {
+            return SinAdministracion();
+        }
+
         public IList<EstadoModulo> ObtenerModulosVisibles()
         {
             return new List<EstadoModulo>();

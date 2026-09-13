@@ -128,6 +128,7 @@
     <Content Include="Admin\Admin.Master" />
     <Content Include="Admin\Default.aspx" />
     <Content Include="Admin\Espacios.aspx" />
+    <Content Include="Admin\Padron.aspx" />
     <Content Include="Admin\Verificacion.aspx" />
     <Content Include="Admin\Moderacion.aspx" />
     <Content Include="Admin\Bitacora.aspx" />
@@ -436,6 +437,13 @@
     </Compile>
     <Compile Include="Admin\Espacios.aspx.designer.cs">
       <DependentUpon>Espacios.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Admin\Padron.aspx.cs">
+      <DependentUpon>Padron.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Admin\Padron.aspx.designer.cs">
+      <DependentUpon>Padron.aspx</DependentUpon>
     </Compile>
     <Compile Include="Admin\Modulos.aspx.cs">
       <DependentUpon>Modulos.aspx</DependentUpon>

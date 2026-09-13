@@ -312,6 +312,12 @@ namespace frontend.Servicios
         Resultado CrearCuentaEspacio(
             int codigoUsuario, int codigoEspacio, string login, string nombre, string correo, string clave);
 
+        /* El padrón: quién puede participar en un espacio con padrón cerrado.
+           Correos, no cuentas, y baja lógica. */
+        IList<Miembro> ObtenerPadron(int codigoUsuario, int codigoEspacio);
+        ResultadoPadron CargarPadron(int codigoUsuario, int codigoEspacio, string correos);
+        Resultado CambiarEstadoMiembro(int codigoUsuario, int codigoMiembro, bool activo);
+
         // ------------------------------------------------------- Módulos
 
         /// <summary>

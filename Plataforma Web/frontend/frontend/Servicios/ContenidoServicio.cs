@@ -1300,6 +1300,50 @@ namespace frontend.Servicios
             return ARespuesta(d);
         }
 
+        public IList<Miembro> ObtenerPadron(int codigoUsuario, int codigoEspacio)
+        {
+            ws.Miembro[] datos = Ejecutar(
+                c => c.listarPadron(codigoUsuario, codigoEspacio), new ws.Miembro[0]);
+
+            List<Miembro> lista = new List<Miembro>();
+            if (datos == null) return lista;
+
+            foreach (ws.Miembro d in datos)
+            {
+                lista.Add(new Miembro
+                {
+                    Codigo = d.codigoMiembro,
+                    Correo = d.correo ?? string.Empty,
+                    Activo = d.activo,
+                    FechaAlta = d.fechaAlta,
+                    Nombre = d.nombre ?? string.Empty,
+                    TieneCuenta = d.tieneCuenta,
+                    PuedeParticipar = d.puedeParticipar
+                });
+            }
+
+            return lista;
+        }
+
+        public ResultadoPadron CargarPadron(int codigoUsuario, int codigoEspacio, string correos)
+        {
+            ws.RespuestaPadron d = Ejecutar(
+                c => c.cargarPadron(codigoUsuario, codigoEspacio, correos), null);
+
+            if (d == null)
+                return new ResultadoPadron { Ok = false, Mensaje = "No se pudo contactar al servidor.", Rechazados = string.Empty };
+
+            return new ResultadoPadron { Ok = d.ok, Mensaje = d.mensaje, Rechazados = d.rechazados ?? string.Empty };
+        }
+
+        public Resultado CambiarEstadoMiembro(int codigoUsuario, int codigoMiembro, bool activo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.cambiarEstadoMiembro(codigoUsuario, codigoMiembro, activo), null);
+
+            return ARespuesta(d);
+        }
+
         private static Espacio AEspacio(ws.Espacio d)
         {
             return new Espacio

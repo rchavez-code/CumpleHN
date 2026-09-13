@@ -87,6 +87,27 @@ namespace frontend.webservices
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/crearCuentaEspacio", ReplyAction="*")]
         System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> crearCuentaEspacioAsync(int codigoUsuario, int codigoEspacio, string login, string nombre, string correo, string clave);
         
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarPadron", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.Miembro[] listarPadron(int codigoUsuario, int codigoEspacio);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarPadron", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.Miembro[]> listarPadronAsync(int codigoUsuario, int codigoEspacio);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cargarPadron", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaPadron cargarPadron(int codigoUsuario, int codigoEspacio, string correos);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cargarPadron", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaPadron> cargarPadronAsync(int codigoUsuario, int codigoEspacio, string correos);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoMiembro", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin cambiarEstadoMiembro(int codigoUsuario, int codigoMiembro, bool activo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoMiembro", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoMiembroAsync(int codigoUsuario, int codigoMiembro, bool activo);
+        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosVisibles", ReplyAction="*")]
         [System.ServiceModel.XmlSerializerFormatAttribute()]
         frontend.webservices.EstadoModulo[] listarModulosVisibles();
@@ -6460,6 +6481,202 @@ namespace frontend.webservices
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class RespuestaPadron
+    {
+        
+        private bool okField;
+        
+        private string mensajeField;
+        
+        private string rechazadosField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public bool ok
+        {
+            get
+            {
+                return this.okField;
+            }
+            set
+            {
+                this.okField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string mensaje
+        {
+            get
+            {
+                return this.mensajeField;
+            }
+            set
+            {
+                this.mensajeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string rechazados
+        {
+            get
+            {
+                return this.rechazadosField;
+            }
+            set
+            {
+                this.rechazadosField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class Miembro
+    {
+        
+        private int codigoMiembroField;
+        
+        private int codigoEspacioField;
+        
+        private string correoField;
+        
+        private bool activoField;
+        
+        private System.DateTime fechaAltaField;
+        
+        private string nombreField;
+        
+        private bool tieneCuentaField;
+        
+        private bool puedeParticiparField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoMiembro
+        {
+            get
+            {
+                return this.codigoMiembroField;
+            }
+            set
+            {
+                this.codigoMiembroField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public int codigoEspacio
+        {
+            get
+            {
+                return this.codigoEspacioField;
+            }
+            set
+            {
+                this.codigoEspacioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string correo
+        {
+            get
+            {
+                return this.correoField;
+            }
+            set
+            {
+                this.correoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public bool activo
+        {
+            get
+            {
+                return this.activoField;
+            }
+            set
+            {
+                this.activoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public System.DateTime fechaAlta
+        {
+            get
+            {
+                return this.fechaAltaField;
+            }
+            set
+            {
+                this.fechaAltaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        public string nombre
+        {
+            get
+            {
+                return this.nombreField;
+            }
+            set
+            {
+                this.nombreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        public bool tieneCuenta
+        {
+            get
+            {
+                return this.tieneCuentaField;
+            }
+            set
+            {
+                this.tieneCuentaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        public bool puedeParticipar
+        {
+            get
+            {
+                return this.puedeParticiparField;
+            }
+            set
+            {
+                this.puedeParticiparField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
     public partial class Espacio
     {
         
@@ -7250,6 +7467,36 @@ namespace frontend.webservices
         public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> crearCuentaEspacioAsync(int codigoUsuario, int codigoEspacio, string login, string nombre, string correo, string clave)
         {
             return base.Channel.crearCuentaEspacioAsync(codigoUsuario, codigoEspacio, login, nombre, correo, clave);
+        }
+        
+        public frontend.webservices.Miembro[] listarPadron(int codigoUsuario, int codigoEspacio)
+        {
+            return base.Channel.listarPadron(codigoUsuario, codigoEspacio);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.Miembro[]> listarPadronAsync(int codigoUsuario, int codigoEspacio)
+        {
+            return base.Channel.listarPadronAsync(codigoUsuario, codigoEspacio);
+        }
+        
+        public frontend.webservices.RespuestaPadron cargarPadron(int codigoUsuario, int codigoEspacio, string correos)
+        {
+            return base.Channel.cargarPadron(codigoUsuario, codigoEspacio, correos);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaPadron> cargarPadronAsync(int codigoUsuario, int codigoEspacio, string correos)
+        {
+            return base.Channel.cargarPadronAsync(codigoUsuario, codigoEspacio, correos);
+        }
+        
+        public frontend.webservices.RespuestaAdmin cambiarEstadoMiembro(int codigoUsuario, int codigoMiembro, bool activo)
+        {
+            return base.Channel.cambiarEstadoMiembro(codigoUsuario, codigoMiembro, activo);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoMiembroAsync(int codigoUsuario, int codigoMiembro, bool activo)
+        {
+            return base.Channel.cambiarEstadoMiembroAsync(codigoUsuario, codigoMiembro, activo);
         }
         
         public frontend.webservices.EstadoModulo[] listarModulosVisibles()

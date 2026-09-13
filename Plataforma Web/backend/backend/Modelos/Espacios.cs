@@ -50,4 +50,33 @@ namespace backend.Modelos
         public int candidaturas { get; set; }
         public int administradores { get; set; }
     }
+
+    /// <summary>
+    /// Un correo del padrón de un espacio, con lo que la plataforma sabe de
+    /// él: si ya hay una cuenta con ese correo y si puede participar. Del
+    /// titular de la cuenta solo viaja el nombre.
+    /// </summary>
+    public class Miembro
+    {
+        public int codigoMiembro { get; set; }
+        public int codigoEspacio { get; set; }
+        public string correo { get; set; }
+        public bool activo { get; set; }
+        public DateTime fechaAlta { get; set; }
+        public string nombre { get; set; }
+        public bool tieneCuenta { get; set; }
+        public bool puedeParticipar { get; set; }
+    }
+
+    /// <summary>
+    /// Resultado de cargar una lista al padrón: el resumen en el mensaje y,
+    /// aparte, los correos que no se tomaron por no tener forma de correo,
+    /// para que la pantalla los muestre y se corrijan.
+    /// </summary>
+    public class RespuestaPadron
+    {
+        public bool ok { get; set; }
+        public string mensaje { get; set; }
+        public string rechazados { get; set; }
+    }
 }

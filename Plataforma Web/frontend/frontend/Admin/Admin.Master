@@ -83,6 +83,7 @@
                     <div class="gc-side__lbl">Participación</div>
 
                     <a class="gc-side__link <%= ClaseNav("Encuestas") %>" href="<%= ResolveUrl("~/Admin/Encuestas") %>">Encuestas</a>
+                    <a class="gc-side__link <%= ClaseNav("Padron") %>" href="<%= ResolveUrl("~/Admin/Padron") %>">Padrón</a>
 
                     <% if (AdministraPlataforma) { %>
                     <div class="gc-side__lbl">Configuración</div>

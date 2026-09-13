@@ -48,4 +48,46 @@ namespace frontend.Modelos
             get { return EsPlataforma ? "~/" : "~/e/" + Slug; }
         }
     }
+
+    /// <summary>Un correo del padrón de un espacio y lo que la plataforma sabe de él.</summary>
+    public class Miembro
+    {
+        public int Codigo { get; set; }
+        public string Correo { get; set; }
+        public bool Activo { get; set; }
+        public DateTime FechaAlta { get; set; }
+        public string Nombre { get; set; }
+        public bool TieneCuenta { get; set; }
+        public bool PuedeParticipar { get; set; }
+
+        public string EstadoTexto
+        {
+            get
+            {
+                if (!Activo) return "Fuera del padrón";
+                if (PuedeParticipar) return "Puede participar";
+                if (TieneCuenta) return "Cuenta sin confirmar";
+                return "Sin cuenta todavía";
+            }
+        }
+
+        public string EstadoClase
+        {
+            get
+            {
+                if (!Activo) return "gc-chip gc-chip--estancada";
+                if (PuedeParticipar) return "gc-chip gc-chip--cumplida";
+                if (TieneCuenta) return "gc-chip gc-chip--proceso";
+                return "gc-chip gc-chip--declarada";
+            }
+        }
+    }
+
+    /// <summary>Resultado de cargar una lista al padrón.</summary>
+    public class ResultadoPadron
+    {
+        public bool Ok { get; set; }
+        public string Mensaje { get; set; }
+        public string Rechazados { get; set; }
+    }
 }
