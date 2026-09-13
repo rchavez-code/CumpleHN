@@ -15,6 +15,18 @@
     </div>
     <% } %>
 
+    <% if (!Sesion.AdministraPlataforma && !string.IsNullOrEmpty(UrlSitio)) { %>
+    <%-- La direccion del sitio del espacio, que es lo que el cliente comparte
+         con sus miembros. La portada de la plataforma sigue siendo CumpleHN. --%>
+    <div class="gc-note gc-mb">
+        <span>
+            El sitio de <strong><%: Sesion.EspacioNombre %></strong> está en
+            <a href="<%= UrlSitio %>" target="_blank"><%: UrlSitioCompleta %></a>. Es la dirección que se comparte con
+            los miembros. La portada de CumpleHN es el sitio público de la plataforma, no el del espacio.
+        </span>
+    </div>
+    <% } %>
+
     <div class="row">
         <div class="col-lg-8">
 

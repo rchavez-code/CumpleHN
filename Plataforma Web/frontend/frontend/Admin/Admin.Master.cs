@@ -99,6 +99,40 @@ namespace frontend.Admin
             get { return Sesion.EspacioNombre; }
         }
 
+        /// <summary>
+        /// El sitio público que le corresponde a lo que se está administrando:
+        /// la raíz para la plataforma, e/{espacio} para un espacio. Antes el
+        /// botón mandaba siempre a la raíz, y la cuenta de un cliente llegaba
+        /// a CumpleHN en lugar de a su propio sitio.
+        /// </summary>
+        protected string UrlSitioPublico
+        {
+            get
+            {
+                Espacio actual = EspacioAdministrado;
+                return ResolveUrl(actual == null ? "~/" : actual.Url);
+            }
+        }
+
+        private Espacio _espacioAdministrado;
+        private bool _espacioResuelto;
+
+        /// <summary>La ficha del espacio de la sesión, una sola vez por página.</summary>
+        protected Espacio EspacioAdministrado
+        {
+            get
+            {
+                if (_espacioResuelto) return _espacioAdministrado;
+                _espacioResuelto = true;
+
+                foreach (Espacio x in Contenido.Datos.ObtenerEspacios(Sesion.CodigoUsuario, false))
+                {
+                    if (x.Codigo == Sesion.CodigoEspacio) { _espacioAdministrado = x; break; }
+                }
+                return _espacioAdministrado;
+            }
+        }
+
         private string PaginaActual
         {
             get

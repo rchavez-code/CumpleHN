@@ -65,6 +65,30 @@ namespace frontend.Admin
             }
         }
 
+        /// <summary>Dirección del sitio del espacio administrado, o vacía para la plataforma.</summary>
+        protected string UrlSitio
+        {
+            get
+            {
+                foreach (Modelos.Espacio x in Contenido.Datos.ObtenerEspacios(Sesion.CodigoUsuario, false))
+                {
+                    if (x.Codigo == Sesion.CodigoEspacio && !x.EsPlataforma) return ResolveUrl(x.Url);
+                }
+                return string.Empty;
+            }
+        }
+
+        /// <summary>La misma dirección, absoluta, para leerla y copiarla.</summary>
+        protected string UrlSitioCompleta
+        {
+            get
+            {
+                string ruta = UrlSitio;
+                if (ruta.Length == 0) return string.Empty;
+                return Request.Url.GetLeftPart(UriPartial.Authority) + ruta;
+            }
+        }
+
         protected string Alcance
         {
             get

@@ -94,7 +94,7 @@
                 </nav>
 
                 <div class="gc-side__foot">
-                    <a class="gc-btn gc-btn--ghost gc-btn--sm gc-btn--block" href="<%= ResolveUrl("~/") %>">Ver el sitio público</a>
+                    <a class="gc-btn gc-btn--ghost gc-btn--sm gc-btn--block" href="<%= UrlSitioPublico %>">Ver el sitio público</a>
                     <a class="gc-btn gc-btn--quiet gc-btn--sm gc-btn--block" style="margin-top: 7px;" href="<%= ResolveUrl("~/Acceso?salir=1") %>">Salir</a>
                 </div>
 
