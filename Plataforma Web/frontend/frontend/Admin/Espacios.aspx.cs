@@ -99,7 +99,7 @@ namespace frontend.Admin
 
                 // La cuenta de la plataforma pasa a mirar ese espacio. Todo lo
                 // de Admin/ se acota por Sesion.CodigoEspacio desde ahora.
-                Sesion.CambiarEspacio(elegido.Codigo, elegido.Nombre);
+                Sesion.CambiarEspacio(elegido.Codigo, elegido.Nombre, elegido.Slug);
                 Response.Redirect("~/Admin/");
                 return;
             }

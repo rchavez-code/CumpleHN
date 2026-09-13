@@ -75,7 +75,13 @@ namespace frontend.Admin
             int codigo;
             if (!int.TryParse(ddlEspacio.SelectedValue, out codigo)) return;
 
-            Sesion.CambiarEspacio(codigo, ddlEspacio.SelectedItem.Text);
+            string slug = string.Empty;
+            foreach (Espacio x in Contenido.Datos.ObtenerEspacios(Sesion.CodigoUsuario, true))
+            {
+                if (x.Codigo == codigo) { slug = x.Slug; break; }
+            }
+
+            Sesion.CambiarEspacio(codigo, ddlEspacio.SelectedItem.Text, slug);
             Response.Redirect(Request.RawUrl);
         }
 

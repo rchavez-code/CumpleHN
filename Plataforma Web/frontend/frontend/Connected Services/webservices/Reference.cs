@@ -150,6 +150,27 @@ namespace frontend.webservices
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/atenderSolicitud", ReplyAction="*")]
         System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> atenderSolicitudAsync(int codigoUsuario, int codigoSolicitud, string estado, int codigoEspacio, string notas);
         
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarCargosAdmin", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.CargoAdmin[] listarCargosAdmin(int codigoUsuario, int codigoEspacio);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarCargosAdmin", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.CargoAdmin[]> listarCargosAdminAsync(int codigoUsuario, int codigoEspacio);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarCargo", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaGuardado guardarCargo(int codigoUsuario, int codigoEspacio, int codigoCargo, string nombre, string nivelGobierno, int orden);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarCargo", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarCargoAsync(int codigoUsuario, int codigoEspacio, int codigoCargo, string nombre, string nivelGobierno, int orden);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoCargo", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin cambiarEstadoCargo(int codigoUsuario, int codigoCargo, bool activo, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoCargo", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoCargoAsync(int codigoUsuario, int codigoCargo, bool activo, string motivo);
+        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosVisibles", ReplyAction="*")]
         [System.ServiceModel.XmlSerializerFormatAttribute()]
         frontend.webservices.EstadoModulo[] listarModulosVisibles();
@@ -5670,6 +5691,8 @@ namespace frontend.webservices
         
         private string espacioNombreField;
         
+        private string espacioSlugField;
+        
         private bool administraPlataformaField;
         
         /// <remarks/>
@@ -5814,6 +5837,20 @@ namespace frontend.webservices
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=10)]
+        public string espacioSlug
+        {
+            get
+            {
+                return this.espacioSlugField;
+            }
+            set
+            {
+                this.espacioSlugField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
         public bool administraPlataforma
         {
             get
@@ -6513,6 +6550,112 @@ namespace frontend.webservices
             set
             {
                 this.visibleField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class CargoAdmin
+    {
+        
+        private int codigoCargoField;
+        
+        private string nombreField;
+        
+        private string nivelGobiernoField;
+        
+        private int ordenField;
+        
+        private bool activoField;
+        
+        private int candidaturasField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoCargo
+        {
+            get
+            {
+                return this.codigoCargoField;
+            }
+            set
+            {
+                this.codigoCargoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string nombre
+        {
+            get
+            {
+                return this.nombreField;
+            }
+            set
+            {
+                this.nombreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string nivelGobierno
+        {
+            get
+            {
+                return this.nivelGobiernoField;
+            }
+            set
+            {
+                this.nivelGobiernoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public int orden
+        {
+            get
+            {
+                return this.ordenField;
+            }
+            set
+            {
+                this.ordenField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public bool activo
+        {
+            get
+            {
+                return this.activoField;
+            }
+            set
+            {
+                this.activoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        public int candidaturas
+        {
+            get
+            {
+                return this.candidaturasField;
+            }
+            set
+            {
+                this.candidaturasField = value;
             }
         }
     }
@@ -8285,6 +8428,36 @@ namespace frontend.webservices
         public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> atenderSolicitudAsync(int codigoUsuario, int codigoSolicitud, string estado, int codigoEspacio, string notas)
         {
             return base.Channel.atenderSolicitudAsync(codigoUsuario, codigoSolicitud, estado, codigoEspacio, notas);
+        }
+        
+        public frontend.webservices.CargoAdmin[] listarCargosAdmin(int codigoUsuario, int codigoEspacio)
+        {
+            return base.Channel.listarCargosAdmin(codigoUsuario, codigoEspacio);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.CargoAdmin[]> listarCargosAdminAsync(int codigoUsuario, int codigoEspacio)
+        {
+            return base.Channel.listarCargosAdminAsync(codigoUsuario, codigoEspacio);
+        }
+        
+        public frontend.webservices.RespuestaGuardado guardarCargo(int codigoUsuario, int codigoEspacio, int codigoCargo, string nombre, string nivelGobierno, int orden)
+        {
+            return base.Channel.guardarCargo(codigoUsuario, codigoEspacio, codigoCargo, nombre, nivelGobierno, orden);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarCargoAsync(int codigoUsuario, int codigoEspacio, int codigoCargo, string nombre, string nivelGobierno, int orden)
+        {
+            return base.Channel.guardarCargoAsync(codigoUsuario, codigoEspacio, codigoCargo, nombre, nivelGobierno, orden);
+        }
+        
+        public frontend.webservices.RespuestaAdmin cambiarEstadoCargo(int codigoUsuario, int codigoCargo, bool activo, string motivo)
+        {
+            return base.Channel.cambiarEstadoCargo(codigoUsuario, codigoCargo, activo, motivo);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoCargoAsync(int codigoUsuario, int codigoCargo, bool activo, string motivo)
+        {
+            return base.Channel.cambiarEstadoCargoAsync(codigoUsuario, codigoCargo, activo, motivo);
         }
         
         public frontend.webservices.EstadoModulo[] listarModulosVisibles()

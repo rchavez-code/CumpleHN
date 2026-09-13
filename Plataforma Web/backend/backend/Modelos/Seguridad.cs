@@ -30,6 +30,7 @@ namespace backend.Modelos
            quien autoriza es el Web Service contra la base. */
         public int codigoEspacio { get; set; }
         public string espacioNombre { get; set; }
+        public string espacioSlug { get; set; }
         public bool administraPlataforma { get; set; }
     }
 

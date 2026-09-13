@@ -103,10 +103,10 @@ GO
 /* Cargos de elección popular. El nivel de gobierno se hereda de acá,
    no se repite en cada candidato.
 
-   codigoEspacio en NULL significa compartido por todos los espacios.
-   Un espacio agrega los suyos («Presidente de junta», «Tesorero»),
-   que solo se listan dentro de él. El nombre es único por espacio y
-   no en toda la tabla: dos organizaciones pueden tener «Presidente». */
+   Cada espacio tiene sus propios cargos: la plataforma los de elección
+   popular, una organización «Presidente de junta» o «Tesorero». Nacen
+   con codigoEspacio nulo y el 23 los asigna a la plataforma. El nombre
+   es único por espacio y no en toda la tabla. */
 IF OBJECT_ID('dbo.Cargos') IS NULL
 CREATE TABLE dbo.Cargos
 (
@@ -115,6 +115,7 @@ CREATE TABLE dbo.Cargos
     nivelGobierno  NVARCHAR(20) NOT NULL,
     orden          INT          NOT NULL CONSTRAINT DF_Cargos_orden DEFAULT (0),
     codigoEspacio  INT          NULL,
+    activo         BIT          NOT NULL CONSTRAINT DF_Cargos_activo DEFAULT (1),
     CONSTRAINT PK_Cargos PRIMARY KEY (codigoCargo),
     CONSTRAINT UQ_Cargos_espacioNombre UNIQUE (codigoEspacio, nombre),
     CONSTRAINT FK_Cargos_Espacios FOREIGN KEY (codigoEspacio) REFERENCES dbo.Espacios (codigoEspacio),
@@ -128,6 +129,12 @@ GO
 IF COL_LENGTH('dbo.Cargos', 'codigoEspacio') IS NULL
     ALTER TABLE dbo.Cargos ADD codigoEspacio INT NULL
         CONSTRAINT FK_Cargos_Espacios REFERENCES dbo.Espacios (codigoEspacio);
+GO
+
+/* Baja lógica del cargo (script 23): un cargo con candidaturas no se
+   borra, se saca del desplegable. */
+IF COL_LENGTH('dbo.Cargos', 'activo') IS NULL
+    ALTER TABLE dbo.Cargos ADD activo BIT NOT NULL CONSTRAINT DF_Cargos_activo DEFAULT (1);
 GO
 
 /* Los 18 departamentos de Honduras. */

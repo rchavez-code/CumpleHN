@@ -41,6 +41,30 @@ namespace frontend.Modelos
     }
 
     /// <summary>
+    /// Cargo visto desde la administración del espacio: con los desactivados
+    /// y el conteo de candidaturas que lo tienen.
+    /// </summary>
+    public class CargoAdmin
+    {
+        public int Codigo { get; set; }
+        public string Nombre { get; set; }
+        public string NivelGobierno { get; set; }
+        public int Orden { get; set; }
+        public bool Activo { get; set; }
+        public int Candidaturas { get; set; }
+
+        public string EstadoTexto
+        {
+            get { return Activo ? "Disponible" : "Desactivado"; }
+        }
+
+        public string EstadoClase
+        {
+            get { return Activo ? "gc-chip gc-chip--cumplida" : "gc-chip gc-chip--estancada"; }
+        }
+    }
+
+    /// <summary>
     /// Partido visto desde la administración: incluye los desactivados y
     /// cuenta sus candidaturas activas.
     /// </summary>

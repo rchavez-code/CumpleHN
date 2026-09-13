@@ -19,6 +19,7 @@ namespace frontend.Servicios
         private const string ClaveConfirmado = "correoConfirmado";
         private const string ClaveEspacio = "codigoEspacio";
         private const string ClaveEspacioNombre = "espacioNombre";
+        private const string ClaveEspacioSlug = "espacioSlug";
         private const string ClaveAdministraPlataforma = "administraPlataforma";
         private const string ClaveAviso = "avisoCuenta";
 
@@ -53,6 +54,7 @@ namespace frontend.Servicios
             ctx.Session[ClaveConfirmado] = usuario.correoConfirmado;
             ctx.Session[ClaveEspacio] = usuario.codigoEspacio;
             ctx.Session[ClaveEspacioNombre] = usuario.espacioNombre;
+            ctx.Session[ClaveEspacioSlug] = usuario.espacioSlug;
             ctx.Session[ClaveAdministraPlataforma] = usuario.administraPlataforma;
         }
 
@@ -62,13 +64,14 @@ namespace frontend.Servicios
         /// un cliente queda fija en el suyo, y aunque cambiara este valor el
         /// Web Service la rechazaría contra la base.
         /// </summary>
-        public static void CambiarEspacio(int codigoEspacio, string nombre)
+        public static void CambiarEspacio(int codigoEspacio, string nombre, string slug)
         {
             HttpContext ctx = HttpContext.Current;
             if (ctx == null || ctx.Session == null || !AdministraPlataforma) return;
 
             ctx.Session[ClaveEspacio] = codigoEspacio;
             ctx.Session[ClaveEspacioNombre] = nombre;
+            ctx.Session[ClaveEspacioSlug] = slug ?? string.Empty;
         }
 
         /// <summary>
@@ -178,6 +181,16 @@ namespace frontend.Servicios
         public static string EspacioNombre
         {
             get { return Convert.ToString(Leer(ClaveEspacioNombre)); }
+        }
+
+        /// <summary>
+        /// Slug del espacio administrado. Es lo que la capa de servicios usa
+        /// dentro de Admin/ para pedir los catálogos del espacio (cargos,
+        /// categorías) al Web Service, que los recibe por slug.
+        /// </summary>
+        public static string EspacioSlug
+        {
+            get { return Convert.ToString(Leer(ClaveEspacioSlug)); }
         }
 
         /// <summary>La cuenta administra la plataforma entera y puede cambiar de espacio.</summary>

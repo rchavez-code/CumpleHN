@@ -80,6 +80,7 @@
                     <a class="gc-side__link <%= ClaseNav("Partidos") %>" href="<%= ResolveUrl("~/Admin/Partidos") %>">Partidos</a>
                     <a class="gc-side__link <%= ClaseNav("Campanas") %>" href="<%= ResolveUrl("~/Admin/Campanas") %>">Campañas</a>
                     <a class="gc-side__link <%= ClaseNav("Candidatos") %>" href="<%= ResolveUrl("~/Admin/Candidatos") %>">Candidaturas</a>
+                    <a class="gc-side__link <%= ClaseNav("Cargos") %>" href="<%= ResolveUrl("~/Admin/Cargos") %>">Cargos</a>
 
                     <div class="gc-side__lbl">Participación</div>
 

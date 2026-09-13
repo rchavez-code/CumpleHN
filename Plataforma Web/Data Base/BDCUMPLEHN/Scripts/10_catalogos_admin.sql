@@ -631,10 +631,10 @@ BEGIN
         RETURN;
     END
 
-    /* El cargo es compartido (NULL) o del mismo espacio. */
+    /* El cargo es del mismo espacio y está activo (script 23). */
     IF NOT EXISTS (SELECT 1 FROM dbo.Cargos
                     WHERE codigoCargo = @codigoCargo
-                      AND (codigoEspacio IS NULL OR codigoEspacio = @codigoEspacio))
+                      AND codigoEspacio = @codigoEspacio AND activo = 1)
     BEGIN
         SELECT CAST(0 AS BIT) AS ok, N'Elegí el cargo al que aspira.' AS mensaje, 0 AS codigo;
         RETURN;

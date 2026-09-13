@@ -52,6 +52,14 @@ namespace frontend.Servicios
                 if (ctx.Items.Contains(ClaveFijado))
                     return Convert.ToString(ctx.Items[ClaveFijado]);
 
+                // Dentro de la administración, el espacio es el que la sesión
+                // administra: es de ahí que salen los catálogos (cargos) que un
+                // alta de candidatura ofrece. Sin esto, Admin/ pedía siempre los
+                // de la plataforma.
+                string pagina = ctx.Request.AppRelativeCurrentExecutionFilePath ?? string.Empty;
+                if (pagina.StartsWith("~/Admin/", StringComparison.OrdinalIgnoreCase))
+                    return Sesion.EspacioSlug ?? string.Empty;
+
                 RouteData ruta = ctx.Request.RequestContext == null
                     ? null
                     : ctx.Request.RequestContext.RouteData;

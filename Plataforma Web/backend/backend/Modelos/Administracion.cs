@@ -30,6 +30,17 @@ namespace backend.Modelos
         public int codigo { get; set; }
     }
 
+    /// <summary>Cargo visto desde la administración: con inactivos y conteo de candidaturas.</summary>
+    public class CargoAdmin
+    {
+        public int codigoCargo { get; set; }
+        public string nombre { get; set; }
+        public string nivelGobierno { get; set; }
+        public int orden { get; set; }
+        public bool activo { get; set; }
+        public int candidaturas { get; set; }
+    }
+
     /// <summary>
     /// Partido político visto desde la administración: incluye los
     /// desactivados y cuenta sus candidaturas activas.

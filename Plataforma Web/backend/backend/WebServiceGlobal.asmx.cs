@@ -99,12 +99,13 @@ namespace backend
                            administración arranque con un espacio elegido. */
                         "       CASE WHEN r.nombre = 'Administrador' THEN ISNULL(u.codigoEspacio, pl.codigoEspacio) ELSE 0 END AS codigoEspacio, " +
                         "       CASE WHEN r.nombre = 'Administrador' THEN ISNULL(e.nombre, pl.nombre) ELSE '' END AS espacioNombre, " +
+                        "       CASE WHEN r.nombre = 'Administrador' THEN ISNULL(e.slug, pl.slug) ELSE '' END AS espacioSlug, " +
                         "       CASE WHEN r.nombre = 'Administrador' AND u.codigoEspacio IS NULL THEN 1 ELSE 0 END AS administraPlataforma " +
                         "FROM dbo.Usuarios u " +
                         "INNER JOIN dbo.Roles r ON r.codigoRol = u.codigoRol " +
                         "LEFT JOIN dbo.Candidatos c ON c.codigoCandidato = u.codigoCandidato " +
                         "LEFT JOIN dbo.Espacios e ON e.codigoEspacio = u.codigoEspacio " +
-                        "CROSS JOIN (SELECT TOP (1) codigoEspacio, nombre FROM dbo.Espacios WHERE esPlataforma = 1) pl " +
+                        "CROSS JOIN (SELECT TOP (1) codigoEspacio, nombre, slug FROM dbo.Espacios WHERE esPlataforma = 1) pl " +
                         "WHERE (u.login = @usuario OR u.correo = @usuario) " +
                         "  AND u.clave = @clave AND u.activo = 1";
 
@@ -129,6 +130,7 @@ namespace backend
                             candidatoSlug = Texto(reader, "candidatoSlug"),
                             codigoEspacio = Convert.ToInt32(reader["codigoEspacio"]),
                             espacioNombre = Texto(reader, "espacioNombre"),
+                            espacioSlug = Texto(reader, "espacioSlug"),
                             administraPlataforma = Convert.ToInt32(reader["administraPlataforma"]) == 1
                         };
                         respuesta.ok = true;
@@ -853,9 +855,12 @@ namespace backend
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public List<Catalogo> listarCargos(string espacioSlug)
         {
+            /* Los cargos son de cada espacio (script 23): los de la plataforma
+               no le aparecen a una organización, ni al revés. Solo los activos:
+               es el desplegable del alta de candidaturas. */
             return LeerCatalogo(
                 "SELECT codigoCargo AS codigo, nombre, nivelGobierno AS detalle " +
-                "FROM dbo.Cargos WHERE codigoEspacio IS NULL OR codigoEspacio = @espacio ORDER BY orden",
+                "FROM dbo.Cargos WHERE codigoEspacio = @espacio AND activo = 1 ORDER BY orden, nombre",
                 espacioSlug);
         }
 
@@ -3780,6 +3785,105 @@ namespace backend
             }
 
             return e;
+        }
+
+        // ------------------------------------------------------- Cargos
+
+        /// <summary>
+        /// Los cargos del espacio, activos e inactivos, para administrarlos.
+        /// Son de cada espacio (script 23): la plataforma tiene los de elección
+        /// popular, una organización crea «Presidente», «Tesorero», los suyos.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<CargoAdmin> listarCargosAdmin(int codigoUsuario, int codigoEspacio)
+        {
+            List<CargoAdmin> lista = new List<CargoAdmin>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministradorDe(conn, codigoUsuario, codigoEspacio)) return lista;
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminCargos", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lista.Add(new CargoAdmin
+                        {
+                            codigoCargo = Convert.ToInt32(reader["codigoCargo"]),
+                            nombre = Texto(reader, "nombre"),
+                            nivelGobierno = Texto(reader, "nivelGobierno"),
+                            orden = Convert.ToInt32(reader["orden"]),
+                            activo = Convert.ToBoolean(reader["activo"]),
+                            candidaturas = Convert.ToInt32(reader["candidaturas"])
+                        });
+                    }
+                }
+            }
+
+            return lista;
+        }
+
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaGuardado guardarCargo(
+            int codigoUsuario, int codigoEspacio, int codigoCargo, string nombre, string nivelGobierno, int orden)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministradorDe(conn, codigoUsuario, codigoCargo > 0 ? EspacioDeCargo(conn, codigoCargo) : codigoEspacio))
+                    return RechazoGuardado("La cuenta no tiene permiso para administrar cargos en este espacio.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminGuardarCargo", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoEspacio", codigoEspacio);
+                cmd.Parameters.AddWithValue("@codigoCargo", codigoCargo);
+                cmd.Parameters.AddWithValue("@nombre", (object)nombre ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@nivelGobierno", (object)nivelGobierno ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@orden", orden);
+
+                return LeerGuardado(cmd);
+            }
+        }
+
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin cambiarEstadoCargo(int codigoUsuario, int codigoCargo, bool activo, string motivo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (!EsAdministradorDe(conn, codigoUsuario, EspacioDeCargo(conn, codigoCargo)))
+                    return Rechazo("La cuenta no tiene permiso para administrar este cargo.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spAdminEstadoCargo", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoCargo", codigoCargo);
+                cmd.Parameters.AddWithValue("@activo", activo);
+                cmd.Parameters.AddWithValue("@motivo", (object)motivo ?? DBNull.Value);
+
+                return LeerRespuesta(cmd);
+            }
+        }
+
+        /// <summary>El espacio de un cargo. Cero si no existe. Los cargos no entran en fnEspacioDeObjeto: no se valoran ni se comentan.</summary>
+        private static int EspacioDeCargo(SqlConnection conn, int codigoCargo)
+        {
+            SqlCommand cmd = new SqlCommand("SELECT codigoEspacio FROM dbo.Cargos WHERE codigoCargo = @c", conn);
+            cmd.Parameters.AddWithValue("@c", codigoCargo);
+            object v = cmd.ExecuteScalar();
+            return v == null || v == DBNull.Value ? 0 : Convert.ToInt32(v);
         }
 
         // =============================================================

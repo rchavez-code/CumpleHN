@@ -576,6 +576,21 @@ namespace frontend.Servicios
             return SinAdministracion();
         }
 
+        public IList<CargoAdmin> ObtenerCargosAdmin(int codigoUsuario)
+        {
+            return new List<CargoAdmin>();
+        }
+
+        public ResultadoGuardado GuardarCargo(int codigoUsuario, int codigoCargo, string nombre, string nivelGobierno, int orden)
+        {
+            return SinAdministracionGuardado();
+        }
+
+        public Resultado CambiarEstadoCargo(int codigoUsuario, int codigoCargo, bool activo, string motivo)
+        {
+            return SinAdministracion();
+        }
+
         public IList<EstadoModulo> ObtenerModulosVisibles()
         {
             return new List<EstadoModulo>();

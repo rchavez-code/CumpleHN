@@ -244,6 +244,12 @@ namespace frontend.Servicios
         Resultado CrearCuentaCandidato(
             int codigoUsuario, int codigoCandidato, string login, string correo, string clave);
 
+        /* Cargos del espacio. Son de cada espacio (script 23): la plataforma
+           tiene los de elección popular y una organización crea los suyos. */
+        IList<CargoAdmin> ObtenerCargosAdmin(int codigoUsuario);
+        ResultadoGuardado GuardarCargo(int codigoUsuario, int codigoCargo, string nombre, string nivelGobierno, int orden);
+        Resultado CambiarEstadoCargo(int codigoUsuario, int codigoCargo, bool activo, string motivo);
+
         // ------------------------------------------------- Encuestas admin
 
         /// <summary>

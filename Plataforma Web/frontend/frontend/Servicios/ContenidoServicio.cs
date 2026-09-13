@@ -1252,6 +1252,46 @@ namespace frontend.Servicios
         }
 
 
+        public IList<CargoAdmin> ObtenerCargosAdmin(int codigoUsuario)
+        {
+            ws.CargoAdmin[] datos = Ejecutar(
+                c => c.listarCargosAdmin(codigoUsuario, Sesion.CodigoEspacio), new ws.CargoAdmin[0]);
+
+            List<CargoAdmin> lista = new List<CargoAdmin>();
+            if (datos == null) return lista;
+
+            foreach (ws.CargoAdmin d in datos)
+            {
+                lista.Add(new CargoAdmin
+                {
+                    Codigo = d.codigoCargo,
+                    Nombre = d.nombre ?? string.Empty,
+                    NivelGobierno = d.nivelGobierno ?? string.Empty,
+                    Orden = d.orden,
+                    Activo = d.activo,
+                    Candidaturas = d.candidaturas
+                });
+            }
+
+            return lista;
+        }
+
+        public ResultadoGuardado GuardarCargo(int codigoUsuario, int codigoCargo, string nombre, string nivelGobierno, int orden)
+        {
+            ws.RespuestaGuardado d = Ejecutar(
+                c => c.guardarCargo(codigoUsuario, Sesion.CodigoEspacio, codigoCargo, nombre, nivelGobierno, orden), null);
+
+            return AGuardado(d);
+        }
+
+        public Resultado CambiarEstadoCargo(int codigoUsuario, int codigoCargo, bool activo, string motivo)
+        {
+            ws.RespuestaAdmin d = Ejecutar(
+                c => c.cambiarEstadoCargo(codigoUsuario, codigoCargo, activo, motivo), null);
+
+            return ARespuesta(d);
+        }
+
         // ------------------------------------------------------ Espacios
 
         public Espacio ObtenerEspacio(string slug)
