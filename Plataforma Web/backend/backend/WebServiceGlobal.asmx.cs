@@ -459,10 +459,12 @@ namespace backend
         private const string SelectCampana =
             "SELECT c.codigoCampana, c.slug, c.nombre, c.resumen, c.descripcion, c.alcance, " +
             "       c.fechaInicio, c.fechaEleccion, c.estado, c.esActual, " +
+            "       es.slug AS espacioSlug, " +
             "       (SELECT COUNT(*) FROM dbo.Candidatos    x WHERE x.codigoCampana = c.codigoCampana) AS totalCandidatos, " +
             "       (SELECT COUNT(*) FROM dbo.Propuestas    x WHERE x.codigoCampana = c.codigoCampana) AS totalPropuestas, " +
             "       (SELECT COUNT(*) FROM dbo.Publicaciones x WHERE x.codigoCampana = c.codigoCampana) AS totalPublicaciones " +
-            "FROM dbo.Campanas c ";
+            "FROM dbo.Campanas c " +
+            "INNER JOIN dbo.Espacios es ON es.codigoEspacio = c.codigoEspacio ";
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
@@ -557,6 +559,7 @@ namespace backend
             "       ISNULL(k.sitioWeb,'') AS sitioWeb, ISNULL(k.facebook,'') AS facebook, " +
             "       ISNULL(k.x,'') AS x, ISNULL(k.instagram,'') AS instagram, " +
             "       nv.nombre AS verificacion, ISNULL(pa.slug,'') AS partidoSlug, " +
+            "       es.slug AS espacioSlug, " +
             "       (SELECT COUNT(*) FROM dbo.Propuestas    p WHERE p.codigoCandidato = k.codigoCandidato) AS totalPropuestas, " +
             "       (SELECT COUNT(*) FROM dbo.Publicaciones p WHERE p.codigoCandidato = k.codigoCandidato) AS totalPublicaciones, " +
             "       (SELECT COUNT(*) FROM dbo.Valoraciones v INNER JOIN dbo.TiposObjeto t ON t.codigoTipoObjeto = v.codigoTipoObjeto " +
@@ -567,6 +570,7 @@ namespace backend
             "         WHERE t.nombre = 'Candidato' AND cm.codigoObjeto = k.codigoCandidato AND cm.aprobado = 1) AS comentarios " +
             "FROM dbo.Candidatos k " +
             "INNER JOIN dbo.Campanas ca ON ca.codigoCampana = k.codigoCampana " +
+            "INNER JOIN dbo.Espacios es ON es.codigoEspacio = ca.codigoEspacio " +
             "INNER JOIN dbo.Cargos cg ON cg.codigoCargo = k.codigoCargo " +
             "INNER JOIN dbo.NivelesVerificacion nv ON nv.codigoVerificacion = k.codigoVerificacion " +
             "LEFT JOIN dbo.Departamentos d ON d.codigoDepartamento = k.codigoDepartamento " +
@@ -638,6 +642,7 @@ namespace backend
 
         private const string SelectPropuesta =
             "SELECT p.codigoPropuesta, p.codigoCandidato, k.slug AS candidatoSlug, " +
+            "       es.slug AS espacioSlug, " +
             "       (k.nombres + ' ' + k.apellidos) AS candidatoNombre, ca.slug AS campanaSlug, " +
             "       p.nombre, p.descripcion, ISNULL(p.problema,'') AS problema, ISNULL(p.objetivo,'') AS objetivo, " +
             "       ISNULL(p.beneficiarios,'') AS beneficiarios, cat.nombre AS categoria, " +
@@ -654,6 +659,7 @@ namespace backend
             "FROM dbo.Propuestas p " +
             "INNER JOIN dbo.Candidatos k ON k.codigoCandidato = p.codigoCandidato " +
             "INNER JOIN dbo.Campanas ca ON ca.codigoCampana = p.codigoCampana " +
+            "INNER JOIN dbo.Espacios es ON es.codigoEspacio = ca.codigoEspacio " +
             "INNER JOIN dbo.Categorias cat ON cat.codigoCategoria = p.codigoCategoria " +
             "INNER JOIN dbo.EstadosPropuesta ep ON ep.codigoEstado = p.codigoEstado " +
             "INNER JOIN dbo.NivelesVerificacion nv ON nv.codigoVerificacion = p.codigoVerificacion ";
@@ -867,6 +873,7 @@ namespace backend
 
         private const string SelectPartido =
             "SELECT pa.codigoPartido, pa.slug, pa.nombre, ISNULL(pa.siglas,'') AS siglas, " +
+            "       es.slug AS espacioSlug, " +
             "       ISNULL(pa.descripcion,'') AS descripcion, " +
             "       (SELECT COUNT(*) FROM dbo.Candidatos k WHERE k.codigoPartido = pa.codigoPartido) AS totalCandidatos, " +
             "       (SELECT COUNT(*) FROM dbo.Propuestas r INNER JOIN dbo.Candidatos k2 ON k2.codigoCandidato = r.codigoCandidato " +
@@ -877,7 +884,8 @@ namespace backend
             "         WHERE t.nombre = 'Partido' AND v.codigoObjeto = pa.codigoPartido AND v.valor = -1) AS noMeGusta, " +
             "       (SELECT COUNT(*) FROM dbo.Comentarios cm INNER JOIN dbo.TiposObjeto t ON t.codigoTipoObjeto = cm.codigoTipoObjeto " +
             "         WHERE t.nombre = 'Partido' AND cm.codigoObjeto = pa.codigoPartido AND cm.aprobado = 1) AS comentarios " +
-            "FROM dbo.Partidos pa ";
+            "FROM dbo.Partidos pa " +
+            "INNER JOIN dbo.Espacios es ON es.codigoEspacio = pa.codigoEspacio ";
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
@@ -1948,6 +1956,7 @@ namespace backend
             return new Partido
             {
                 codigoPartido = Convert.ToInt32(reader["codigoPartido"]),
+                espacioSlug = Texto(reader, "espacioSlug"),
                 slug = Texto(reader, "slug"),
                 nombre = Texto(reader, "nombre"),
                 siglas = Texto(reader, "siglas"),
@@ -1996,6 +2005,7 @@ namespace backend
             return new Campana
             {
                 codigoCampana = Convert.ToInt32(reader["codigoCampana"]),
+                espacioSlug = Texto(reader, "espacioSlug"),
                 slug = Texto(reader, "slug"),
                 nombre = Texto(reader, "nombre"),
                 resumen = Texto(reader, "resumen"),
@@ -2016,6 +2026,7 @@ namespace backend
             return new Candidato
             {
                 codigoCandidato = Convert.ToInt32(reader["codigoCandidato"]),
+                espacioSlug = Texto(reader, "espacioSlug"),
                 slug = Texto(reader, "slug"),
                 codigoCampana = Convert.ToInt32(reader["codigoCampana"]),
                 campanaSlug = Texto(reader, "campanaSlug"),
@@ -2054,6 +2065,7 @@ namespace backend
             return new Propuesta
             {
                 codigoPropuesta = Convert.ToInt32(reader["codigoPropuesta"]),
+                espacioSlug = Texto(reader, "espacioSlug"),
                 codigoCandidato = Convert.ToInt32(reader["codigoCandidato"]),
                 candidatoSlug = Texto(reader, "candidatoSlug"),
                 candidatoNombre = Texto(reader, "candidatoNombre"),

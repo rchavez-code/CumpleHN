@@ -41,6 +41,8 @@ namespace frontend
                 return;
             }
 
+            Espacios.Fijar(_candidato.EspacioSlug);
+
             _campana = Contenido.Datos.ObtenerCampana(_candidato.CampanaSlug);
             _tab = NormalizarTab(Request.QueryString["t"]);
 
@@ -178,7 +180,7 @@ namespace frontend
             {
                 return _campana != null
                     ? ResolveUrl(_campana.Url)
-                    : ResolveUrl("~/Campanas");
+                    : ResolveUrl(Espacios.Url("~/Campanas"));
             }
         }
     }

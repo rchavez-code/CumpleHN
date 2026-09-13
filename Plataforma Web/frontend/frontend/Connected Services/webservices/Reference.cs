@@ -17,6 +17,146 @@ namespace frontend.webservices
     public interface WebServiceGlobalSoap
     {
         
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/votarEncuesta", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaEncuesta votarEncuesta(int codigoEncuesta, int codigoOpcion, int codigoUsuario);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/votarEncuesta", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaEncuesta> votarEncuestaAsync(int codigoEncuesta, int codigoOpcion, int codigoUsuario);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarEncuestasAdmin", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.EncuestaAdmin[] listarEncuestasAdmin(int codigoUsuario, int codigoEspacio, string campanaSlug, string estado);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarEncuestasAdmin", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.EncuestaAdmin[]> listarEncuestasAdminAsync(int codigoUsuario, int codigoEspacio, string campanaSlug, string estado);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarOpcionesEncuestaAdmin", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.OpcionEncuesta[] listarOpcionesEncuestaAdmin(int codigoUsuario, int codigoEncuesta);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarOpcionesEncuestaAdmin", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.OpcionEncuesta[]> listarOpcionesEncuestaAdminAsync(int codigoUsuario, int codigoEncuesta);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarEncuesta", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaGuardado guardarEncuesta(int codigoUsuario, int codigoEncuesta, int codigoCampana, string pregunta, string descripcion, int codigoCategoria, System.DateTime fechaInicio, string fechaCierre, string opciones);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarEncuesta", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarEncuestaAsync(int codigoUsuario, int codigoEncuesta, int codigoCampana, string pregunta, string descripcion, int codigoCategoria, System.DateTime fechaInicio, string fechaCierre, string opciones);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoEncuesta", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin cambiarEstadoEncuesta(int codigoUsuario, int codigoEncuesta, string accion, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoEncuesta", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoEncuestaAsync(int codigoUsuario, int codigoEncuesta, string accion, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/obtenerEspacio", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.Espacio obtenerEspacio(string slug);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/obtenerEspacio", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.Espacio> obtenerEspacioAsync(string slug);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarEspacios", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.Espacio[] listarEspacios(int codigoUsuario, bool soloActivos);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarEspacios", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.Espacio[]> listarEspaciosAsync(int codigoUsuario, bool soloActivos);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarEspacio", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaGuardado guardarEspacio(int codigoUsuario, int codigoEspacio, string nombre, string organizacion, string descripcion, bool padronCerrado, string terminoAgrupacion);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarEspacio", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarEspacioAsync(int codigoUsuario, int codigoEspacio, string nombre, string organizacion, string descripcion, bool padronCerrado, string terminoAgrupacion);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoEspacio", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin cambiarEstadoEspacio(int codigoUsuario, int codigoEspacio, bool activo, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoEspacio", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoEspacioAsync(int codigoUsuario, int codigoEspacio, bool activo, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/crearCuentaEspacio", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin crearCuentaEspacio(int codigoUsuario, int codigoEspacio, string login, string nombre, string correo, string clave);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/crearCuentaEspacio", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> crearCuentaEspacioAsync(int codigoUsuario, int codigoEspacio, string login, string nombre, string correo, string clave);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosVisibles", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.EstadoModulo[] listarModulosVisibles();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosVisibles", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.EstadoModulo[]> listarModulosVisiblesAsync();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosAdmin", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.ModuloAdmin[] listarModulosAdmin(int codigoUsuario);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosAdmin", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.ModuloAdmin[]> listarModulosAdminAsync(int codigoUsuario);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoModulo", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin cambiarEstadoModulo(int codigoUsuario, string clave, bool habilitado, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoModulo", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoModuloAsync(int codigoUsuario, string clave, bool habilitado, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarIniciativas", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.IniciativaPublica[] listarIniciativas(string espacioSlug, int codigoUsuario);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarIniciativas", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.IniciativaPublica[]> listarIniciativasAsync(string espacioSlug, int codigoUsuario);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarIniciativasDeUsuario", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.IniciativaPublica[] listarIniciativasDeUsuario(int codigoUsuario);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarIniciativasDeUsuario", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.IniciativaPublica[]> listarIniciativasDeUsuarioAsync(int codigoUsuario);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarIniciativa", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaGuardado guardarIniciativa(string espacioSlug, int codigoUsuario, int codigoIniciativa, string titulo, string descripcion, int codigoCategoria, int codigoDepartamento);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarIniciativa", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarIniciativaAsync(string espacioSlug, int codigoUsuario, int codigoIniciativa, string titulo, string descripcion, int codigoCategoria, int codigoDepartamento);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/retirarIniciativaPropia", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin retirarIniciativaPropia(int codigoUsuario, int codigoIniciativa);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/retirarIniciativaPropia", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> retirarIniciativaPropiaAsync(int codigoUsuario, int codigoIniciativa);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarIniciativasAdmin", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.IniciativaPublica[] listarIniciativasAdmin(int codigoUsuario, int codigoEspacio, string estado);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarIniciativasAdmin", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.IniciativaPublica[]> listarIniciativasAdminAsync(int codigoUsuario, int codigoEspacio, string estado);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/moderarIniciativa", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin moderarIniciativa(int codigoUsuario, int codigoIniciativa, bool activo, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/moderarIniciativa", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> moderarIniciativaAsync(int codigoUsuario, int codigoIniciativa, bool activo, string motivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/preguntarAsistente", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAsistente preguntarAsistente(int codigoUsuario, string pregunta, string campanaSlug);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/preguntarAsistente", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAsistente> preguntarAsistenteAsync(int codigoUsuario, string pregunta, string campanaSlug);
+        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ValidarLogin", ReplyAction="*")]
         [System.ServiceModel.XmlSerializerFormatAttribute()]
         frontend.webservices.RespuestaLogin ValidarLogin(string usuario, string clave);
@@ -310,1586 +450,6 @@ namespace frontend.webservices
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarOpcionesEncuesta", ReplyAction="*")]
         System.Threading.Tasks.Task<frontend.webservices.OpcionEncuesta[]> listarOpcionesEncuestaAsync(int codigoEncuesta, int codigoUsuario);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/votarEncuesta", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.RespuestaEncuesta votarEncuesta(int codigoEncuesta, int codigoOpcion, int codigoUsuario);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/votarEncuesta", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.RespuestaEncuesta> votarEncuestaAsync(int codigoEncuesta, int codigoOpcion, int codigoUsuario);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarEncuestasAdmin", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.EncuestaAdmin[] listarEncuestasAdmin(int codigoUsuario, int codigoEspacio, string campanaSlug, string estado);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarEncuestasAdmin", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.EncuestaAdmin[]> listarEncuestasAdminAsync(int codigoUsuario, int codigoEspacio, string campanaSlug, string estado);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarOpcionesEncuestaAdmin", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.OpcionEncuesta[] listarOpcionesEncuestaAdmin(int codigoUsuario, int codigoEncuesta);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarOpcionesEncuestaAdmin", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.OpcionEncuesta[]> listarOpcionesEncuestaAdminAsync(int codigoUsuario, int codigoEncuesta);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarEncuesta", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.RespuestaGuardado guardarEncuesta(int codigoUsuario, int codigoEncuesta, int codigoCampana, string pregunta, string descripcion, int codigoCategoria, System.DateTime fechaInicio, string fechaCierre, string opciones);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarEncuesta", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarEncuestaAsync(int codigoUsuario, int codigoEncuesta, int codigoCampana, string pregunta, string descripcion, int codigoCategoria, System.DateTime fechaInicio, string fechaCierre, string opciones);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoEncuesta", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.RespuestaAdmin cambiarEstadoEncuesta(int codigoUsuario, int codigoEncuesta, string accion, string motivo);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoEncuesta", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoEncuestaAsync(int codigoUsuario, int codigoEncuesta, string accion, string motivo);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/obtenerEspacio", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.Espacio obtenerEspacio(string slug);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/obtenerEspacio", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.Espacio> obtenerEspacioAsync(string slug);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarEspacios", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.Espacio[] listarEspacios(int codigoUsuario, bool soloActivos);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarEspacios", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.Espacio[]> listarEspaciosAsync(int codigoUsuario, bool soloActivos);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarEspacio", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.RespuestaGuardado guardarEspacio(int codigoUsuario, int codigoEspacio, string nombre, string organizacion, string descripcion, bool padronCerrado, string terminoAgrupacion);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarEspacio", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarEspacioAsync(int codigoUsuario, int codigoEspacio, string nombre, string organizacion, string descripcion, bool padronCerrado, string terminoAgrupacion);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoEspacio", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.RespuestaAdmin cambiarEstadoEspacio(int codigoUsuario, int codigoEspacio, bool activo, string motivo);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoEspacio", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoEspacioAsync(int codigoUsuario, int codigoEspacio, bool activo, string motivo);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/crearCuentaEspacio", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.RespuestaAdmin crearCuentaEspacio(int codigoUsuario, int codigoEspacio, string login, string nombre, string correo, string clave);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/crearCuentaEspacio", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> crearCuentaEspacioAsync(int codigoUsuario, int codigoEspacio, string login, string nombre, string correo, string clave);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosVisibles", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.EstadoModulo[] listarModulosVisibles();
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosVisibles", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.EstadoModulo[]> listarModulosVisiblesAsync();
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosAdmin", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.ModuloAdmin[] listarModulosAdmin(int codigoUsuario);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarModulosAdmin", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.ModuloAdmin[]> listarModulosAdminAsync(int codigoUsuario);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoModulo", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.RespuestaAdmin cambiarEstadoModulo(int codigoUsuario, string clave, bool habilitado, string motivo);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/cambiarEstadoModulo", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoModuloAsync(int codigoUsuario, string clave, bool habilitado, string motivo);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarIniciativas", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.IniciativaPublica[] listarIniciativas(string espacioSlug, int codigoUsuario);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarIniciativas", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.IniciativaPublica[]> listarIniciativasAsync(string espacioSlug, int codigoUsuario);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarIniciativasDeUsuario", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.IniciativaPublica[] listarIniciativasDeUsuario(int codigoUsuario);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarIniciativasDeUsuario", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.IniciativaPublica[]> listarIniciativasDeUsuarioAsync(int codigoUsuario);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarIniciativa", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.RespuestaGuardado guardarIniciativa(string espacioSlug, int codigoUsuario, int codigoIniciativa, string titulo, string descripcion, int codigoCategoria, int codigoDepartamento);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarIniciativa", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarIniciativaAsync(string espacioSlug, int codigoUsuario, int codigoIniciativa, string titulo, string descripcion, int codigoCategoria, int codigoDepartamento);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/retirarIniciativaPropia", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.RespuestaAdmin retirarIniciativaPropia(int codigoUsuario, int codigoIniciativa);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/retirarIniciativaPropia", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> retirarIniciativaPropiaAsync(int codigoUsuario, int codigoIniciativa);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarIniciativasAdmin", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.IniciativaPublica[] listarIniciativasAdmin(int codigoUsuario, int codigoEspacio, string estado);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarIniciativasAdmin", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.IniciativaPublica[]> listarIniciativasAdminAsync(int codigoUsuario, int codigoEspacio, string estado);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/moderarIniciativa", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.RespuestaAdmin moderarIniciativa(int codigoUsuario, int codigoIniciativa, bool activo, string motivo);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/moderarIniciativa", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> moderarIniciativaAsync(int codigoUsuario, int codigoIniciativa, bool activo, string motivo);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/preguntarAsistente", ReplyAction="*")]
-        [System.ServiceModel.XmlSerializerFormatAttribute()]
-        frontend.webservices.RespuestaAsistente preguntarAsistente(int codigoUsuario, string pregunta, string campanaSlug);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/preguntarAsistente", ReplyAction="*")]
-        System.Threading.Tasks.Task<frontend.webservices.RespuestaAsistente> preguntarAsistenteAsync(int codigoUsuario, string pregunta, string campanaSlug);
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
-    public partial class RespuestaLogin
-    {
-        
-        private bool okField;
-        
-        private string mensajeField;
-        
-        private InfoUsuario usuarioField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
-        public bool ok
-        {
-            get
-            {
-                return this.okField;
-            }
-            set
-            {
-                this.okField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
-        public string mensaje
-        {
-            get
-            {
-                return this.mensajeField;
-            }
-            set
-            {
-                this.mensajeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
-        public InfoUsuario usuario
-        {
-            get
-            {
-                return this.usuarioField;
-            }
-            set
-            {
-                this.usuarioField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
-    public partial class InfoUsuario
-    {
-        
-        private int codigoUsuarioField;
-        
-        private string loginField;
-        
-        private string nombreField;
-        
-        private string correoField;
-        
-        private string rolField;
-        
-        private bool correoConfirmadoField;
-        
-        private int codigoCandidatoField;
-        
-        private string candidatoSlugField;
-        
-        private int codigoEspacioField;
-        
-        private string espacioNombreField;
-        
-        private bool administraPlataformaField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
-        public int codigoUsuario
-        {
-            get
-            {
-                return this.codigoUsuarioField;
-            }
-            set
-            {
-                this.codigoUsuarioField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
-        public string login
-        {
-            get
-            {
-                return this.loginField;
-            }
-            set
-            {
-                this.loginField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
-        public string nombre
-        {
-            get
-            {
-                return this.nombreField;
-            }
-            set
-            {
-                this.nombreField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
-        public string correo
-        {
-            get
-            {
-                return this.correoField;
-            }
-            set
-            {
-                this.correoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
-        public string rol
-        {
-            get
-            {
-                return this.rolField;
-            }
-            set
-            {
-                this.rolField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
-        public bool correoConfirmado
-        {
-            get
-            {
-                return this.correoConfirmadoField;
-            }
-            set
-            {
-                this.correoConfirmadoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
-        public int codigoCandidato
-        {
-            get
-            {
-                return this.codigoCandidatoField;
-            }
-            set
-            {
-                this.codigoCandidatoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
-        public string candidatoSlug
-        {
-            get
-            {
-                return this.candidatoSlugField;
-            }
-            set
-            {
-                this.candidatoSlugField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
-        public int codigoEspacio
-        {
-            get
-            {
-                return this.codigoEspacioField;
-            }
-            set
-            {
-                this.codigoEspacioField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
-        public string espacioNombre
-        {
-            get
-            {
-                return this.espacioNombreField;
-            }
-            set
-            {
-                this.espacioNombreField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
-        public bool administraPlataforma
-        {
-            get
-            {
-                return this.administraPlataformaField;
-            }
-            set
-            {
-                this.administraPlataformaField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
-    public partial class RespuestaAsistente
-    {
-        
-        private bool okField;
-        
-        private string respuestaField;
-        
-        private string[] fuentesField;
-        
-        private string mensajeField;
-        
-        private int restantesField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
-        public bool ok
-        {
-            get
-            {
-                return this.okField;
-            }
-            set
-            {
-                this.okField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
-        public string respuesta
-        {
-            get
-            {
-                return this.respuestaField;
-            }
-            set
-            {
-                this.respuestaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayAttribute(Order=2)]
-        public string[] fuentes
-        {
-            get
-            {
-                return this.fuentesField;
-            }
-            set
-            {
-                this.fuentesField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
-        public string mensaje
-        {
-            get
-            {
-                return this.mensajeField;
-            }
-            set
-            {
-                this.mensajeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
-        public int restantes
-        {
-            get
-            {
-                return this.restantesField;
-            }
-            set
-            {
-                this.restantesField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
-    public partial class IniciativaPublica
-    {
-        
-        private int codigoIniciativaField;
-        
-        private string autoraField;
-        
-        private string tituloField;
-        
-        private string descripcionField;
-        
-        private int codigoCategoriaField;
-        
-        private string categoriaField;
-        
-        private int codigoDepartamentoField;
-        
-        private string departamentoField;
-        
-        private int meGustaField;
-        
-        private int noMeGustaField;
-        
-        private int comentariosField;
-        
-        private int saldoField;
-        
-        private int miValoracionField;
-        
-        private bool esMiaField;
-        
-        private bool activoField;
-        
-        private string motivoBajaField;
-        
-        private bool puedeEditarField;
-        
-        private System.DateTime fechaRegistroField;
-        
-        private string fechaEdicionField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
-        public int codigoIniciativa
-        {
-            get
-            {
-                return this.codigoIniciativaField;
-            }
-            set
-            {
-                this.codigoIniciativaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
-        public string autora
-        {
-            get
-            {
-                return this.autoraField;
-            }
-            set
-            {
-                this.autoraField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
-        public string titulo
-        {
-            get
-            {
-                return this.tituloField;
-            }
-            set
-            {
-                this.tituloField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
-        public string descripcion
-        {
-            get
-            {
-                return this.descripcionField;
-            }
-            set
-            {
-                this.descripcionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
-        public int codigoCategoria
-        {
-            get
-            {
-                return this.codigoCategoriaField;
-            }
-            set
-            {
-                this.codigoCategoriaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
-        public string categoria
-        {
-            get
-            {
-                return this.categoriaField;
-            }
-            set
-            {
-                this.categoriaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
-        public int codigoDepartamento
-        {
-            get
-            {
-                return this.codigoDepartamentoField;
-            }
-            set
-            {
-                this.codigoDepartamentoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
-        public string departamento
-        {
-            get
-            {
-                return this.departamentoField;
-            }
-            set
-            {
-                this.departamentoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
-        public int meGusta
-        {
-            get
-            {
-                return this.meGustaField;
-            }
-            set
-            {
-                this.meGustaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
-        public int noMeGusta
-        {
-            get
-            {
-                return this.noMeGustaField;
-            }
-            set
-            {
-                this.noMeGustaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
-        public int comentarios
-        {
-            get
-            {
-                return this.comentariosField;
-            }
-            set
-            {
-                this.comentariosField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
-        public int saldo
-        {
-            get
-            {
-                return this.saldoField;
-            }
-            set
-            {
-                this.saldoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=12)]
-        public int miValoracion
-        {
-            get
-            {
-                return this.miValoracionField;
-            }
-            set
-            {
-                this.miValoracionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=13)]
-        public bool esMia
-        {
-            get
-            {
-                return this.esMiaField;
-            }
-            set
-            {
-                this.esMiaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=14)]
-        public bool activo
-        {
-            get
-            {
-                return this.activoField;
-            }
-            set
-            {
-                this.activoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=15)]
-        public string motivoBaja
-        {
-            get
-            {
-                return this.motivoBajaField;
-            }
-            set
-            {
-                this.motivoBajaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=16)]
-        public bool puedeEditar
-        {
-            get
-            {
-                return this.puedeEditarField;
-            }
-            set
-            {
-                this.puedeEditarField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=17)]
-        public System.DateTime fechaRegistro
-        {
-            get
-            {
-                return this.fechaRegistroField;
-            }
-            set
-            {
-                this.fechaRegistroField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=18)]
-        public string fechaEdicion
-        {
-            get
-            {
-                return this.fechaEdicionField;
-            }
-            set
-            {
-                this.fechaEdicionField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
-    public partial class ModuloAdmin
-    {
-        
-        private int codigoModuloField;
-        
-        private string claveField;
-        
-        private string nombreField;
-        
-        private string descripcionField;
-        
-        private string grupoField;
-        
-        private string clavePadreField;
-        
-        private bool habilitadoField;
-        
-        private bool visibleField;
-        
-        private bool apagadoPorPadreField;
-        
-        private System.DateTime fechaCambioField;
-        
-        private string cambiadoPorField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
-        public int codigoModulo
-        {
-            get
-            {
-                return this.codigoModuloField;
-            }
-            set
-            {
-                this.codigoModuloField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
-        public string clave
-        {
-            get
-            {
-                return this.claveField;
-            }
-            set
-            {
-                this.claveField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
-        public string nombre
-        {
-            get
-            {
-                return this.nombreField;
-            }
-            set
-            {
-                this.nombreField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
-        public string descripcion
-        {
-            get
-            {
-                return this.descripcionField;
-            }
-            set
-            {
-                this.descripcionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
-        public string grupo
-        {
-            get
-            {
-                return this.grupoField;
-            }
-            set
-            {
-                this.grupoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
-        public string clavePadre
-        {
-            get
-            {
-                return this.clavePadreField;
-            }
-            set
-            {
-                this.clavePadreField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
-        public bool habilitado
-        {
-            get
-            {
-                return this.habilitadoField;
-            }
-            set
-            {
-                this.habilitadoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
-        public bool visible
-        {
-            get
-            {
-                return this.visibleField;
-            }
-            set
-            {
-                this.visibleField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
-        public bool apagadoPorPadre
-        {
-            get
-            {
-                return this.apagadoPorPadreField;
-            }
-            set
-            {
-                this.apagadoPorPadreField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
-        public System.DateTime fechaCambio
-        {
-            get
-            {
-                return this.fechaCambioField;
-            }
-            set
-            {
-                this.fechaCambioField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
-        public string cambiadoPor
-        {
-            get
-            {
-                return this.cambiadoPorField;
-            }
-            set
-            {
-                this.cambiadoPorField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
-    public partial class EstadoModulo
-    {
-        
-        private string claveField;
-        
-        private bool visibleField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
-        public string clave
-        {
-            get
-            {
-                return this.claveField;
-            }
-            set
-            {
-                this.claveField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
-        public bool visible
-        {
-            get
-            {
-                return this.visibleField;
-            }
-            set
-            {
-                this.visibleField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
-    public partial class Espacio
-    {
-        
-        private int codigoEspacioField;
-        
-        private string slugField;
-        
-        private string nombreField;
-        
-        private string organizacionField;
-        
-        private string descripcionField;
-        
-        private bool esPlataformaField;
-        
-        private bool padronCerradoField;
-        
-        private string terminoAgrupacionField;
-        
-        private bool activoField;
-        
-        private string estadoField;
-        
-        private string motivoBajaField;
-        
-        private System.DateTime fechaCreacionField;
-        
-        private int codigoUsuarioPropietarioField;
-        
-        private string propietarioField;
-        
-        private string propietarioLoginField;
-        
-        private string propietarioCorreoField;
-        
-        private int campanasField;
-        
-        private int candidaturasField;
-        
-        private int administradoresField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
-        public int codigoEspacio
-        {
-            get
-            {
-                return this.codigoEspacioField;
-            }
-            set
-            {
-                this.codigoEspacioField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
-        public string slug
-        {
-            get
-            {
-                return this.slugField;
-            }
-            set
-            {
-                this.slugField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
-        public string nombre
-        {
-            get
-            {
-                return this.nombreField;
-            }
-            set
-            {
-                this.nombreField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
-        public string organizacion
-        {
-            get
-            {
-                return this.organizacionField;
-            }
-            set
-            {
-                this.organizacionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
-        public string descripcion
-        {
-            get
-            {
-                return this.descripcionField;
-            }
-            set
-            {
-                this.descripcionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
-        public bool esPlataforma
-        {
-            get
-            {
-                return this.esPlataformaField;
-            }
-            set
-            {
-                this.esPlataformaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
-        public bool padronCerrado
-        {
-            get
-            {
-                return this.padronCerradoField;
-            }
-            set
-            {
-                this.padronCerradoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
-        public string terminoAgrupacion
-        {
-            get
-            {
-                return this.terminoAgrupacionField;
-            }
-            set
-            {
-                this.terminoAgrupacionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
-        public bool activo
-        {
-            get
-            {
-                return this.activoField;
-            }
-            set
-            {
-                this.activoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
-        public string estado
-        {
-            get
-            {
-                return this.estadoField;
-            }
-            set
-            {
-                this.estadoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
-        public string motivoBaja
-        {
-            get
-            {
-                return this.motivoBajaField;
-            }
-            set
-            {
-                this.motivoBajaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
-        public System.DateTime fechaCreacion
-        {
-            get
-            {
-                return this.fechaCreacionField;
-            }
-            set
-            {
-                this.fechaCreacionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=12)]
-        public int codigoUsuarioPropietario
-        {
-            get
-            {
-                return this.codigoUsuarioPropietarioField;
-            }
-            set
-            {
-                this.codigoUsuarioPropietarioField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=13)]
-        public string propietario
-        {
-            get
-            {
-                return this.propietarioField;
-            }
-            set
-            {
-                this.propietarioField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=14)]
-        public string propietarioLogin
-        {
-            get
-            {
-                return this.propietarioLoginField;
-            }
-            set
-            {
-                this.propietarioLoginField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=15)]
-        public string propietarioCorreo
-        {
-            get
-            {
-                return this.propietarioCorreoField;
-            }
-            set
-            {
-                this.propietarioCorreoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=16)]
-        public int campanas
-        {
-            get
-            {
-                return this.campanasField;
-            }
-            set
-            {
-                this.campanasField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=17)]
-        public int candidaturas
-        {
-            get
-            {
-                return this.candidaturasField;
-            }
-            set
-            {
-                this.candidaturasField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=18)]
-        public int administradores
-        {
-            get
-            {
-                return this.administradoresField;
-            }
-            set
-            {
-                this.administradoresField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
-    public partial class EncuestaAdmin
-    {
-        
-        private int codigoEncuestaField;
-        
-        private int codigoCampanaField;
-        
-        private string campanaSlugField;
-        
-        private string campanaField;
-        
-        private string preguntaField;
-        
-        private string descripcionField;
-        
-        private int codigoCategoriaField;
-        
-        private string categoriaField;
-        
-        private System.DateTime fechaInicioField;
-        
-        private string fechaCierreField;
-        
-        private bool activoField;
-        
-        private string motivoBajaField;
-        
-        private string estadoField;
-        
-        private int opcionesField;
-        
-        private int votosField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
-        public int codigoEncuesta
-        {
-            get
-            {
-                return this.codigoEncuestaField;
-            }
-            set
-            {
-                this.codigoEncuestaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
-        public int codigoCampana
-        {
-            get
-            {
-                return this.codigoCampanaField;
-            }
-            set
-            {
-                this.codigoCampanaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
-        public string campanaSlug
-        {
-            get
-            {
-                return this.campanaSlugField;
-            }
-            set
-            {
-                this.campanaSlugField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
-        public string campana
-        {
-            get
-            {
-                return this.campanaField;
-            }
-            set
-            {
-                this.campanaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
-        public string pregunta
-        {
-            get
-            {
-                return this.preguntaField;
-            }
-            set
-            {
-                this.preguntaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
-        public string descripcion
-        {
-            get
-            {
-                return this.descripcionField;
-            }
-            set
-            {
-                this.descripcionField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
-        public int codigoCategoria
-        {
-            get
-            {
-                return this.codigoCategoriaField;
-            }
-            set
-            {
-                this.codigoCategoriaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
-        public string categoria
-        {
-            get
-            {
-                return this.categoriaField;
-            }
-            set
-            {
-                this.categoriaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
-        public System.DateTime fechaInicio
-        {
-            get
-            {
-                return this.fechaInicioField;
-            }
-            set
-            {
-                this.fechaInicioField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
-        public string fechaCierre
-        {
-            get
-            {
-                return this.fechaCierreField;
-            }
-            set
-            {
-                this.fechaCierreField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
-        public bool activo
-        {
-            get
-            {
-                return this.activoField;
-            }
-            set
-            {
-                this.activoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
-        public string motivoBaja
-        {
-            get
-            {
-                return this.motivoBajaField;
-            }
-            set
-            {
-                this.motivoBajaField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=12)]
-        public string estado
-        {
-            get
-            {
-                return this.estadoField;
-            }
-            set
-            {
-                this.estadoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=13)]
-        public int opciones
-        {
-            get
-            {
-                return this.opcionesField;
-            }
-            set
-            {
-                this.opcionesField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=14)]
-        public int votos
-        {
-            get
-            {
-                return this.votosField;
-            }
-            set
-            {
-                this.votosField = value;
-            }
-        }
     }
     
     /// <remarks/>
@@ -2786,64 +1346,6 @@ namespace frontend.webservices
             set
             {
                 this.propuestasField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
-    public partial class RespuestaGuardado
-    {
-        
-        private bool okField;
-        
-        private string mensajeField;
-        
-        private int codigoField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
-        public bool ok
-        {
-            get
-            {
-                return this.okField;
-            }
-            set
-            {
-                this.okField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
-        public string mensaje
-        {
-            get
-            {
-                return this.mensajeField;
-            }
-            set
-            {
-                this.mensajeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
-        public int codigo
-        {
-            get
-            {
-                return this.codigoField;
-            }
-            set
-            {
-                this.codigoField = value;
             }
         }
     }
@@ -5443,6 +3945,8 @@ namespace frontend.webservices
         
         private int codigoPartidoField;
         
+        private string espacioSlugField;
+        
         private string slugField;
         
         private string nombreField;
@@ -5477,6 +3981,20 @@ namespace frontend.webservices
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string espacioSlug
+        {
+            get
+            {
+                return this.espacioSlugField;
+            }
+            set
+            {
+                this.espacioSlugField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
         public string slug
         {
             get
@@ -5490,7 +4008,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
         public string nombre
         {
             get
@@ -5504,7 +4022,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
         public string siglas
         {
             get
@@ -5518,7 +4036,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
         public string descripcion
         {
             get
@@ -5532,7 +4050,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
         public int totalCandidatos
         {
             get
@@ -5546,7 +4064,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
         public int totalPropuestas
         {
             get
@@ -5560,7 +4078,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
         public int meGusta
         {
             get
@@ -5574,7 +4092,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
         public int noMeGusta
         {
             get
@@ -5588,7 +4106,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
         public int comentarios
         {
             get
@@ -5953,6 +4471,8 @@ namespace frontend.webservices
         
         private int codigoPropuestaField;
         
+        private string espacioSlugField;
+        
         private int codigoCandidatoField;
         
         private string candidatoSlugField;
@@ -6009,6 +4529,20 @@ namespace frontend.webservices
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string espacioSlug
+        {
+            get
+            {
+                return this.espacioSlugField;
+            }
+            set
+            {
+                this.espacioSlugField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
         public int codigoCandidato
         {
             get
@@ -6022,7 +4556,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
         public string candidatoSlug
         {
             get
@@ -6036,7 +4570,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
         public string candidatoNombre
         {
             get
@@ -6050,7 +4584,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
         public string campanaSlug
         {
             get
@@ -6064,7 +4598,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
         public string nombre
         {
             get
@@ -6078,7 +4612,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
         public string descripcion
         {
             get
@@ -6092,7 +4626,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
         public string problema
         {
             get
@@ -6106,7 +4640,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
         public string objetivo
         {
             get
@@ -6120,7 +4654,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
         public string beneficiarios
         {
             get
@@ -6134,7 +4668,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
         public string categoria
         {
             get
@@ -6148,7 +4682,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=12)]
         public string ubicacion
         {
             get
@@ -6162,7 +4696,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=12)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=13)]
         public string periodoEjecucion
         {
             get
@@ -6176,7 +4710,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=13)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=14)]
         public string estado
         {
             get
@@ -6190,7 +4724,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=14)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=15)]
         public string imagenUrl
         {
             get
@@ -6204,7 +4738,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=15)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=16)]
         public string informacionAdicional
         {
             get
@@ -6218,7 +4752,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=16)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=17)]
         public string verificacion
         {
             get
@@ -6232,7 +4766,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=17)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=18)]
         public System.DateTime fechaRegistro
         {
             get
@@ -6246,7 +4780,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=18)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=19)]
         public int meGusta
         {
             get
@@ -6260,7 +4794,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=19)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=20)]
         public int noMeGusta
         {
             get
@@ -6274,7 +4808,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=20)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=21)]
         public int comentarios
         {
             get
@@ -6298,6 +4832,8 @@ namespace frontend.webservices
     {
         
         private int codigoCandidatoField;
+        
+        private string espacioSlugField;
         
         private string slugField;
         
@@ -6375,6 +4911,20 @@ namespace frontend.webservices
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string espacioSlug
+        {
+            get
+            {
+                return this.espacioSlugField;
+            }
+            set
+            {
+                this.espacioSlugField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
         public string slug
         {
             get
@@ -6388,7 +4938,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
         public int codigoCampana
         {
             get
@@ -6402,7 +4952,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
         public string campanaSlug
         {
             get
@@ -6416,7 +4966,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
         public string campanaNombre
         {
             get
@@ -6430,7 +4980,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
         public string nombres
         {
             get
@@ -6444,7 +4994,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
         public string apellidos
         {
             get
@@ -6458,7 +5008,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
         public string partido
         {
             get
@@ -6472,7 +5022,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
         public string partidoSiglas
         {
             get
@@ -6486,7 +5036,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
         public string partidoSlug
         {
             get
@@ -6500,7 +5050,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
         public string cargo
         {
             get
@@ -6514,7 +5064,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=12)]
         public string nivelGobierno
         {
             get
@@ -6528,7 +5078,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=12)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=13)]
         public string departamento
         {
             get
@@ -6542,7 +5092,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=13)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=14)]
         public string municipio
         {
             get
@@ -6556,7 +5106,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=14)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=15)]
         public string fotoUrl
         {
             get
@@ -6570,7 +5120,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=15)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=16)]
         public string titular
         {
             get
@@ -6584,7 +5134,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=16)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=17)]
         public string biografia
         {
             get
@@ -6598,7 +5148,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=17)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=18)]
         public string informacionProfesional
         {
             get
@@ -6612,7 +5162,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=18)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=19)]
         public string descripcionCandidatura
         {
             get
@@ -6626,7 +5176,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=19)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=20)]
         public string correoPublico
         {
             get
@@ -6640,7 +5190,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=20)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=21)]
         public string telefono
         {
             get
@@ -6654,7 +5204,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=21)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=22)]
         public string sitioWeb
         {
             get
@@ -6668,7 +5218,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=22)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=23)]
         public string facebook
         {
             get
@@ -6682,7 +5232,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=23)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=24)]
         public string x
         {
             get
@@ -6696,7 +5246,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=24)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=25)]
         public string instagram
         {
             get
@@ -6710,7 +5260,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=25)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=26)]
         public string verificacion
         {
             get
@@ -6724,7 +5274,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=26)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=27)]
         public int totalPropuestas
         {
             get
@@ -6738,7 +5288,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=27)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=28)]
         public int totalPublicaciones
         {
             get
@@ -6752,7 +5302,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=28)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=29)]
         public int meGusta
         {
             get
@@ -6766,7 +5316,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=29)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=30)]
         public int noMeGusta
         {
             get
@@ -6780,7 +5330,7 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=30)]
+        [System.Xml.Serialization.XmlElementAttribute(Order=31)]
         public int comentarios
         {
             get
@@ -6804,6 +5354,8 @@ namespace frontend.webservices
     {
         
         private int codigoCampanaField;
+        
+        private string espacioSlugField;
         
         private string slugField;
         
@@ -6845,6 +5397,1126 @@ namespace frontend.webservices
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string espacioSlug
+        {
+            get
+            {
+                return this.espacioSlugField;
+            }
+            set
+            {
+                this.espacioSlugField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string slug
+        {
+            get
+            {
+                return this.slugField;
+            }
+            set
+            {
+                this.slugField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public string nombre
+        {
+            get
+            {
+                return this.nombreField;
+            }
+            set
+            {
+                this.nombreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public string resumen
+        {
+            get
+            {
+                return this.resumenField;
+            }
+            set
+            {
+                this.resumenField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        public string descripcion
+        {
+            get
+            {
+                return this.descripcionField;
+            }
+            set
+            {
+                this.descripcionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        public string alcance
+        {
+            get
+            {
+                return this.alcanceField;
+            }
+            set
+            {
+                this.alcanceField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        public System.DateTime fechaInicio
+        {
+            get
+            {
+                return this.fechaInicioField;
+            }
+            set
+            {
+                this.fechaInicioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        public System.DateTime fechaEleccion
+        {
+            get
+            {
+                return this.fechaEleccionField;
+            }
+            set
+            {
+                this.fechaEleccionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
+        public string estado
+        {
+            get
+            {
+                return this.estadoField;
+            }
+            set
+            {
+                this.estadoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
+        public bool esActual
+        {
+            get
+            {
+                return this.esActualField;
+            }
+            set
+            {
+                this.esActualField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
+        public int totalCandidatos
+        {
+            get
+            {
+                return this.totalCandidatosField;
+            }
+            set
+            {
+                this.totalCandidatosField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=12)]
+        public int totalPropuestas
+        {
+            get
+            {
+                return this.totalPropuestasField;
+            }
+            set
+            {
+                this.totalPropuestasField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=13)]
+        public int totalPublicaciones
+        {
+            get
+            {
+                return this.totalPublicacionesField;
+            }
+            set
+            {
+                this.totalPublicacionesField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class InfoUsuario
+    {
+        
+        private int codigoUsuarioField;
+        
+        private string loginField;
+        
+        private string nombreField;
+        
+        private string correoField;
+        
+        private string rolField;
+        
+        private bool correoConfirmadoField;
+        
+        private int codigoCandidatoField;
+        
+        private string candidatoSlugField;
+        
+        private int codigoEspacioField;
+        
+        private string espacioNombreField;
+        
+        private bool administraPlataformaField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoUsuario
+        {
+            get
+            {
+                return this.codigoUsuarioField;
+            }
+            set
+            {
+                this.codigoUsuarioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string login
+        {
+            get
+            {
+                return this.loginField;
+            }
+            set
+            {
+                this.loginField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string nombre
+        {
+            get
+            {
+                return this.nombreField;
+            }
+            set
+            {
+                this.nombreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public string correo
+        {
+            get
+            {
+                return this.correoField;
+            }
+            set
+            {
+                this.correoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public string rol
+        {
+            get
+            {
+                return this.rolField;
+            }
+            set
+            {
+                this.rolField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        public bool correoConfirmado
+        {
+            get
+            {
+                return this.correoConfirmadoField;
+            }
+            set
+            {
+                this.correoConfirmadoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        public int codigoCandidato
+        {
+            get
+            {
+                return this.codigoCandidatoField;
+            }
+            set
+            {
+                this.codigoCandidatoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        public string candidatoSlug
+        {
+            get
+            {
+                return this.candidatoSlugField;
+            }
+            set
+            {
+                this.candidatoSlugField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        public int codigoEspacio
+        {
+            get
+            {
+                return this.codigoEspacioField;
+            }
+            set
+            {
+                this.codigoEspacioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
+        public string espacioNombre
+        {
+            get
+            {
+                return this.espacioNombreField;
+            }
+            set
+            {
+                this.espacioNombreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
+        public bool administraPlataforma
+        {
+            get
+            {
+                return this.administraPlataformaField;
+            }
+            set
+            {
+                this.administraPlataformaField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class RespuestaLogin
+    {
+        
+        private bool okField;
+        
+        private string mensajeField;
+        
+        private InfoUsuario usuarioField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public bool ok
+        {
+            get
+            {
+                return this.okField;
+            }
+            set
+            {
+                this.okField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string mensaje
+        {
+            get
+            {
+                return this.mensajeField;
+            }
+            set
+            {
+                this.mensajeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public InfoUsuario usuario
+        {
+            get
+            {
+                return this.usuarioField;
+            }
+            set
+            {
+                this.usuarioField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class RespuestaAsistente
+    {
+        
+        private bool okField;
+        
+        private string respuestaField;
+        
+        private string[] fuentesField;
+        
+        private string mensajeField;
+        
+        private int restantesField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public bool ok
+        {
+            get
+            {
+                return this.okField;
+            }
+            set
+            {
+                this.okField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string respuesta
+        {
+            get
+            {
+                return this.respuestaField;
+            }
+            set
+            {
+                this.respuestaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayAttribute(Order=2)]
+        public string[] fuentes
+        {
+            get
+            {
+                return this.fuentesField;
+            }
+            set
+            {
+                this.fuentesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public string mensaje
+        {
+            get
+            {
+                return this.mensajeField;
+            }
+            set
+            {
+                this.mensajeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public int restantes
+        {
+            get
+            {
+                return this.restantesField;
+            }
+            set
+            {
+                this.restantesField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class IniciativaPublica
+    {
+        
+        private int codigoIniciativaField;
+        
+        private string autoraField;
+        
+        private string tituloField;
+        
+        private string descripcionField;
+        
+        private int codigoCategoriaField;
+        
+        private string categoriaField;
+        
+        private int codigoDepartamentoField;
+        
+        private string departamentoField;
+        
+        private int meGustaField;
+        
+        private int noMeGustaField;
+        
+        private int comentariosField;
+        
+        private int saldoField;
+        
+        private int miValoracionField;
+        
+        private bool esMiaField;
+        
+        private bool activoField;
+        
+        private string motivoBajaField;
+        
+        private bool puedeEditarField;
+        
+        private System.DateTime fechaRegistroField;
+        
+        private string fechaEdicionField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoIniciativa
+        {
+            get
+            {
+                return this.codigoIniciativaField;
+            }
+            set
+            {
+                this.codigoIniciativaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string autora
+        {
+            get
+            {
+                return this.autoraField;
+            }
+            set
+            {
+                this.autoraField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string titulo
+        {
+            get
+            {
+                return this.tituloField;
+            }
+            set
+            {
+                this.tituloField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public string descripcion
+        {
+            get
+            {
+                return this.descripcionField;
+            }
+            set
+            {
+                this.descripcionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public int codigoCategoria
+        {
+            get
+            {
+                return this.codigoCategoriaField;
+            }
+            set
+            {
+                this.codigoCategoriaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        public string categoria
+        {
+            get
+            {
+                return this.categoriaField;
+            }
+            set
+            {
+                this.categoriaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        public int codigoDepartamento
+        {
+            get
+            {
+                return this.codigoDepartamentoField;
+            }
+            set
+            {
+                this.codigoDepartamentoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        public string departamento
+        {
+            get
+            {
+                return this.departamentoField;
+            }
+            set
+            {
+                this.departamentoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        public int meGusta
+        {
+            get
+            {
+                return this.meGustaField;
+            }
+            set
+            {
+                this.meGustaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
+        public int noMeGusta
+        {
+            get
+            {
+                return this.noMeGustaField;
+            }
+            set
+            {
+                this.noMeGustaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
+        public int comentarios
+        {
+            get
+            {
+                return this.comentariosField;
+            }
+            set
+            {
+                this.comentariosField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
+        public int saldo
+        {
+            get
+            {
+                return this.saldoField;
+            }
+            set
+            {
+                this.saldoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=12)]
+        public int miValoracion
+        {
+            get
+            {
+                return this.miValoracionField;
+            }
+            set
+            {
+                this.miValoracionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=13)]
+        public bool esMia
+        {
+            get
+            {
+                return this.esMiaField;
+            }
+            set
+            {
+                this.esMiaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=14)]
+        public bool activo
+        {
+            get
+            {
+                return this.activoField;
+            }
+            set
+            {
+                this.activoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=15)]
+        public string motivoBaja
+        {
+            get
+            {
+                return this.motivoBajaField;
+            }
+            set
+            {
+                this.motivoBajaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=16)]
+        public bool puedeEditar
+        {
+            get
+            {
+                return this.puedeEditarField;
+            }
+            set
+            {
+                this.puedeEditarField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=17)]
+        public System.DateTime fechaRegistro
+        {
+            get
+            {
+                return this.fechaRegistroField;
+            }
+            set
+            {
+                this.fechaRegistroField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=18)]
+        public string fechaEdicion
+        {
+            get
+            {
+                return this.fechaEdicionField;
+            }
+            set
+            {
+                this.fechaEdicionField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class ModuloAdmin
+    {
+        
+        private int codigoModuloField;
+        
+        private string claveField;
+        
+        private string nombreField;
+        
+        private string descripcionField;
+        
+        private string grupoField;
+        
+        private string clavePadreField;
+        
+        private bool habilitadoField;
+        
+        private bool visibleField;
+        
+        private bool apagadoPorPadreField;
+        
+        private System.DateTime fechaCambioField;
+        
+        private string cambiadoPorField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoModulo
+        {
+            get
+            {
+                return this.codigoModuloField;
+            }
+            set
+            {
+                this.codigoModuloField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string clave
+        {
+            get
+            {
+                return this.claveField;
+            }
+            set
+            {
+                this.claveField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string nombre
+        {
+            get
+            {
+                return this.nombreField;
+            }
+            set
+            {
+                this.nombreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public string descripcion
+        {
+            get
+            {
+                return this.descripcionField;
+            }
+            set
+            {
+                this.descripcionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public string grupo
+        {
+            get
+            {
+                return this.grupoField;
+            }
+            set
+            {
+                this.grupoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        public string clavePadre
+        {
+            get
+            {
+                return this.clavePadreField;
+            }
+            set
+            {
+                this.clavePadreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        public bool habilitado
+        {
+            get
+            {
+                return this.habilitadoField;
+            }
+            set
+            {
+                this.habilitadoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        public bool visible
+        {
+            get
+            {
+                return this.visibleField;
+            }
+            set
+            {
+                this.visibleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        public bool apagadoPorPadre
+        {
+            get
+            {
+                return this.apagadoPorPadreField;
+            }
+            set
+            {
+                this.apagadoPorPadreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
+        public System.DateTime fechaCambio
+        {
+            get
+            {
+                return this.fechaCambioField;
+            }
+            set
+            {
+                this.fechaCambioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
+        public string cambiadoPor
+        {
+            get
+            {
+                return this.cambiadoPorField;
+            }
+            set
+            {
+                this.cambiadoPorField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class EstadoModulo
+    {
+        
+        private string claveField;
+        
+        private bool visibleField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public string clave
+        {
+            get
+            {
+                return this.claveField;
+            }
+            set
+            {
+                this.claveField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public bool visible
+        {
+            get
+            {
+                return this.visibleField;
+            }
+            set
+            {
+                this.visibleField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class Espacio
+    {
+        
+        private int codigoEspacioField;
+        
+        private string slugField;
+        
+        private string nombreField;
+        
+        private string organizacionField;
+        
+        private string descripcionField;
+        
+        private bool esPlataformaField;
+        
+        private bool padronCerradoField;
+        
+        private string terminoAgrupacionField;
+        
+        private bool activoField;
+        
+        private string estadoField;
+        
+        private string motivoBajaField;
+        
+        private System.DateTime fechaCreacionField;
+        
+        private int codigoUsuarioPropietarioField;
+        
+        private string propietarioField;
+        
+        private string propietarioLoginField;
+        
+        private string propietarioCorreoField;
+        
+        private int campanasField;
+        
+        private int candidaturasField;
+        
+        private int administradoresField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoEspacio
+        {
+            get
+            {
+                return this.codigoEspacioField;
+            }
+            set
+            {
+                this.codigoEspacioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
         public string slug
         {
             get
@@ -6873,15 +6545,15 @@ namespace frontend.webservices
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=3)]
-        public string resumen
+        public string organizacion
         {
             get
             {
-                return this.resumenField;
+                return this.organizacionField;
             }
             set
             {
-                this.resumenField = value;
+                this.organizacionField = value;
             }
         }
         
@@ -6901,48 +6573,62 @@ namespace frontend.webservices
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=5)]
-        public string alcance
+        public bool esPlataforma
         {
             get
             {
-                return this.alcanceField;
+                return this.esPlataformaField;
             }
             set
             {
-                this.alcanceField = value;
+                this.esPlataformaField = value;
             }
         }
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=6)]
-        public System.DateTime fechaInicio
+        public bool padronCerrado
         {
             get
             {
-                return this.fechaInicioField;
+                return this.padronCerradoField;
             }
             set
             {
-                this.fechaInicioField = value;
+                this.padronCerradoField = value;
             }
         }
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=7)]
-        public System.DateTime fechaEleccion
+        public string terminoAgrupacion
         {
             get
             {
-                return this.fechaEleccionField;
+                return this.terminoAgrupacionField;
             }
             set
             {
-                this.fechaEleccionField = value;
+                this.terminoAgrupacionField = value;
             }
         }
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        public bool activo
+        {
+            get
+            {
+                return this.activoField;
+            }
+            set
+            {
+                this.activoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
         public string estado
         {
             get
@@ -6956,58 +6642,128 @@ namespace frontend.webservices
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
-        public bool esActual
-        {
-            get
-            {
-                return this.esActualField;
-            }
-            set
-            {
-                this.esActualField = value;
-            }
-        }
-        
-        /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=10)]
-        public int totalCandidatos
+        public string motivoBaja
         {
             get
             {
-                return this.totalCandidatosField;
+                return this.motivoBajaField;
             }
             set
             {
-                this.totalCandidatosField = value;
+                this.motivoBajaField = value;
             }
         }
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=11)]
-        public int totalPropuestas
+        public System.DateTime fechaCreacion
         {
             get
             {
-                return this.totalPropuestasField;
+                return this.fechaCreacionField;
             }
             set
             {
-                this.totalPropuestasField = value;
+                this.fechaCreacionField = value;
             }
         }
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=12)]
-        public int totalPublicaciones
+        public int codigoUsuarioPropietario
         {
             get
             {
-                return this.totalPublicacionesField;
+                return this.codigoUsuarioPropietarioField;
             }
             set
             {
-                this.totalPublicacionesField = value;
+                this.codigoUsuarioPropietarioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=13)]
+        public string propietario
+        {
+            get
+            {
+                return this.propietarioField;
+            }
+            set
+            {
+                this.propietarioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=14)]
+        public string propietarioLogin
+        {
+            get
+            {
+                return this.propietarioLoginField;
+            }
+            set
+            {
+                this.propietarioLoginField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=15)]
+        public string propietarioCorreo
+        {
+            get
+            {
+                return this.propietarioCorreoField;
+            }
+            set
+            {
+                this.propietarioCorreoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=16)]
+        public int campanas
+        {
+            get
+            {
+                return this.campanasField;
+            }
+            set
+            {
+                this.campanasField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=17)]
+        public int candidaturas
+        {
+            get
+            {
+                return this.candidaturasField;
+            }
+            set
+            {
+                this.candidaturasField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=18)]
+        public int administradores
+        {
+            get
+            {
+                return this.administradoresField;
+            }
+            set
+            {
+                this.administradoresField = value;
             }
         }
     }
@@ -7054,6 +6810,314 @@ namespace frontend.webservices
         }
     }
     
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class RespuestaGuardado
+    {
+        
+        private bool okField;
+        
+        private string mensajeField;
+        
+        private int codigoField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public bool ok
+        {
+            get
+            {
+                return this.okField;
+            }
+            set
+            {
+                this.okField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string mensaje
+        {
+            get
+            {
+                return this.mensajeField;
+            }
+            set
+            {
+                this.mensajeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public int codigo
+        {
+            get
+            {
+                return this.codigoField;
+            }
+            set
+            {
+                this.codigoField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class EncuestaAdmin
+    {
+        
+        private int codigoEncuestaField;
+        
+        private int codigoCampanaField;
+        
+        private string campanaSlugField;
+        
+        private string campanaField;
+        
+        private string preguntaField;
+        
+        private string descripcionField;
+        
+        private int codigoCategoriaField;
+        
+        private string categoriaField;
+        
+        private System.DateTime fechaInicioField;
+        
+        private string fechaCierreField;
+        
+        private bool activoField;
+        
+        private string motivoBajaField;
+        
+        private string estadoField;
+        
+        private int opcionesField;
+        
+        private int votosField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoEncuesta
+        {
+            get
+            {
+                return this.codigoEncuestaField;
+            }
+            set
+            {
+                this.codigoEncuestaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public int codigoCampana
+        {
+            get
+            {
+                return this.codigoCampanaField;
+            }
+            set
+            {
+                this.codigoCampanaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string campanaSlug
+        {
+            get
+            {
+                return this.campanaSlugField;
+            }
+            set
+            {
+                this.campanaSlugField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public string campana
+        {
+            get
+            {
+                return this.campanaField;
+            }
+            set
+            {
+                this.campanaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public string pregunta
+        {
+            get
+            {
+                return this.preguntaField;
+            }
+            set
+            {
+                this.preguntaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=5)]
+        public string descripcion
+        {
+            get
+            {
+                return this.descripcionField;
+            }
+            set
+            {
+                this.descripcionField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=6)]
+        public int codigoCategoria
+        {
+            get
+            {
+                return this.codigoCategoriaField;
+            }
+            set
+            {
+                this.codigoCategoriaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=7)]
+        public string categoria
+        {
+            get
+            {
+                return this.categoriaField;
+            }
+            set
+            {
+                this.categoriaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=8)]
+        public System.DateTime fechaInicio
+        {
+            get
+            {
+                return this.fechaInicioField;
+            }
+            set
+            {
+                this.fechaInicioField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=9)]
+        public string fechaCierre
+        {
+            get
+            {
+                return this.fechaCierreField;
+            }
+            set
+            {
+                this.fechaCierreField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=10)]
+        public bool activo
+        {
+            get
+            {
+                return this.activoField;
+            }
+            set
+            {
+                this.activoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=11)]
+        public string motivoBaja
+        {
+            get
+            {
+                return this.motivoBajaField;
+            }
+            set
+            {
+                this.motivoBajaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=12)]
+        public string estado
+        {
+            get
+            {
+                return this.estadoField;
+            }
+            set
+            {
+                this.estadoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=13)]
+        public int opciones
+        {
+            get
+            {
+                return this.opcionesField;
+            }
+            set
+            {
+                this.opcionesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=14)]
+        public int votos
+        {
+            get
+            {
+                return this.votosField;
+            }
+            set
+            {
+                this.votosField = value;
+            }
+        }
+    }
+    
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
     public interface WebServiceGlobalSoapChannel : frontend.webservices.WebServiceGlobalSoap, System.ServiceModel.IClientChannel
     {
@@ -7086,6 +7150,206 @@ namespace frontend.webservices
         public WebServiceGlobalSoapClient(System.ServiceModel.Channels.Binding binding, System.ServiceModel.EndpointAddress remoteAddress) : 
                 base(binding, remoteAddress)
         {
+        }
+        
+        public frontend.webservices.RespuestaEncuesta votarEncuesta(int codigoEncuesta, int codigoOpcion, int codigoUsuario)
+        {
+            return base.Channel.votarEncuesta(codigoEncuesta, codigoOpcion, codigoUsuario);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaEncuesta> votarEncuestaAsync(int codigoEncuesta, int codigoOpcion, int codigoUsuario)
+        {
+            return base.Channel.votarEncuestaAsync(codigoEncuesta, codigoOpcion, codigoUsuario);
+        }
+        
+        public frontend.webservices.EncuestaAdmin[] listarEncuestasAdmin(int codigoUsuario, int codigoEspacio, string campanaSlug, string estado)
+        {
+            return base.Channel.listarEncuestasAdmin(codigoUsuario, codigoEspacio, campanaSlug, estado);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.EncuestaAdmin[]> listarEncuestasAdminAsync(int codigoUsuario, int codigoEspacio, string campanaSlug, string estado)
+        {
+            return base.Channel.listarEncuestasAdminAsync(codigoUsuario, codigoEspacio, campanaSlug, estado);
+        }
+        
+        public frontend.webservices.OpcionEncuesta[] listarOpcionesEncuestaAdmin(int codigoUsuario, int codigoEncuesta)
+        {
+            return base.Channel.listarOpcionesEncuestaAdmin(codigoUsuario, codigoEncuesta);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.OpcionEncuesta[]> listarOpcionesEncuestaAdminAsync(int codigoUsuario, int codigoEncuesta)
+        {
+            return base.Channel.listarOpcionesEncuestaAdminAsync(codigoUsuario, codigoEncuesta);
+        }
+        
+        public frontend.webservices.RespuestaGuardado guardarEncuesta(int codigoUsuario, int codigoEncuesta, int codigoCampana, string pregunta, string descripcion, int codigoCategoria, System.DateTime fechaInicio, string fechaCierre, string opciones)
+        {
+            return base.Channel.guardarEncuesta(codigoUsuario, codigoEncuesta, codigoCampana, pregunta, descripcion, codigoCategoria, fechaInicio, fechaCierre, opciones);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarEncuestaAsync(int codigoUsuario, int codigoEncuesta, int codigoCampana, string pregunta, string descripcion, int codigoCategoria, System.DateTime fechaInicio, string fechaCierre, string opciones)
+        {
+            return base.Channel.guardarEncuestaAsync(codigoUsuario, codigoEncuesta, codigoCampana, pregunta, descripcion, codigoCategoria, fechaInicio, fechaCierre, opciones);
+        }
+        
+        public frontend.webservices.RespuestaAdmin cambiarEstadoEncuesta(int codigoUsuario, int codigoEncuesta, string accion, string motivo)
+        {
+            return base.Channel.cambiarEstadoEncuesta(codigoUsuario, codigoEncuesta, accion, motivo);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoEncuestaAsync(int codigoUsuario, int codigoEncuesta, string accion, string motivo)
+        {
+            return base.Channel.cambiarEstadoEncuestaAsync(codigoUsuario, codigoEncuesta, accion, motivo);
+        }
+        
+        public frontend.webservices.Espacio obtenerEspacio(string slug)
+        {
+            return base.Channel.obtenerEspacio(slug);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.Espacio> obtenerEspacioAsync(string slug)
+        {
+            return base.Channel.obtenerEspacioAsync(slug);
+        }
+        
+        public frontend.webservices.Espacio[] listarEspacios(int codigoUsuario, bool soloActivos)
+        {
+            return base.Channel.listarEspacios(codigoUsuario, soloActivos);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.Espacio[]> listarEspaciosAsync(int codigoUsuario, bool soloActivos)
+        {
+            return base.Channel.listarEspaciosAsync(codigoUsuario, soloActivos);
+        }
+        
+        public frontend.webservices.RespuestaGuardado guardarEspacio(int codigoUsuario, int codigoEspacio, string nombre, string organizacion, string descripcion, bool padronCerrado, string terminoAgrupacion)
+        {
+            return base.Channel.guardarEspacio(codigoUsuario, codigoEspacio, nombre, organizacion, descripcion, padronCerrado, terminoAgrupacion);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarEspacioAsync(int codigoUsuario, int codigoEspacio, string nombre, string organizacion, string descripcion, bool padronCerrado, string terminoAgrupacion)
+        {
+            return base.Channel.guardarEspacioAsync(codigoUsuario, codigoEspacio, nombre, organizacion, descripcion, padronCerrado, terminoAgrupacion);
+        }
+        
+        public frontend.webservices.RespuestaAdmin cambiarEstadoEspacio(int codigoUsuario, int codigoEspacio, bool activo, string motivo)
+        {
+            return base.Channel.cambiarEstadoEspacio(codigoUsuario, codigoEspacio, activo, motivo);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoEspacioAsync(int codigoUsuario, int codigoEspacio, bool activo, string motivo)
+        {
+            return base.Channel.cambiarEstadoEspacioAsync(codigoUsuario, codigoEspacio, activo, motivo);
+        }
+        
+        public frontend.webservices.RespuestaAdmin crearCuentaEspacio(int codigoUsuario, int codigoEspacio, string login, string nombre, string correo, string clave)
+        {
+            return base.Channel.crearCuentaEspacio(codigoUsuario, codigoEspacio, login, nombre, correo, clave);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> crearCuentaEspacioAsync(int codigoUsuario, int codigoEspacio, string login, string nombre, string correo, string clave)
+        {
+            return base.Channel.crearCuentaEspacioAsync(codigoUsuario, codigoEspacio, login, nombre, correo, clave);
+        }
+        
+        public frontend.webservices.EstadoModulo[] listarModulosVisibles()
+        {
+            return base.Channel.listarModulosVisibles();
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.EstadoModulo[]> listarModulosVisiblesAsync()
+        {
+            return base.Channel.listarModulosVisiblesAsync();
+        }
+        
+        public frontend.webservices.ModuloAdmin[] listarModulosAdmin(int codigoUsuario)
+        {
+            return base.Channel.listarModulosAdmin(codigoUsuario);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.ModuloAdmin[]> listarModulosAdminAsync(int codigoUsuario)
+        {
+            return base.Channel.listarModulosAdminAsync(codigoUsuario);
+        }
+        
+        public frontend.webservices.RespuestaAdmin cambiarEstadoModulo(int codigoUsuario, string clave, bool habilitado, string motivo)
+        {
+            return base.Channel.cambiarEstadoModulo(codigoUsuario, clave, habilitado, motivo);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoModuloAsync(int codigoUsuario, string clave, bool habilitado, string motivo)
+        {
+            return base.Channel.cambiarEstadoModuloAsync(codigoUsuario, clave, habilitado, motivo);
+        }
+        
+        public frontend.webservices.IniciativaPublica[] listarIniciativas(string espacioSlug, int codigoUsuario)
+        {
+            return base.Channel.listarIniciativas(espacioSlug, codigoUsuario);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.IniciativaPublica[]> listarIniciativasAsync(string espacioSlug, int codigoUsuario)
+        {
+            return base.Channel.listarIniciativasAsync(espacioSlug, codigoUsuario);
+        }
+        
+        public frontend.webservices.IniciativaPublica[] listarIniciativasDeUsuario(int codigoUsuario)
+        {
+            return base.Channel.listarIniciativasDeUsuario(codigoUsuario);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.IniciativaPublica[]> listarIniciativasDeUsuarioAsync(int codigoUsuario)
+        {
+            return base.Channel.listarIniciativasDeUsuarioAsync(codigoUsuario);
+        }
+        
+        public frontend.webservices.RespuestaGuardado guardarIniciativa(string espacioSlug, int codigoUsuario, int codigoIniciativa, string titulo, string descripcion, int codigoCategoria, int codigoDepartamento)
+        {
+            return base.Channel.guardarIniciativa(espacioSlug, codigoUsuario, codigoIniciativa, titulo, descripcion, codigoCategoria, codigoDepartamento);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarIniciativaAsync(string espacioSlug, int codigoUsuario, int codigoIniciativa, string titulo, string descripcion, int codigoCategoria, int codigoDepartamento)
+        {
+            return base.Channel.guardarIniciativaAsync(espacioSlug, codigoUsuario, codigoIniciativa, titulo, descripcion, codigoCategoria, codigoDepartamento);
+        }
+        
+        public frontend.webservices.RespuestaAdmin retirarIniciativaPropia(int codigoUsuario, int codigoIniciativa)
+        {
+            return base.Channel.retirarIniciativaPropia(codigoUsuario, codigoIniciativa);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> retirarIniciativaPropiaAsync(int codigoUsuario, int codigoIniciativa)
+        {
+            return base.Channel.retirarIniciativaPropiaAsync(codigoUsuario, codigoIniciativa);
+        }
+        
+        public frontend.webservices.IniciativaPublica[] listarIniciativasAdmin(int codigoUsuario, int codigoEspacio, string estado)
+        {
+            return base.Channel.listarIniciativasAdmin(codigoUsuario, codigoEspacio, estado);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.IniciativaPublica[]> listarIniciativasAdminAsync(int codigoUsuario, int codigoEspacio, string estado)
+        {
+            return base.Channel.listarIniciativasAdminAsync(codigoUsuario, codigoEspacio, estado);
+        }
+        
+        public frontend.webservices.RespuestaAdmin moderarIniciativa(int codigoUsuario, int codigoIniciativa, bool activo, string motivo)
+        {
+            return base.Channel.moderarIniciativa(codigoUsuario, codigoIniciativa, activo, motivo);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> moderarIniciativaAsync(int codigoUsuario, int codigoIniciativa, bool activo, string motivo)
+        {
+            return base.Channel.moderarIniciativaAsync(codigoUsuario, codigoIniciativa, activo, motivo);
+        }
+        
+        public frontend.webservices.RespuestaAsistente preguntarAsistente(int codigoUsuario, string pregunta, string campanaSlug)
+        {
+            return base.Channel.preguntarAsistente(codigoUsuario, pregunta, campanaSlug);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAsistente> preguntarAsistenteAsync(int codigoUsuario, string pregunta, string campanaSlug)
+        {
+            return base.Channel.preguntarAsistenteAsync(codigoUsuario, pregunta, campanaSlug);
         }
         
         public frontend.webservices.RespuestaLogin ValidarLogin(string usuario, string clave)
@@ -7506,206 +7770,6 @@ namespace frontend.webservices
         public System.Threading.Tasks.Task<frontend.webservices.OpcionEncuesta[]> listarOpcionesEncuestaAsync(int codigoEncuesta, int codigoUsuario)
         {
             return base.Channel.listarOpcionesEncuestaAsync(codigoEncuesta, codigoUsuario);
-        }
-        
-        public frontend.webservices.RespuestaEncuesta votarEncuesta(int codigoEncuesta, int codigoOpcion, int codigoUsuario)
-        {
-            return base.Channel.votarEncuesta(codigoEncuesta, codigoOpcion, codigoUsuario);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.RespuestaEncuesta> votarEncuestaAsync(int codigoEncuesta, int codigoOpcion, int codigoUsuario)
-        {
-            return base.Channel.votarEncuestaAsync(codigoEncuesta, codigoOpcion, codigoUsuario);
-        }
-        
-        public frontend.webservices.EncuestaAdmin[] listarEncuestasAdmin(int codigoUsuario, int codigoEspacio, string campanaSlug, string estado)
-        {
-            return base.Channel.listarEncuestasAdmin(codigoUsuario, codigoEspacio, campanaSlug, estado);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.EncuestaAdmin[]> listarEncuestasAdminAsync(int codigoUsuario, int codigoEspacio, string campanaSlug, string estado)
-        {
-            return base.Channel.listarEncuestasAdminAsync(codigoUsuario, codigoEspacio, campanaSlug, estado);
-        }
-        
-        public frontend.webservices.OpcionEncuesta[] listarOpcionesEncuestaAdmin(int codigoUsuario, int codigoEncuesta)
-        {
-            return base.Channel.listarOpcionesEncuestaAdmin(codigoUsuario, codigoEncuesta);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.OpcionEncuesta[]> listarOpcionesEncuestaAdminAsync(int codigoUsuario, int codigoEncuesta)
-        {
-            return base.Channel.listarOpcionesEncuestaAdminAsync(codigoUsuario, codigoEncuesta);
-        }
-        
-        public frontend.webservices.RespuestaGuardado guardarEncuesta(int codigoUsuario, int codigoEncuesta, int codigoCampana, string pregunta, string descripcion, int codigoCategoria, System.DateTime fechaInicio, string fechaCierre, string opciones)
-        {
-            return base.Channel.guardarEncuesta(codigoUsuario, codigoEncuesta, codigoCampana, pregunta, descripcion, codigoCategoria, fechaInicio, fechaCierre, opciones);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarEncuestaAsync(int codigoUsuario, int codigoEncuesta, int codigoCampana, string pregunta, string descripcion, int codigoCategoria, System.DateTime fechaInicio, string fechaCierre, string opciones)
-        {
-            return base.Channel.guardarEncuestaAsync(codigoUsuario, codigoEncuesta, codigoCampana, pregunta, descripcion, codigoCategoria, fechaInicio, fechaCierre, opciones);
-        }
-        
-        public frontend.webservices.RespuestaAdmin cambiarEstadoEncuesta(int codigoUsuario, int codigoEncuesta, string accion, string motivo)
-        {
-            return base.Channel.cambiarEstadoEncuesta(codigoUsuario, codigoEncuesta, accion, motivo);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoEncuestaAsync(int codigoUsuario, int codigoEncuesta, string accion, string motivo)
-        {
-            return base.Channel.cambiarEstadoEncuestaAsync(codigoUsuario, codigoEncuesta, accion, motivo);
-        }
-        
-        public frontend.webservices.Espacio obtenerEspacio(string slug)
-        {
-            return base.Channel.obtenerEspacio(slug);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.Espacio> obtenerEspacioAsync(string slug)
-        {
-            return base.Channel.obtenerEspacioAsync(slug);
-        }
-        
-        public frontend.webservices.Espacio[] listarEspacios(int codigoUsuario, bool soloActivos)
-        {
-            return base.Channel.listarEspacios(codigoUsuario, soloActivos);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.Espacio[]> listarEspaciosAsync(int codigoUsuario, bool soloActivos)
-        {
-            return base.Channel.listarEspaciosAsync(codigoUsuario, soloActivos);
-        }
-        
-        public frontend.webservices.RespuestaGuardado guardarEspacio(int codigoUsuario, int codigoEspacio, string nombre, string organizacion, string descripcion, bool padronCerrado, string terminoAgrupacion)
-        {
-            return base.Channel.guardarEspacio(codigoUsuario, codigoEspacio, nombre, organizacion, descripcion, padronCerrado, terminoAgrupacion);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarEspacioAsync(int codigoUsuario, int codigoEspacio, string nombre, string organizacion, string descripcion, bool padronCerrado, string terminoAgrupacion)
-        {
-            return base.Channel.guardarEspacioAsync(codigoUsuario, codigoEspacio, nombre, organizacion, descripcion, padronCerrado, terminoAgrupacion);
-        }
-        
-        public frontend.webservices.RespuestaAdmin cambiarEstadoEspacio(int codigoUsuario, int codigoEspacio, bool activo, string motivo)
-        {
-            return base.Channel.cambiarEstadoEspacio(codigoUsuario, codigoEspacio, activo, motivo);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoEspacioAsync(int codigoUsuario, int codigoEspacio, bool activo, string motivo)
-        {
-            return base.Channel.cambiarEstadoEspacioAsync(codigoUsuario, codigoEspacio, activo, motivo);
-        }
-        
-        public frontend.webservices.RespuestaAdmin crearCuentaEspacio(int codigoUsuario, int codigoEspacio, string login, string nombre, string correo, string clave)
-        {
-            return base.Channel.crearCuentaEspacio(codigoUsuario, codigoEspacio, login, nombre, correo, clave);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> crearCuentaEspacioAsync(int codigoUsuario, int codigoEspacio, string login, string nombre, string correo, string clave)
-        {
-            return base.Channel.crearCuentaEspacioAsync(codigoUsuario, codigoEspacio, login, nombre, correo, clave);
-        }
-        
-        public frontend.webservices.EstadoModulo[] listarModulosVisibles()
-        {
-            return base.Channel.listarModulosVisibles();
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.EstadoModulo[]> listarModulosVisiblesAsync()
-        {
-            return base.Channel.listarModulosVisiblesAsync();
-        }
-        
-        public frontend.webservices.ModuloAdmin[] listarModulosAdmin(int codigoUsuario)
-        {
-            return base.Channel.listarModulosAdmin(codigoUsuario);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.ModuloAdmin[]> listarModulosAdminAsync(int codigoUsuario)
-        {
-            return base.Channel.listarModulosAdminAsync(codigoUsuario);
-        }
-        
-        public frontend.webservices.RespuestaAdmin cambiarEstadoModulo(int codigoUsuario, string clave, bool habilitado, string motivo)
-        {
-            return base.Channel.cambiarEstadoModulo(codigoUsuario, clave, habilitado, motivo);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> cambiarEstadoModuloAsync(int codigoUsuario, string clave, bool habilitado, string motivo)
-        {
-            return base.Channel.cambiarEstadoModuloAsync(codigoUsuario, clave, habilitado, motivo);
-        }
-        
-        public frontend.webservices.IniciativaPublica[] listarIniciativas(string espacioSlug, int codigoUsuario)
-        {
-            return base.Channel.listarIniciativas(espacioSlug, codigoUsuario);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.IniciativaPublica[]> listarIniciativasAsync(string espacioSlug, int codigoUsuario)
-        {
-            return base.Channel.listarIniciativasAsync(espacioSlug, codigoUsuario);
-        }
-        
-        public frontend.webservices.IniciativaPublica[] listarIniciativasDeUsuario(int codigoUsuario)
-        {
-            return base.Channel.listarIniciativasDeUsuario(codigoUsuario);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.IniciativaPublica[]> listarIniciativasDeUsuarioAsync(int codigoUsuario)
-        {
-            return base.Channel.listarIniciativasDeUsuarioAsync(codigoUsuario);
-        }
-        
-        public frontend.webservices.RespuestaGuardado guardarIniciativa(string espacioSlug, int codigoUsuario, int codigoIniciativa, string titulo, string descripcion, int codigoCategoria, int codigoDepartamento)
-        {
-            return base.Channel.guardarIniciativa(espacioSlug, codigoUsuario, codigoIniciativa, titulo, descripcion, codigoCategoria, codigoDepartamento);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarIniciativaAsync(string espacioSlug, int codigoUsuario, int codigoIniciativa, string titulo, string descripcion, int codigoCategoria, int codigoDepartamento)
-        {
-            return base.Channel.guardarIniciativaAsync(espacioSlug, codigoUsuario, codigoIniciativa, titulo, descripcion, codigoCategoria, codigoDepartamento);
-        }
-        
-        public frontend.webservices.RespuestaAdmin retirarIniciativaPropia(int codigoUsuario, int codigoIniciativa)
-        {
-            return base.Channel.retirarIniciativaPropia(codigoUsuario, codigoIniciativa);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> retirarIniciativaPropiaAsync(int codigoUsuario, int codigoIniciativa)
-        {
-            return base.Channel.retirarIniciativaPropiaAsync(codigoUsuario, codigoIniciativa);
-        }
-        
-        public frontend.webservices.IniciativaPublica[] listarIniciativasAdmin(int codigoUsuario, int codigoEspacio, string estado)
-        {
-            return base.Channel.listarIniciativasAdmin(codigoUsuario, codigoEspacio, estado);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.IniciativaPublica[]> listarIniciativasAdminAsync(int codigoUsuario, int codigoEspacio, string estado)
-        {
-            return base.Channel.listarIniciativasAdminAsync(codigoUsuario, codigoEspacio, estado);
-        }
-        
-        public frontend.webservices.RespuestaAdmin moderarIniciativa(int codigoUsuario, int codigoIniciativa, bool activo, string motivo)
-        {
-            return base.Channel.moderarIniciativa(codigoUsuario, codigoIniciativa, activo, motivo);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> moderarIniciativaAsync(int codigoUsuario, int codigoIniciativa, bool activo, string motivo)
-        {
-            return base.Channel.moderarIniciativaAsync(codigoUsuario, codigoIniciativa, activo, motivo);
-        }
-        
-        public frontend.webservices.RespuestaAsistente preguntarAsistente(int codigoUsuario, string pregunta, string campanaSlug)
-        {
-            return base.Channel.preguntarAsistente(codigoUsuario, pregunta, campanaSlug);
-        }
-        
-        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAsistente> preguntarAsistenteAsync(int codigoUsuario, string pregunta, string campanaSlug)
-        {
-            return base.Channel.preguntarAsistenteAsync(codigoUsuario, pregunta, campanaSlug);
         }
     }
 }

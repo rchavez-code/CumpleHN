@@ -107,7 +107,7 @@ namespace frontend
 
         protected void btnFiltrar_Click(object sender, EventArgs e)
         {
-            string destino = "~/Propuestas?q=" + HttpUtility.UrlEncode(txtBuscar.Text.Trim())
+            string destino = Espacios.Url("~/Propuestas") + "?q=" + HttpUtility.UrlEncode(txtBuscar.Text.Trim())
                 + "&cat=" + HttpUtility.UrlEncode(ddlCategoria.SelectedValue)
                 + "&c=" + HttpUtility.UrlEncode(ddlCampana.SelectedValue);
 

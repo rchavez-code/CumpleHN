@@ -163,6 +163,11 @@ namespace frontend.Servicios
         {
             base.OnPreInit(e);
 
+            // Un espacio que no existe o fue retirado no tiene páginas: se
+            // vuelve a la portada de la plataforma en lugar de dibujar la
+            // plataforma bajo una dirección ajena.
+            Espacios.ExigirExistente();
+
             Modulos.ExigirVisible(ModuloRequerido);
         }
 

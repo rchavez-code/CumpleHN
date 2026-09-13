@@ -20,6 +20,7 @@ namespace frontend.Modelos
         }
 
         public int Id { get; set; }
+        public string EspacioSlug { get; set; }
 
         public string CandidatoSlug { get; set; }
 

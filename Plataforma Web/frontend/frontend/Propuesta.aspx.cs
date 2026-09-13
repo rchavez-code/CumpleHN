@@ -43,6 +43,8 @@ namespace frontend
                 return;
             }
 
+            Espacios.Fijar(_propuesta.EspacioSlug);
+
             _autor = Contenido.Datos.ObtenerCandidato(_propuesta.CandidatoSlug);
 
             Page.Title = _propuesta.Nombre;
@@ -88,7 +90,7 @@ namespace frontend
             {
                 return _autor != null
                     ? ResolveUrl(_autor.Url)
-                    : ResolveUrl("~/Candidatos");
+                    : ResolveUrl(Espacios.Url("~/Candidatos"));
             }
         }
 

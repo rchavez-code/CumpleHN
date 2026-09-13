@@ -6,6 +6,22 @@
 
     <section class="gc-hero">
         <div class="container">
+            <% if (EnEspacio) { %>
+            <%-- Portada de un espacio: el nombre del cliente va de título y la
+                 plataforma queda declarada como herramienta. La descripción la
+                 escribe la organización al registrarse. --%>
+            <p class="gc-eyebrow">Espacio administrado por <%: Espacio.Organizacion %></p>
+
+            <h1><%: Espacio.Nombre %></h1>
+
+            <p class="gc-hero__lead">
+                <%: string.IsNullOrEmpty(Espacio.Descripcion)
+                        ? "Las candidaturas, sus propuestas y la participación de este proceso electoral, en un solo lugar."
+                        : Espacio.Descripcion %>
+                Este espacio corre sobre CumpleHN, que ordena la evidencia sin emitir un veredicto: el juicio es de
+                cada persona.
+            </p>
+            <% } else { %>
             <p class="gc-eyebrow">Seguimiento ciudadano de compromisos políticos</p>
 
             <h1>Lo que se promete, ordenado y a la vista.</h1>
@@ -15,12 +31,13 @@
                 de cada compromiso. No emitimos un veredicto sobre quién cumple mejor: ordenamos la evidencia
                 para que cada persona pondere lo que considere de mayor peso y decida por su cuenta.
             </p>
+            <% } %>
 
             <div class="gc-hero__actions">
                 <asp:TextBox ID="txtBuscar" runat="server" CssClass="gc-input" Style="max-width: 320px;"
                     placeholder="Buscar un candidato por nombre" />
                 <asp:Button ID="btnBuscar" runat="server" CssClass="gc-btn" Text="Buscar" OnClick="btnBuscar_Click" />
-                <a class="gc-btn gc-btn--ghost" href="<%= ResolveUrl("~/Campanas") %>">Ver campañas</a>
+                <a class="gc-btn gc-btn--ghost" href="<%= ResolveUrl(Espacios.Url("~/Campanas")) %>">Ver campañas</a>
             </div>
 
             <div class="gc-figures">
@@ -54,7 +71,7 @@
                     <h2>Campaña electoral actual</h2>
                     <p class="gc-muted">La campaña abierta en este momento para consulta y registro.</p>
                 </div>
-                <a class="gc-btn gc-btn--quiet gc-btn--sm gc-nowrap" href="<%= ResolveUrl("~/Campanas") %>">Ver todas &rarr;</a>
+                <a class="gc-btn gc-btn--quiet gc-btn--sm gc-nowrap" href="<%= ResolveUrl(Espacios.Url("~/Campanas")) %>">Ver todas &rarr;</a>
             </div>
 
             <div class="gc-feature gc-mb">
@@ -275,7 +292,7 @@
                 <h2>Candidaturas de la campaña</h2>
                 <p class="gc-muted">Cada perfil reúne la biografía, las propuestas y las publicaciones que la propia candidatura declara.</p>
             </div>
-            <a class="gc-btn gc-btn--quiet gc-btn--sm gc-nowrap" href="<%= ResolveUrl("~/Candidatos") %>">Ver todos &rarr;</a>
+            <a class="gc-btn gc-btn--quiet gc-btn--sm gc-nowrap" href="<%= ResolveUrl(Espacios.Url("~/Candidatos")) %>">Ver todos &rarr;</a>
         </div>
 
         <div class="row">

@@ -28,6 +28,12 @@ namespace frontend
         protected override void OnInit(EventArgs e)
         {
             base.OnInit(e);
+
+            // La portada no hereda de PaginaDeModulo (no pertenece a un módulo
+            // apagable), así que comprueba ella misma que el espacio de la ruta
+            // exista.
+            Espacios.ExigirExistente();
+
             CargarIniciativas();
         }
 
@@ -294,11 +300,11 @@ namespace frontend
 
             if (string.IsNullOrEmpty(termino))
             {
-                Response.Redirect("~/Candidatos");
+                Response.Redirect(Espacios.Url("~/Candidatos"));
                 return;
             }
 
-            Response.Redirect("~/Candidatos?q=" + HttpUtility.UrlEncode(termino));
+            Response.Redirect(Espacios.Url("~/Candidatos") + "?q=" + HttpUtility.UrlEncode(termino));
         }
 
         // ------------------------------------------------- Cifras generales
@@ -355,9 +361,22 @@ namespace frontend
             get { return _actual != null ? Vista.CuentaRegresiva(_actual.FechaEleccion) : string.Empty; }
         }
 
+        // ------------------------------------------------------- Espacio
+
+        /// <summary>La portada es de un espacio de cliente, no de la plataforma.</summary>
+        protected bool EnEspacio
+        {
+            get { return !Espacios.EsPlataforma; }
+        }
+
+        protected Espacio Espacio
+        {
+            get { return Espacios.Actual; }
+        }
+
         protected string UrlActual
         {
-            get { return _actual != null ? ResolveUrl(_actual.Url) : ResolveUrl("~/Campanas"); }
+            get { return _actual != null ? ResolveUrl(_actual.Url) : ResolveUrl(Espacios.Url("~/Campanas")); }
         }
     }
 }

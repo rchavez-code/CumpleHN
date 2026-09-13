@@ -7,7 +7,7 @@
             <nav class="gc-crumbs" aria-label="Ruta de navegación">
                 <a href="<%= ResolveUrl("~/") %>">Inicio</a>
                 <span aria-hidden="true">/</span>
-                <a href="<%= ResolveUrl("~/Partidos") %>">Partidos</a>
+                <a href="<%= ResolveUrl(Espacios.Url("~/Partidos")) %>">Partidos</a>
                 <span aria-hidden="true">/</span>
                 <span><%: Item.Nombre %></span>
             </nav>

@@ -18,6 +18,10 @@ namespace backend.Modelos
     public class Campana
     {
         public int codigoCampana { get; set; }
+        /* Slug del espacio al que pertenece. Es lo que le permite a la
+           ficha pública dibujarse dentro de su espacio aunque el enlace
+           llegue sin prefijo. */
+        public string espacioSlug { get; set; }
         public string slug { get; set; }
         public string nombre { get; set; }
         public string resumen { get; set; }
@@ -40,6 +44,7 @@ namespace backend.Modelos
     public class Candidato
     {
         public int codigoCandidato { get; set; }
+        public string espacioSlug { get; set; }
         public string slug { get; set; }
         public int codigoCampana { get; set; }
         public string campanaSlug { get; set; }
@@ -86,6 +91,7 @@ namespace backend.Modelos
     public class Propuesta
     {
         public int codigoPropuesta { get; set; }
+        public string espacioSlug { get; set; }
         public int codigoCandidato { get; set; }
         public string candidatoSlug { get; set; }
         public string candidatoNombre { get; set; }

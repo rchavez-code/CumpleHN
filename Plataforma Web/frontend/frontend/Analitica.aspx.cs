@@ -99,6 +99,11 @@ namespace frontend
             Aplicar(grafTerritorio,   Modulos.AnaliticaTerritorio);
             Aplicar(grafVerificacion, Modulos.AnaliticaVerificacion);
             Aplicar(grafAsistente,    Modulos.AnaliticaAsistente);
+
+            // El asistente responde solo sobre la plataforma: sus procedimientos
+            // fijan ese espacio en la base (script 12) y no reciben otro. Dentro
+            // de un espacio de cliente se esconde, no se deja fallar.
+            if (!Espacios.EsPlataforma) grafAsistente.Visible = false;
         }
 
         /// <summary>

@@ -98,6 +98,7 @@ namespace frontend.Modelos
     {
         public int Id { get; set; }
         public string Slug { get; set; }
+        public string EspacioSlug { get; set; }
         public string Nombre { get; set; }
         public string Siglas { get; set; }
         public string Descripcion { get; set; }

@@ -21,6 +21,7 @@ namespace frontend.Modelos
 
         /// <summary>Identificador legible usado en la URL.</summary>
         public string Slug { get; set; }
+        public string EspacioSlug { get; set; }
 
         public string CampanaSlug { get; set; }
 

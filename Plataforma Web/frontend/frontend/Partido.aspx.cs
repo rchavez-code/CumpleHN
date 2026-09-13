@@ -36,6 +36,8 @@ namespace frontend
                 return;
             }
 
+            Espacios.Fijar(_partido.EspacioSlug);
+
             Page.Title = _partido.Nombre;
 
             interPartido.TipoObjeto = TiposObjeto.Partido;

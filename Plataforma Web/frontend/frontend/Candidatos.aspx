@@ -31,7 +31,7 @@
             <asp:DropDownList ID="ddlNivel" runat="server" CssClass="gc-select" />
 
             <asp:Button ID="btnFiltrar" runat="server" CssClass="gc-btn" Text="Filtrar" OnClick="btnFiltrar_Click" />
-            <a class="gc-btn gc-btn--quiet" href="<%= ResolveUrl("~/Candidatos") %>">Limpiar</a>
+            <a class="gc-btn gc-btn--quiet" href="<%= ResolveUrl(Espacios.Url("~/Candidatos")) %>">Limpiar</a>
         </div>
 
         <div class="gc-sechead">
@@ -55,7 +55,7 @@
             <div class="gc-card gc-empty">
                 <h3>No se encontraron candidaturas</h3>
                 <p>Probá con otro nombre o quitá los filtros aplicados para ver todos los perfiles registrados.</p>
-                <a class="gc-btn gc-btn--ghost" href="<%= ResolveUrl("~/Candidatos") %>">Quitar filtros</a>
+                <a class="gc-btn gc-btn--ghost" href="<%= ResolveUrl(Espacios.Url("~/Candidatos")) %>">Quitar filtros</a>
             </div>
         </asp:PlaceHolder>
 

@@ -196,6 +196,18 @@ hr {
 .gc-brand svg { display: block; }
 .gc-brand__hn { color: var(--gc-escarlata); }
 
+/* Marca dentro de un espacio: el nombre del cliente grande y CumpleHN
+   pequeño debajo, como herramienta. Verificado con grep que el nombre
+   estaba libre. */
+.gc-brand__esp { display: flex; flex-direction: column; line-height: 1.05; }
+.gc-brand__esp small {
+    font-family: var(--gc-sans);
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--gc-muted);
+}
+
 .gc-nav {
     display: flex;
     align-items: center;

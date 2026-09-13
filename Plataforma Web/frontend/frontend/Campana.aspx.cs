@@ -59,6 +59,11 @@ namespace frontend
                 return;
             }
 
+            // La ficha se dibuja dentro del espacio de la campaña, llegue el
+            // enlace con prefijo o sin él. Va antes de pedir nada más: lo que
+            // siga (feed, candidaturas) se acota a este espacio.
+            Espacios.Fijar(_campana.EspacioSlug);
+
             _tab = NormalizarTab(Request.QueryString["t"]);
 
             Page.Title = _campana.Nombre;

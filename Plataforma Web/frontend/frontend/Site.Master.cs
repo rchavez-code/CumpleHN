@@ -90,6 +90,44 @@ namespace frontend
             lnkReenviar.Visible = !r.ok;
         }
 
+        // ------------------------------------------------------- Espacio
+
+        /// <summary>
+        /// El espacio que se está mirando. Nulo solo si el slug de la ruta no
+        /// existe, y entonces la plantilla se dibuja como la plataforma.
+        /// </summary>
+        protected Modelos.Espacio EspacioActual
+        {
+            get { return Servicios.Espacios.Actual; }
+        }
+
+        /// <summary>Se está dentro del espacio de un cliente, no en la plataforma.</summary>
+        protected bool EnEspacio
+        {
+            get { return !Servicios.Espacios.EsPlataforma; }
+        }
+
+        /// <summary>Dirección de una página de listado, dentro del espacio actual.</summary>
+        protected string UrlEspacio(string rutaApp)
+        {
+            return ResolveUrl(Servicios.Espacios.Url(rutaApp));
+        }
+
+        /// <summary>
+        /// Cómo llama el espacio a las agrupaciones de candidaturas, en plural:
+        /// Partidos en la plataforma, Planillas o Listas en una elección
+        /// interna. Solo cambia el rótulo, no el modelo.
+        /// </summary>
+        protected string Agrupaciones
+        {
+            get
+            {
+                Modelos.Espacio e = EspacioActual;
+                string t = e == null || string.IsNullOrEmpty(e.TerminoAgrupacion) ? "Partido" : e.TerminoAgrupacion;
+                return t.EndsWith("s", StringComparison.OrdinalIgnoreCase) ? t : t + "s";
+            }
+        }
+
         protected string NombreUsuario
         {
             get { return Servicios.Sesion.Nombre; }

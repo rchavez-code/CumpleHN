@@ -675,6 +675,7 @@ namespace frontend.Servicios
             return new Campana
             {
                 Slug = d.slug,
+                EspacioSlug = d.espacioSlug ?? string.Empty,
                 Nombre = d.nombre,
                 Resumen = d.resumen,
                 Descripcion = d.descripcion,
@@ -695,6 +696,7 @@ namespace frontend.Servicios
             {
                 Id = d.codigoCandidato,
                 Slug = d.slug,
+                EspacioSlug = d.espacioSlug ?? string.Empty,
                 CampanaSlug = d.campanaSlug,
                 Nombres = d.nombres,
                 Apellidos = d.apellidos,
@@ -730,6 +732,7 @@ namespace frontend.Servicios
             return new Propuesta
             {
                 Id = d.codigoPropuesta,
+                EspacioSlug = d.espacioSlug ?? string.Empty,
                 CandidatoSlug = d.candidatoSlug,
                 CampanaSlug = d.campanaSlug,
                 Nombre = d.nombre,
@@ -781,6 +784,7 @@ namespace frontend.Servicios
             {
                 Id = d.codigoPartido,
                 Slug = d.slug,
+                EspacioSlug = d.espacioSlug ?? string.Empty,
                 Nombre = d.nombre,
                 Siglas = d.siglas,
                 Descripcion = d.descripcion,

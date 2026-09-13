@@ -16,6 +16,11 @@ namespace frontend.Modelos
         /// <summary>Identificador legible usado en la URL (p. ej. "generales-2029").</summary>
         public string Slug { get; set; }
 
+        /* Slug del espacio al que pertenece. Vacío es la plataforma. Con él
+           la ficha se dibuja dentro de su espacio aunque el enlace llegue
+           sin prefijo (Espacios.Fijar). */
+        public string EspacioSlug { get; set; }
+
         public string Nombre { get; set; }
 
         /// <summary>Frase corta que describe la campaña.</summary>

@@ -69,6 +69,7 @@ namespace backend.Modelos
     public class Partido
     {
         public int codigoPartido { get; set; }
+        public string espacioSlug { get; set; }
         public string slug { get; set; }
         public string nombre { get; set; }
         public string siglas { get; set; }
