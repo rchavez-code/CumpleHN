@@ -50,11 +50,7 @@ GO
    ausencia de candidaturas en 15 de ellos sea visible.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spAnaliticaCatalogos') IS NOT NULL
-    DROP PROCEDURE dbo.spAnaliticaCatalogos;
-GO
-
-CREATE PROCEDURE dbo.spAnaliticaCatalogos
+CREATE OR ALTER PROCEDURE dbo.spAnaliticaCatalogos
     @codigoEspacio INT
 AS
 BEGIN
@@ -106,11 +102,7 @@ GO
    hora del servidor.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spAnaliticaResumen') IS NOT NULL
-    DROP PROCEDURE dbo.spAnaliticaResumen;
-GO
-
-CREATE PROCEDURE dbo.spAnaliticaResumen
+CREATE OR ALTER PROCEDURE dbo.spAnaliticaResumen
     @codigoEspacio      INT,
     @campanaSlug       NVARCHAR(80)  = NULL,
     @codigoCategoria   INT           = NULL,
@@ -250,11 +242,7 @@ GO
    que quedó tras el filtro y tiene que sumar 100 % en pantalla.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spAnaliticaCategorias') IS NOT NULL
-    DROP PROCEDURE dbo.spAnaliticaCategorias;
-GO
-
-CREATE PROCEDURE dbo.spAnaliticaCategorias
+CREATE OR ALTER PROCEDURE dbo.spAnaliticaCategorias
     @codigoEspacio      INT,
     @campanaSlug        NVARCHAR(80) = NULL,
     @codigoPartido      INT          = NULL,
@@ -297,11 +285,7 @@ GO
    propuesta llegó todavía a él.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spAnaliticaEstados') IS NOT NULL
-    DROP PROCEDURE dbo.spAnaliticaEstados;
-GO
-
-CREATE PROCEDURE dbo.spAnaliticaEstados
+CREATE OR ALTER PROCEDURE dbo.spAnaliticaEstados
     @codigoEspacio      INT,
     @campanaSlug        NVARCHAR(80) = NULL,
     @codigoCategoria    INT          = NULL,
@@ -345,11 +329,7 @@ GO
    declarada del proyecto.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spAnaliticaVerificacion') IS NOT NULL
-    DROP PROCEDURE dbo.spAnaliticaVerificacion;
-GO
-
-CREATE PROCEDURE dbo.spAnaliticaVerificacion
+CREATE OR ALTER PROCEDURE dbo.spAnaliticaVerificacion
     @codigoEspacio      INT,
     @campanaSlug        NVARCHAR(80) = NULL,
     @codigoCategoria    INT          = NULL,
@@ -413,11 +393,7 @@ GO
    Responde dónde se concentra la conversación de la plataforma.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spAnaliticaParticipacion') IS NOT NULL
-    DROP PROCEDURE dbo.spAnaliticaParticipacion;
-GO
-
-CREATE PROCEDURE dbo.spAnaliticaParticipacion
+CREATE OR ALTER PROCEDURE dbo.spAnaliticaParticipacion
     @codigoEspacio      INT,
     @campanaSlug        NVARCHAR(80) = NULL,
     @codigoCategoria    INT          = NULL,
@@ -484,11 +460,7 @@ GO
    quien genera rechazo igual que a quien genera respaldo.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spAnaliticaCandidatos') IS NOT NULL
-    DROP PROCEDURE dbo.spAnaliticaCandidatos;
-GO
-
-CREATE PROCEDURE dbo.spAnaliticaCandidatos
+CREATE OR ALTER PROCEDURE dbo.spAnaliticaCandidatos
     @codigoEspacio      INT,
     @campanaSlug        NVARCHAR(80) = NULL,
     @codigoCategoria    INT          = NULL,
@@ -563,11 +535,7 @@ GO
    programática de ninguno.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spAnaliticaPartidos') IS NOT NULL
-    DROP PROCEDURE dbo.spAnaliticaPartidos;
-GO
-
-CREATE PROCEDURE dbo.spAnaliticaPartidos
+CREATE OR ALTER PROCEDURE dbo.spAnaliticaPartidos
     @codigoEspacio      INT,
     @campanaSlug        NVARCHAR(80) = NULL,
     @codigoCategoria    INT          = NULL,
@@ -640,11 +608,7 @@ GO
    justamente eso.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spAnaliticaTerritorio') IS NOT NULL
-    DROP PROCEDURE dbo.spAnaliticaTerritorio;
-GO
-
-CREATE PROCEDURE dbo.spAnaliticaTerritorio
+CREATE OR ALTER PROCEDURE dbo.spAnaliticaTerritorio
     @codigoEspacio   INT,
     @campanaSlug     NVARCHAR(80) = NULL,
     @codigoCategoria INT          = NULL,
@@ -714,11 +678,7 @@ GO
    genere una serie infinita.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spAnaliticaActividad') IS NOT NULL
-    DROP PROCEDURE dbo.spAnaliticaActividad;
-GO
-
-CREATE PROCEDURE dbo.spAnaliticaActividad
+CREATE OR ALTER PROCEDURE dbo.spAnaliticaActividad
     @codigoEspacio      INT,
     @campanaSlug        NVARCHAR(80) = NULL,
     @codigoPartido      INT          = NULL,

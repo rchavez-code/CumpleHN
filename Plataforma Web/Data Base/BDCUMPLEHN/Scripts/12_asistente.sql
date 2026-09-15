@@ -110,11 +110,7 @@ GO
    consulta antes de llamar al modelo — nunca después.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spIACuotaDisponible') IS NOT NULL
-    DROP PROCEDURE dbo.spIACuotaDisponible;
-GO
-
-CREATE PROCEDURE dbo.spIACuotaDisponible
+CREATE OR ALTER PROCEDURE dbo.spIACuotaDisponible
     @codigoUsuario INT,
     @limiteDiario  INT = 20
 AS
@@ -158,11 +154,7 @@ GO
    explicar una excepción de escritura en el anexo de seguridad.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spIARegistrarConsulta') IS NOT NULL
-    DROP PROCEDURE dbo.spIARegistrarConsulta;
-GO
-
-CREATE PROCEDURE dbo.spIARegistrarConsulta
+CREATE OR ALTER PROCEDURE dbo.spIARegistrarConsulta
     @codigoUsuario INT,
     @pregunta      NVARCHAR(1000),
     @respuesta     NVARCHAR(MAX)  = NULL,
@@ -216,11 +208,7 @@ GO
    contacto.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spIABuscarPropuestas') IS NOT NULL
-    DROP PROCEDURE dbo.spIABuscarPropuestas;
-GO
-
-CREATE PROCEDURE dbo.spIABuscarPropuestas
+CREATE OR ALTER PROCEDURE dbo.spIABuscarPropuestas
     @codigoPropuesta INT           = NULL,
     @texto           NVARCHAR(200) = NULL,
     @campanaSlug     NVARCHAR(80)  = NULL,
@@ -309,11 +297,7 @@ GO
    hace falta para responder sobre promesas.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spIAFichaCandidato') IS NOT NULL
-    DROP PROCEDURE dbo.spIAFichaCandidato;
-GO
-
-CREATE PROCEDURE dbo.spIAFichaCandidato
+CREATE OR ALTER PROCEDURE dbo.spIAFichaCandidato
     @candidatoSlug NVARCHAR(120)
 AS
 BEGIN
@@ -377,11 +361,7 @@ GO
    y su GRANT, nunca una consulta suelta.
    ============================================================ */
 
-IF OBJECT_ID('dbo.spIACampana') IS NOT NULL
-    DROP PROCEDURE dbo.spIACampana;
-GO
-
-CREATE PROCEDURE dbo.spIACampana
+CREATE OR ALTER PROCEDURE dbo.spIACampana
     @campanaSlug NVARCHAR(80) = NULL
 AS
 BEGIN
