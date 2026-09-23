@@ -69,7 +69,7 @@ Tres soluciones `.slnx` independientes:
 
 - `Plataforma Web/frontend/` → `frontend.csproj`. IIS Express en el puerto 5080.
 - `Plataforma Web/backend/` → `backend.csproj`. Vacío por ahora, ya referencia `System.Web.Services`.
-- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`, `09_administracion`, `10_catalogos_admin`, `11_modulos`, `12_asistente`, `13_permisos_ia`, `14_encuestas`, `15_datos_encuestas`, `16_registro`, `17_confirmacion`, `18_iniciativas`, `19_espacios`, `20_padron`, `21_suscripciones`, `22_solicitudes`, `23_cargos`. **`07_vistas` depende ahora de la tabla `Iniciativas` del script 18** (la quinta rama de sus dos vistas de valoraciones y comentarios), así que en una base nueva el 18 se ejecuta antes del 07 —o el 07 se vuelve a correr después, que es idempotente. **Las columnas `codigoEspacio` nacen con sus tablas (02, 05, 09, 18) y no en el 19**, con el patrón `IF COL_LENGTH(...) IS NULL ALTER TABLE ... ADD`: en una base nueva las vistas del 07 y los procedimientos del 08 en adelante las referencian, y fallarían si se agregaran al final. El 19 solo migra lo existente al espacio de la plataforma y fija los `NOT NULL`. Orden completo para una base nueva: 01, 02, 03, 04, 05, 06, 09, 10, 11, 14, 15, 16, 17, 18, 07, 08, 12, 13, 19, 20, 21, 22, 23.
+- `Plataforma Web/Data Base/BDCUMPLEHN/Scripts/` → scripts T-SQL numerados (no hay proyecto `.sqlproj` porque falta el workload SSDT). Se ejecutan en orden: `01_crear_base`, `02_tablas`, `03_catalogos`, `04_datos_demo`, `05_interaccion`, `06_datos_interaccion`, `07_vistas`, `08_analitica`, `09_administracion`, `10_catalogos_admin`, `11_modulos`, `12_asistente`, `13_permisos_ia`, `14_encuestas`, `15_datos_encuestas`, `16_registro`, `17_confirmacion`, `18_iniciativas`, `19_espacios`, `20_padron`, `21_suscripciones`, `22_solicitudes`, `23_cargos`, `24_panel_candidato`. **`07_vistas` depende ahora de la tabla `Iniciativas` del script 18** (la quinta rama de sus dos vistas de valoraciones y comentarios), así que en una base nueva el 18 se ejecuta antes del 07 —o el 07 se vuelve a correr después, que es idempotente. **Las columnas `codigoEspacio` nacen con sus tablas (02, 05, 09, 18) y no en el 19**, con el patrón `IF COL_LENGTH(...) IS NULL ALTER TABLE ... ADD`: en una base nueva las vistas del 07 y los procedimientos del 08 en adelante las referencian, y fallarían si se agregaran al final. El 19 solo migra lo existente al espacio de la plataforma y fija los `NOT NULL`. Orden completo para una base nueva: 01, 02, 03, 04, 05, 06, 09, 10, 11, 14, 15, 16, 17, 18, 07, 08, 12, 13, 19, 20, 21, 22, 23, 24.
 
 **Volver a ejecutar el 10, el 11 o el 14 sobre una base con datos fallaba**: cada uno recrea `CK_Auditoria_accion` con una lista que no incluye las acciones de scripts posteriores, y ya hay filas con ellas. Ahora esa restricción se agrega `WITH NOCHECK` en todos los scripts que la amplían.
 
@@ -469,9 +469,24 @@ La plataforma se vende como servicio: un **espacio** es un cliente —colegio pr
 
 Quedan anotados sin urgencia: categorías propias por espacio con el mismo patrón que los cargos, los rótulos internos de `Partidos.aspx` y la ficha de partido según el término del espacio, que el alta de un espacio y su primer pago sean un solo paso, y `ModulosEspacio` para que un cliente apague módulos de su sitio.
 
-### Pendiente
+### Panel de la candidatura
 
-Guardado del perfil y de los proyectos desde el panel del candidato: los formularios ya validan del lado del servidor pero todavía no persisten.
+`Panel/Proyecto.aspx` y `Panel/Perfil.aspx` guardan contra `spPanelGuardarPropuesta` y `spPanelGuardarPerfil` (`24_panel_candidato.sql`). **La candidatura nunca se recibe**: `fnCandidatoDeUsuario` la deriva de la cuenta, en el Web Service y otra vez dentro de cada procedimiento.
+
+**El perfil solo guarda lo que redacta la candidatura**: presentación, contacto y redes. Nombre, cargo, partido, departamento y municipio se muestran de solo lectura porque los registra la administración (`spAdminGuardarCandidato`, script 10), que es quien los contrasta.
+
+Reglas que no se deben romper:
+
+1. **Solo «Declarada» o «En proceso»**, exigido por el procedimiento y no solo por el desplegable.
+2. **Un proyecto con estado de cumplimiento asignado ya no se edita**, ni nada de una campaña cerrada o de un espacio sin suscripción vigente. Lo decide `fnPanelBloqueo`.
+3. **Con valoraciones o comentarios, el contenido del proyecto no se edita** y el estado declarado sí. Es la regla de las iniciativas. Como las once propuestas sembradas tienen reacciones, en la base de desarrollo solo se edita el texto de las nuevas.
+4. **Cambiar el contenido de algo verificado lo devuelve a «Declarado»**: la verificación respalda un texto concreto. En el perfil cuenta solo la presentación, no el contacto ni las redes. La comparación es binaria (`Latin1_General_BIN2`) porque la intercalación de la base no distingue tildes.
+
+`spPanelEdicion` le dice a la pantalla qué puede cambiar antes de que la persona escriba, con las mismas funciones que usan los procedimientos, para que no ofrezca algo que después se rechaza. Nada de esto escribe en `Auditoria`, que es la bitácora de la administración.
+
+La carga de imágenes (foto del perfil e imagen del proyecto) sigue sin implementar, y sus campos están deshabilitados con el aviso.
+
+### Pendiente
 
 **`spAdminCrearCuentaCandidato` arrastra el problema del hash descrito arriba.** Una cuenta de candidatura creada con una contraseña que lleve tilde o eñe no puede entrar nunca. Se arregla igual que en el registro ciudadano — que el backend mande el hash y el procedimiento reciba `CHAR(64)` en lugar de la clave en texto.
 

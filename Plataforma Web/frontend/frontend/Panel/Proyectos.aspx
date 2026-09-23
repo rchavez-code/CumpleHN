@@ -16,6 +16,10 @@
         <span class="gc-muted gc-small"><%: TotalTexto %></span>
     </div>
 
+    <asp:PlaceHolder ID="phAviso" runat="server" Visible="false">
+        <p class="gc-ok gc-mb"><asp:Literal ID="litAviso" runat="server" /></p>
+    </asp:PlaceHolder>
+
     <asp:PlaceHolder ID="phLista" runat="server">
 
         <div class="gc-card gc-filters">

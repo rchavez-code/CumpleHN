@@ -11,19 +11,34 @@ namespace frontend.Panel
     /// pública en <c>Candidato.aspx</c>: lo que se llena acá es exactamente lo
     /// que se publica allá.
     ///
-    /// Pendiente: el guardado corresponde al Web Service de candidatos. La
-    /// validación de entrada ya está acá porque también debe existir del lado
-    /// del servidor.
+    /// Se guarda solo lo que redacta la candidatura: presentación, contacto y
+    /// redes (<c>spPanelGuardarPerfil</c>, script 24). El nombre, el cargo, el
+    /// partido, el departamento y el municipio se muestran pero no se editan:
+    /// los registra la administración, que es la que los contrasta.
     /// </summary>
     public partial class Perfil : PaginaPanel
     {
+        private EdicionPanel _edicion;
+
         protected void Page_Load(object sender, EventArgs e)
         {
+            // El cargo se muestra con los catálogos del espacio de la
+            // candidatura, que no siempre es la plataforma.
+            Espacios.Fijar(CandidatoActual.EspacioSlug);
+
+            _edicion = Contenido.Datos.ObtenerEdicionPanel(Sesion.CodigoUsuario, 0);
+
             if (!IsPostBack)
             {
                 CargarCatalogos();
                 CargarDatos();
+
+                // Lo deja el guardado antes de volver a cargar la página.
+                string aviso = Sesion.TomarAviso();
+                if (!string.IsNullOrEmpty(aviso)) Ok(aviso);
             }
+
+            AplicarBloqueo();
         }
 
         private void CargarCatalogos()
@@ -68,19 +83,29 @@ namespace frontend.Panel
             if (item != null) lista.SelectedValue = item.Value;
         }
 
-        protected void btnGuardar_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Con la campaña cerrada o el espacio vencido el perfil se consulta
+        /// pero no se edita. Lo decide la base con la misma función que usa el
+        /// procedimiento de guardado.
+        /// </summary>
+        private void AplicarBloqueo()
         {
-            if (string.IsNullOrEmpty(txtNombres.Text.Trim()) || string.IsNullOrEmpty(txtApellidos.Text.Trim()))
+            if (_edicion.Editable) return;
+
+            foreach (TextBox t in new[] { txtTitular, txtBiografia, txtProfesional, txtCandidatura,
+                                          txtCorreo, txtTelefono, txtSitio, txtFacebook, txtX, txtInstagram })
             {
-                MostrarError("Los nombres y apellidos son obligatorios.");
-                return;
+                t.ReadOnly = true;
             }
 
-            if (string.IsNullOrEmpty(ddlCargo.SelectedValue))
-            {
-                MostrarError("Seleccioná el cargo al que aspirás.");
-                return;
-            }
+            btnGuardar.Visible = false;
+            litBloqueo.Text = Server.HtmlEncode(_edicion.Motivo);
+            phBloqueo.Visible = true;
+        }
+
+        protected void btnGuardar_Click(object sender, EventArgs e)
+        {
+            if (!_edicion.Editable) return;
 
             string correo = txtCorreo.Text.Trim();
             if (!string.IsNullOrEmpty(correo) && correo.IndexOf('@') < 0)
@@ -89,8 +114,22 @@ namespace frontend.Panel
                 return;
             }
 
-            // Acá irá la llamada al Web Service de candidatos para persistir.
-            Ok("Los datos son válidos. La persistencia se habilita al conectar el Web Service de candidatos.");
+            ResultadoGuardado r = Contenido.Datos.GuardarPerfilPanel(Sesion.CodigoUsuario,
+                txtTitular.Text.Trim(), txtBiografia.Text.Trim(), txtProfesional.Text.Trim(),
+                txtCandidatura.Text.Trim(), correo, txtTelefono.Text.Trim(), txtSitio.Text.Trim(),
+                txtFacebook.Text.Trim(), txtX.Text.Trim(), txtInstagram.Text.Trim());
+
+            if (!r.Ok)
+            {
+                MostrarError(r.Mensaje);
+                return;
+            }
+
+            // Se vuelve a cargar la página para que la verificación y el
+            // avance del perfil reflejen lo guardado: la candidatura de esta
+            // petición se leyó antes del clic.
+            Sesion.DejarAviso(r.Mensaje);
+            Response.Redirect("~/Panel/Perfil");
         }
 
         private void Ok(string mensaje)

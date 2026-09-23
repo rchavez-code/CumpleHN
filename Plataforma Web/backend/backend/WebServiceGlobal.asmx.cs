@@ -4264,6 +4264,156 @@ namespace backend
         }
 
         // =============================================================
+        //  Panel de la candidatura
+        //
+        //  El proyecto de campaña y el perfil público (script 24). La
+        //  candidatura no se recibe: se deriva de la cuenta, acá y otra vez
+        //  dentro de cada procedimiento, por lo mismo que el rol del
+        //  administrador se comprueba en las dos capas.
+        // =============================================================
+
+        /// <summary>
+        /// La candidatura de la cuenta, o cero si la cuenta no es de una
+        /// candidatura activa. Delega en fnCandidatoDeUsuario para responder
+        /// lo mismo que los procedimientos por definición.
+        /// </summary>
+        private static int CandidatoDeUsuario(SqlConnection conn, int codigoUsuario)
+        {
+            if (codigoUsuario <= 0) return 0;
+
+            SqlCommand cmd = new SqlCommand("SELECT dbo.fnCandidatoDeUsuario(@u)", conn);
+            cmd.Parameters.AddWithValue("@u", codigoUsuario);
+            return Convert.ToInt32(cmd.ExecuteScalar());
+        }
+
+        /// <summary>
+        /// Qué puede cambiar la candidatura antes de guardar: si el formulario
+        /// está abierto y si el texto de la propuesta se puede editar. Con
+        /// propuesta en cero responde por el alta y por el perfil.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public EdicionPanel obtenerEdicionPanel(int codigoUsuario, int codigoPropuesta)
+        {
+            EdicionPanel r = new EdicionPanel
+            {
+                editable = false,
+                textoEditable = false,
+                motivo = "No se pudo comprobar si el contenido se puede editar."
+            };
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand("dbo.spPanelEdicion", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoPropuesta", codigoPropuesta);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        r.editable = Convert.ToBoolean(reader["editable"]);
+                        r.textoEditable = Convert.ToBoolean(reader["textoEditable"]);
+                        r.motivo = Texto(reader, "motivo");
+                    }
+                }
+            }
+
+            return r;
+        }
+
+        /// <summary>
+        /// Alta (código cero) o edición de un proyecto de campaña. El estado
+        /// llega por nombre y solo se aceptan «Declarada» y «En proceso»: los
+        /// de cumplimiento los asigna la plataforma con evidencia.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaGuardado guardarPropuestaPanel(int codigoUsuario, int codigoPropuesta,
+            string nombre, string descripcion, string problema, string objetivo, string beneficiarios,
+            int codigoCategoria, string ubicacion, string periodoEjecucion, string estado,
+            string informacionAdicional)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(cadenaConexion))
+                {
+                    conn.Open();
+
+                    if (CandidatoDeUsuario(conn, codigoUsuario) == 0)
+                        return RechazoGuardado("La cuenta no está vinculada a una candidatura activa.");
+
+                    SqlCommand cmd = new SqlCommand("dbo.spPanelGuardarPropuesta", conn);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                    cmd.Parameters.AddWithValue("@codigoPropuesta", codigoPropuesta);
+                    cmd.Parameters.AddWithValue("@nombre", (object)nombre ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@descripcion", (object)descripcion ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@problema", (object)problema ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@objetivo", (object)objetivo ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@beneficiarios", (object)beneficiarios ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@codigoCategoria", codigoCategoria);
+                    cmd.Parameters.AddWithValue("@ubicacion", (object)ubicacion ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@periodoEjecucion", (object)periodoEjecucion ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@estado", (object)estado ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@informacionAdicional", (object)informacionAdicional ?? DBNull.Value);
+
+                    return LeerGuardado(cmd);
+                }
+            }
+            catch (Exception ex)
+            {
+                return RechazoGuardado("No se pudo guardar el proyecto: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Guarda lo que redacta la candidatura en su perfil: presentación,
+        /// contacto y redes. La identificación (nombre, cargo, partido,
+        /// departamento, municipio) la registra la administración y no viaja.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaGuardado guardarPerfilPanel(int codigoUsuario, string titular, string biografia,
+            string informacionProfesional, string descripcionCandidatura, string correoPublico,
+            string telefono, string sitioWeb, string facebook, string x, string instagram)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(cadenaConexion))
+                {
+                    conn.Open();
+
+                    if (CandidatoDeUsuario(conn, codigoUsuario) == 0)
+                        return RechazoGuardado("La cuenta no está vinculada a una candidatura activa.");
+
+                    SqlCommand cmd = new SqlCommand("dbo.spPanelGuardarPerfil", conn);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                    cmd.Parameters.AddWithValue("@titular", (object)titular ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@biografia", (object)biografia ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@informacionProfesional", (object)informacionProfesional ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@descripcionCandidatura", (object)descripcionCandidatura ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@correoPublico", (object)correoPublico ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@telefono", (object)telefono ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@sitioWeb", (object)sitioWeb ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@facebook", (object)facebook ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@x", (object)x ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@instagram", (object)instagram ?? DBNull.Value);
+
+                    return LeerGuardado(cmd);
+                }
+            }
+            catch (Exception ex)
+            {
+                return RechazoGuardado("No se pudo guardar el perfil: " + ex.Message);
+            }
+        }
+
+        // =============================================================
         //  Asistente de consulta en lenguaje natural
         // =============================================================
 

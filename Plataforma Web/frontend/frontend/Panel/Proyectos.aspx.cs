@@ -27,6 +27,14 @@ namespace frontend.Panel
             {
                 CargarFiltros();
                 txtBuscar.Text = _q;
+
+                // Lo deja Proyecto.aspx al guardar, antes de redirigir acá.
+                string aviso = Sesion.TomarAviso();
+                if (!string.IsNullOrEmpty(aviso))
+                {
+                    litAviso.Text = Server.HtmlEncode(aviso);
+                    phAviso.Visible = true;
+                }
             }
 
             CargarProyectos();

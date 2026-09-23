@@ -40,5 +40,15 @@ namespace frontend.Panel
         /// phVacio control.
         /// </summary>
         protected global::System.Web.UI.WebControls.PlaceHolder phVacio;
+
+        /// <summary>
+        /// phAviso control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phAviso;
+
+        /// <summary>
+        /// litAviso control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litAviso;
     }
 }

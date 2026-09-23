@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using frontend.Modelos;
@@ -14,20 +15,35 @@ namespace frontend.Panel
     /// proyecto. Los estados de cumplimiento (cumplida, incumplida y los
     /// intermedios) los asigna la plataforma cuando existe evidencia, porque de
     /// lo contrario la candidatura se calificaría a sí misma.
+    ///
+    /// Qué se puede editar lo decide la base (<c>spPanelEdicion</c>, script
+    /// 24) con las mismas funciones que usa el procedimiento de guardado: un
+    /// proyecto con estado de cumplimiento asignado o de una campaña cerrada no
+    /// se edita, y uno con reacciones solo admite cambiar el estado declarado.
     /// </summary>
     public partial class Proyecto : PaginaPanel
     {
+        private const string Declarada = "Declarada";
+        private const string EnProceso = "En proceso";
+
         private Propuesta _propuesta;
         private bool _esNuevo;
+        private EdicionPanel _edicion;
+        private IList<OpcionCatalogo> _categorias;
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // El panel es de la candidatura, y la candidatura es de un
+            // espacio: las categorías que se ofrecen son las de ese espacio.
+            Espacios.Fijar(CandidatoActual.EspacioSlug);
+
             int id;
             if (int.TryParse(Request.QueryString["id"], out id))
             {
                 _propuesta = Contenido.Datos.ObtenerPropuesta(id);
 
-                // Nadie edita el proyecto de otra candidatura.
+                // Nadie edita el proyecto de otra candidatura. El procedimiento
+                // lo vuelve a comprobar: esto solo evita mostrar el formulario.
                 if (_propuesta != null && _propuesta.CandidatoSlug != CandidatoActual.Slug)
                 {
                     Response.Redirect("~/Panel/Proyectos");
@@ -36,6 +52,9 @@ namespace frontend.Panel
             }
 
             _esNuevo = _propuesta == null;
+            _categorias = Contenido.Datos.ObtenerCategoriasConCodigo();
+            _edicion = Contenido.Datos.ObtenerEdicionPanel(
+                Sesion.CodigoUsuario, _esNuevo ? 0 : _propuesta.Id);
 
             Page.Title = _esNuevo ? "Nuevo proyecto" : "Editar proyecto";
 
@@ -45,19 +64,21 @@ namespace frontend.Panel
 
                 if (!_esNuevo) CargarDatos();
             }
+
+            AplicarBloqueo();
         }
 
         private void CargarCatalogos()
         {
             ddlCategoria.Items.Add(new ListItem("Seleccioná una categoría", string.Empty));
-            foreach (string cat in Contenido.Datos.ObtenerCategorias())
+            foreach (OpcionCatalogo cat in _categorias)
             {
-                ddlCategoria.Items.Add(new ListItem(cat, cat));
+                ddlCategoria.Items.Add(new ListItem(cat.Nombre, cat.Codigo.ToString()));
             }
 
             // Solo los estados que le corresponde declarar a la candidatura.
-            ddlEstado.Items.Add(new ListItem("Declarada", EstadoPropuesta.Declarada.ToString()));
-            ddlEstado.Items.Add(new ListItem("En proceso", EstadoPropuesta.EnProceso.ToString()));
+            ddlEstado.Items.Add(new ListItem(Declarada, Declarada));
+            ddlEstado.Items.Add(new ListItem(EnProceso, EnProceso));
         }
 
         private void CargarDatos()
@@ -71,57 +92,131 @@ namespace frontend.Panel
             txtPeriodo.Text = _propuesta.PeriodoEjecucion;
             txtAdicional.Text = _propuesta.InformacionAdicional;
 
-            Seleccionar(ddlCategoria, _propuesta.Categoria);
-            Seleccionar(ddlEstado, _propuesta.Estado.ToString());
+            ListItem cat = ddlCategoria.Items.FindByText(_propuesta.Categoria ?? string.Empty);
+            if (cat != null) ddlCategoria.SelectedValue = cat.Value;
+
+            ListItem estado = ddlEstado.Items.FindByValue(
+                _propuesta.Estado == EstadoPropuesta.EnProceso ? EnProceso : Declarada);
+            if (estado != null) ddlEstado.SelectedValue = estado.Value;
         }
 
-        private static void Seleccionar(DropDownList lista, string valor)
+        /// <summary>
+        /// Cierra lo que no se puede cambiar antes de que la persona lo llene.
+        /// Corre en cada carga porque <c>ReadOnly</c> y <c>Enabled</c> no se
+        /// conservan solos entre postbacks si la página no los vuelve a fijar.
+        /// </summary>
+        private void AplicarBloqueo()
         {
-            ListItem item = lista.Items.FindByValue(valor ?? string.Empty);
-            if (item != null) lista.SelectedValue = item.Value;
+            bool textoAbierto = _edicion.Editable && _edicion.TextoEditable;
+
+            foreach (TextBox t in new[] { txtNombre, txtDescripcion, txtProblema, txtObjetivo,
+                                          txtBeneficiarios, txtUbicacion, txtPeriodo, txtAdicional })
+            {
+                t.ReadOnly = !textoAbierto;
+            }
+
+            ddlCategoria.Enabled = textoAbierto;
+            ddlEstado.Enabled = _edicion.Editable;
+            btnGuardar.Visible = _edicion.Editable;
+
+            if (!textoAbierto && !string.IsNullOrEmpty(_edicion.Motivo))
+            {
+                litBloqueo.Text = Server.HtmlEncode(_edicion.Motivo);
+                phBloqueo.Visible = true;
+            }
         }
 
         protected void btnGuardar_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(txtNombre.Text.Trim()))
+            if (!_edicion.Editable) return;
+
+            string nombre, descripcion, problema, objetivo, beneficiarios, ubicacion, periodo, adicional;
+            int codigoCategoria;
+
+            if (_edicion.TextoEditable)
             {
-                MostrarError("El nombre del proyecto es obligatorio.");
+                nombre = txtNombre.Text.Trim();
+                descripcion = txtDescripcion.Text.Trim();
+                problema = txtProblema.Text.Trim();
+                objetivo = txtObjetivo.Text.Trim();
+                beneficiarios = txtBeneficiarios.Text.Trim();
+                ubicacion = txtUbicacion.Text.Trim();
+                periodo = txtPeriodo.Text.Trim();
+                adicional = txtAdicional.Text.Trim();
+                int.TryParse(ddlCategoria.SelectedValue, out codigoCategoria);
+
+                if (string.IsNullOrEmpty(nombre))
+                {
+                    MostrarError("El nombre del proyecto es obligatorio.");
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(descripcion))
+                {
+                    MostrarError("Agregá una descripción del proyecto.");
+                    return;
+                }
+
+                if (codigoCategoria <= 0)
+                {
+                    MostrarError("Seleccioná el área o categoría del proyecto.");
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(problema))
+                {
+                    MostrarError("Indicá qué problema busca solucionar el proyecto.");
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(objetivo))
+                {
+                    MostrarError("Indicá el objetivo del proyecto.");
+                    return;
+                }
+            }
+            else
+            {
+                // Con el texto cerrado solo cambia el estado. Se reenvía el
+                // contenido tal como está guardado, no lo que diga el
+                // formulario: un control deshabilitado no viaja en el
+                // postback, y el procedimiento compara contra la base.
+                nombre = _propuesta.Nombre;
+                descripcion = _propuesta.Descripcion;
+                problema = _propuesta.Problema;
+                objetivo = _propuesta.Objetivo;
+                beneficiarios = _propuesta.Beneficiarios;
+                ubicacion = _propuesta.Ubicacion;
+                periodo = _propuesta.PeriodoEjecucion;
+                adicional = _propuesta.InformacionAdicional;
+                codigoCategoria = CodigoCategoria(_propuesta.Categoria);
+            }
+
+            ResultadoGuardado r = Contenido.Datos.GuardarPropuestaPanel(
+                Sesion.CodigoUsuario, _esNuevo ? 0 : _propuesta.Id,
+                nombre, descripcion, problema, objetivo, beneficiarios,
+                codigoCategoria, ubicacion, periodo, ddlEstado.SelectedValue, adicional);
+
+            if (!r.Ok)
+            {
+                MostrarError(r.Mensaje);
                 return;
             }
 
-            if (string.IsNullOrEmpty(txtDescripcion.Text.Trim()))
-            {
-                MostrarError("Agregá una descripción del proyecto.");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(ddlCategoria.SelectedValue))
-            {
-                MostrarError("Seleccioná el área o categoría del proyecto.");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(txtProblema.Text.Trim()))
-            {
-                MostrarError("Indicá qué problema busca solucionar el proyecto.");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(txtObjetivo.Text.Trim()))
-            {
-                MostrarError("Indicá el objetivo del proyecto.");
-                return;
-            }
-
-            // Acá irá la llamada al Web Service de propuestas para persistir.
-            Ok("Los datos son válidos. La persistencia se habilita al conectar el Web Service de propuestas.");
+            // El mensaje del procedimiento dice si el proyecto volvió a
+            // declarado, así que es el que se muestra en el listado.
+            Sesion.DejarAviso(r.Mensaje);
+            Response.Redirect("~/Panel/Proyectos");
         }
 
-        private void Ok(string mensaje)
+        private int CodigoCategoria(string nombre)
         {
-            litOk.Text = Server.HtmlEncode(mensaje);
-            phOk.Visible = true;
-            phError.Visible = false;
+            foreach (OpcionCatalogo c in _categorias)
+            {
+                if (string.Equals(c.Nombre, nombre, StringComparison.OrdinalIgnoreCase)) return c.Codigo;
+            }
+
+            return 0;
         }
 
         private void MostrarError(string mensaje)
@@ -164,16 +259,23 @@ namespace frontend.Panel
 
         protected string CategoriaVista
         {
-            get
-            {
-                string v = ddlCategoria.SelectedValue;
-                return string.IsNullOrEmpty(v) ? "Sin categoría" : v;
-            }
+            get { return string.IsNullOrEmpty(CategoriaNombre) ? "Sin categoría" : CategoriaNombre; }
         }
 
         protected string CategoriaClase
         {
-            get { return Vista.ClaseCategoria(ddlCategoria.SelectedValue); }
+            get { return Vista.ClaseCategoria(CategoriaNombre); }
+        }
+
+        /// <summary>El desplegable guarda el código, la vista necesita el nombre.</summary>
+        private string CategoriaNombre
+        {
+            get
+            {
+                return string.IsNullOrEmpty(ddlCategoria.SelectedValue) || ddlCategoria.SelectedItem == null
+                    ? string.Empty
+                    : ddlCategoria.SelectedItem.Text;
+            }
         }
 
         protected string EstadoVista
@@ -190,11 +292,9 @@ namespace frontend.Panel
         {
             get
             {
-                if (string.Equals(ddlEstado.SelectedValue, EstadoPropuesta.EnProceso.ToString(),
-                        StringComparison.OrdinalIgnoreCase))
-                    return EstadoPropuesta.EnProceso;
-
-                return EstadoPropuesta.Declarada;
+                return ddlEstado.SelectedValue == EnProceso
+                    ? EstadoPropuesta.EnProceso
+                    : EstadoPropuesta.Declarada;
             }
         }
     }

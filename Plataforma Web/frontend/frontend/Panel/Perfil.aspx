@@ -24,6 +24,12 @@
         <p class="gc-alert gc-mb"><asp:Literal ID="litError" runat="server" /></p>
     </asp:PlaceHolder>
 
+    <asp:PlaceHolder ID="phBloqueo" runat="server" Visible="false">
+        <div class="gc-note gc-note--ambar gc-mb">
+            <span><asp:Literal ID="litBloqueo" runat="server" /></span>
+        </div>
+    </asp:PlaceHolder>
+
     <div class="row">
         <div class="col-lg-8">
             <div class="gc-card gc-mb">
@@ -38,9 +44,9 @@
                             <div class="gc-drop">
                                 <span class="gc-avatar gc-avatar--lg" style="<%= EstiloAvatar %>" aria-hidden="true"><%: Iniciales %></span>
                                 <div style="flex: 1 1 auto; min-width: 0;">
-                                    <asp:FileUpload ID="fuFoto" runat="server" CssClass="gc-input" />
+                                    <asp:FileUpload ID="fuFoto" runat="server" CssClass="gc-input" Enabled="false" />
                                     <span class="gc-hint">
-                                        Formato JPG o PNG, mínimo 400 × 400 píxeles. Se recorta en forma circular.
+                                        La carga de la fotografía todavía no está disponible. El resto del perfil sí se guarda.
                                     </span>
                                 </div>
                             </div>
@@ -54,11 +60,11 @@
                             <div class="gc-row2">
                                 <div class="gc-field">
                                     <label for="<%= txtNombres.ClientID %>">Nombres</label>
-                                    <asp:TextBox ID="txtNombres" runat="server" CssClass="gc-input" />
+                                    <asp:TextBox ID="txtNombres" runat="server" CssClass="gc-input" ReadOnly="true" />
                                 </div>
                                 <div class="gc-field">
                                     <label for="<%= txtApellidos.ClientID %>">Apellidos</label>
-                                    <asp:TextBox ID="txtApellidos" runat="server" CssClass="gc-input" />
+                                    <asp:TextBox ID="txtApellidos" runat="server" CssClass="gc-input" ReadOnly="true" />
                                 </div>
                             </div>
                         </fieldset>
@@ -71,26 +77,31 @@
                             <div class="gc-row2">
                                 <div class="gc-field">
                                     <label for="<%= ddlCargo.ClientID %>">Cargo al que aspirás</label>
-                                    <asp:DropDownList ID="ddlCargo" runat="server" CssClass="gc-select" />
+                                    <asp:DropDownList ID="ddlCargo" runat="server" CssClass="gc-select" Enabled="false" />
                                 </div>
                                 <div class="gc-field">
                                     <label for="<%= txtPartido.ClientID %>">Partido político</label>
                                     <asp:TextBox ID="txtPartido" runat="server" CssClass="gc-input"
-                                        placeholder="Vacío si es independiente" />
+                                        ReadOnly="true" placeholder="Candidatura independiente" />
                                 </div>
                             </div>
 
                             <div class="gc-row2">
                                 <div class="gc-field">
                                     <label for="<%= ddlDepartamento.ClientID %>">Departamento</label>
-                                    <asp:DropDownList ID="ddlDepartamento" runat="server" CssClass="gc-select" />
+                                    <asp:DropDownList ID="ddlDepartamento" runat="server" CssClass="gc-select" Enabled="false" />
                                 </div>
                                 <div class="gc-field">
                                     <label for="<%= txtMunicipio.ClientID %>">Municipio</label>
                                     <asp:TextBox ID="txtMunicipio" runat="server" CssClass="gc-input"
-                                        placeholder="Solo si tu cargo es municipal" />
+                                        ReadOnly="true" placeholder="Solo en cargos municipales" />
                                 </div>
                             </div>
+
+                            <span class="gc-hint">
+                                El nombre y los datos de la candidatura los registra la administración de la
+                                plataforma, que es la que los contrasta. Si hay un error, pedile la corrección.
+                            </span>
                         </fieldset>
 
                         <%-- ==================================== Presentación --%>
@@ -201,10 +212,11 @@
                 </div>
             </div>
 
-            <div class="gc-note gc-note--ambar">
+            <div class="gc-note">
                 <span>
-                    En esta etapa el formulario todavía no persiste los cambios. El guardado se conecta al
-                    Web Service de candidatos del backend, que es el que escribe en la base de datos.
+                    El perfil se publica como declarado: es lo que la candidatura afirma de sí misma. Si la
+                    plataforma ya lo verificó y cambiás tu presentación, vuelve a figurar como declarado hasta
+                    que lo revise de nuevo. Cambiar el contacto o las redes no afecta la verificación.
                 </span>
             </div>
         </div>

@@ -466,6 +466,29 @@ namespace frontend.Servicios
         private const string SinBaseIniciativas =
             "Las iniciativas necesitan la base de datos. Este origen de datos es solo de demostración.";
 
+        private const string SinBasePanel =
+            "Guardar desde el panel necesita la base de datos. Este origen de datos es solo de demostración.";
+
+        public EdicionPanel ObtenerEdicionPanel(int codigoUsuario, int codigoPropuesta)
+        {
+            return new EdicionPanel { Editable = false, TextoEditable = false, Motivo = SinBasePanel };
+        }
+
+        public ResultadoGuardado GuardarPropuestaPanel(int codigoUsuario, int codigoPropuesta,
+            string nombre, string descripcion, string problema, string objetivo, string beneficiarios,
+            int codigoCategoria, string ubicacion, string periodoEjecucion, string estado,
+            string informacionAdicional)
+        {
+            return new ResultadoGuardado { Ok = false, Mensaje = SinBasePanel };
+        }
+
+        public ResultadoGuardado GuardarPerfilPanel(int codigoUsuario, string titular, string biografia,
+            string informacionProfesional, string descripcionCandidatura, string correoPublico,
+            string telefono, string sitioWeb, string facebook, string x, string instagram)
+        {
+            return new ResultadoGuardado { Ok = false, Mensaje = SinBasePanel };
+        }
+
         public IList<EncuestaAdmin> ObtenerEncuestasAdmin(
             int codigoUsuario, string campanaSlug, string estado)
         {

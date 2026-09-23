@@ -17,6 +17,16 @@ namespace frontend.Panel
         protected global::System.Web.UI.WebControls.PlaceHolder phOk;
 
         /// <summary>
+        /// phBloqueo control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phBloqueo;
+
+        /// <summary>
+        /// litBloqueo control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Literal litBloqueo;
+
+        /// <summary>
         /// litOk control.
         /// </summary>
         protected global::System.Web.UI.WebControls.Literal litOk;

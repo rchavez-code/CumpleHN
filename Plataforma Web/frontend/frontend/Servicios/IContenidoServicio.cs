@@ -151,6 +151,34 @@ namespace frontend.Servicios
         /// <summary>Retira o restaura desde administración, con motivo obligatorio.</summary>
         Resultado ModerarIniciativa(int codigoUsuario, int codigoIniciativa, bool activo, string motivo);
 
+        // ------------------------------------------ Panel de la candidatura
+
+        /* El proyecto de campaña y el perfil público. La candidatura no
+           viaja: el backend la deriva de la cuenta. */
+
+        /// <summary>
+        /// Qué puede cambiar la candidatura. Con propuesta en cero responde
+        /// por el alta y por el perfil.
+        /// </summary>
+        EdicionPanel ObtenerEdicionPanel(int codigoUsuario, int codigoPropuesta);
+
+        /// <summary>
+        /// Alta (código cero) o edición de un proyecto. El estado va por
+        /// nombre, y solo se aceptan «Declarada» y «En proceso».
+        /// </summary>
+        ResultadoGuardado GuardarPropuestaPanel(int codigoUsuario, int codigoPropuesta,
+            string nombre, string descripcion, string problema, string objetivo, string beneficiarios,
+            int codigoCategoria, string ubicacion, string periodoEjecucion, string estado,
+            string informacionAdicional);
+
+        /// <summary>
+        /// Presentación, contacto y redes. La identificación de la candidatura
+        /// la registra la administración y no se guarda desde acá.
+        /// </summary>
+        ResultadoGuardado GuardarPerfilPanel(int codigoUsuario, string titular, string biografia,
+            string informacionProfesional, string descripcionCandidatura, string correoPublico,
+            string telefono, string sitioWeb, string facebook, string x, string instagram);
+
         // ----------------------------------------------------- Analítica
 
         /// <summary>

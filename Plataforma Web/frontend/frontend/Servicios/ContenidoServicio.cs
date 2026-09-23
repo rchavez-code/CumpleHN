@@ -412,6 +412,50 @@ namespace frontend.Servicios
                 c => c.moderarIniciativa(codigoUsuario, codigoIniciativa, activo, motivo), null));
         }
 
+        // =============================================================
+        //  Panel de la candidatura
+        // =============================================================
+
+        public EdicionPanel ObtenerEdicionPanel(int codigoUsuario, int codigoPropuesta)
+        {
+            ws.EdicionPanel d = Ejecutar(c => c.obtenerEdicionPanel(codigoUsuario, codigoPropuesta), null);
+
+            // Sin respuesta el formulario queda cerrado: ofrecer guardar algo
+            // que no se sabe si se acepta termina en un rechazo después de
+            // que la persona escribió todo.
+            if (d == null)
+            {
+                return new EdicionPanel
+                {
+                    Editable = false,
+                    TextoEditable = false,
+                    Motivo = "No se pudo contactar al servidor. Intentá de nuevo en un momento."
+                };
+            }
+
+            return new EdicionPanel { Editable = d.editable, TextoEditable = d.textoEditable, Motivo = d.motivo };
+        }
+
+        public ResultadoGuardado GuardarPropuestaPanel(int codigoUsuario, int codigoPropuesta,
+            string nombre, string descripcion, string problema, string objetivo, string beneficiarios,
+            int codigoCategoria, string ubicacion, string periodoEjecucion, string estado,
+            string informacionAdicional)
+        {
+            return AGuardado(Ejecutar(
+                c => c.guardarPropuestaPanel(codigoUsuario, codigoPropuesta, nombre, descripcion,
+                    problema, objetivo, beneficiarios, codigoCategoria, ubicacion, periodoEjecucion,
+                    estado, informacionAdicional), null));
+        }
+
+        public ResultadoGuardado GuardarPerfilPanel(int codigoUsuario, string titular, string biografia,
+            string informacionProfesional, string descripcionCandidatura, string correoPublico,
+            string telefono, string sitioWeb, string facebook, string x, string instagram)
+        {
+            return AGuardado(Ejecutar(
+                c => c.guardarPerfilPanel(codigoUsuario, titular, biografia, informacionProfesional,
+                    descripcionCandidatura, correoPublico, telefono, sitioWeb, facebook, x, instagram), null));
+        }
+
         private static IList<Iniciativa> AIniciativas(ws.IniciativaPublica[] datos)
         {
             List<Iniciativa> lista = new List<Iniciativa>();

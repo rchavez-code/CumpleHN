@@ -41,6 +41,24 @@ namespace frontend.Modelos
     }
 
     /// <summary>
+    /// Qué puede cambiar la candidatura en su panel. Lo decide la base
+    /// (<c>spPanelEdicion</c>) con las mismas funciones que usan los
+    /// procedimientos de guardado, para que la pantalla no ofrezca algo que
+    /// después se rechaza.
+    /// </summary>
+    public class EdicionPanel
+    {
+        /// <summary>El formulario se puede usar.</summary>
+        public bool Editable { get; set; }
+
+        /// <summary>El contenido de la propuesta se puede cambiar, no solo su estado.</summary>
+        public bool TextoEditable { get; set; }
+
+        /// <summary>Por qué no, cuando alguna de las dos es falsa.</summary>
+        public string Motivo { get; set; }
+    }
+
+    /// <summary>
     /// Cargo visto desde la administración del espacio: con los desactivados
     /// y el conteo de candidaturas que lo tienen.
     /// </summary>

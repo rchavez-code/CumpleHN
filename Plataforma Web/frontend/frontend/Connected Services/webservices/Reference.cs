@@ -234,6 +234,27 @@ namespace frontend.webservices
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/moderarIniciativa", ReplyAction="*")]
         System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> moderarIniciativaAsync(int codigoUsuario, int codigoIniciativa, bool activo, string motivo);
         
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/obtenerEdicionPanel", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.EdicionPanel obtenerEdicionPanel(int codigoUsuario, int codigoPropuesta);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/obtenerEdicionPanel", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.EdicionPanel> obtenerEdicionPanelAsync(int codigoUsuario, int codigoPropuesta);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarPropuestaPanel", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaGuardado guardarPropuestaPanel(int codigoUsuario, int codigoPropuesta, string nombre, string descripcion, string problema, string objetivo, string beneficiarios, int codigoCategoria, string ubicacion, string periodoEjecucion, string estado, string informacionAdicional);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarPropuestaPanel", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarPropuestaPanelAsync(int codigoUsuario, int codigoPropuesta, string nombre, string descripcion, string problema, string objetivo, string beneficiarios, int codigoCategoria, string ubicacion, string periodoEjecucion, string estado, string informacionAdicional);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarPerfilPanel", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaGuardado guardarPerfilPanel(int codigoUsuario, string titular, string biografia, string informacionProfesional, string descripcionCandidatura, string correoPublico, string telefono, string sitioWeb, string facebook, string x, string instagram);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarPerfilPanel", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarPerfilPanelAsync(int codigoUsuario, string titular, string biografia, string informacionProfesional, string descripcionCandidatura, string correoPublico, string telefono, string sitioWeb, string facebook, string x, string instagram);
+        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/preguntarAsistente", ReplyAction="*")]
         [System.ServiceModel.XmlSerializerFormatAttribute()]
         frontend.webservices.RespuestaAsistente preguntarAsistente(int codigoUsuario, string pregunta, string campanaSlug);
@@ -6018,6 +6039,64 @@ namespace frontend.webservices
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class EdicionPanel
+    {
+        
+        private bool editableField;
+        
+        private bool textoEditableField;
+        
+        private string motivoField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public bool editable
+        {
+            get
+            {
+                return this.editableField;
+            }
+            set
+            {
+                this.editableField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public bool textoEditable
+        {
+            get
+            {
+                return this.textoEditableField;
+            }
+            set
+            {
+                this.textoEditableField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string motivo
+        {
+            get
+            {
+                return this.motivoField;
+            }
+            set
+            {
+                this.motivoField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
     public partial class IniciativaPublica
     {
         
@@ -8548,6 +8627,36 @@ namespace frontend.webservices
         public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> moderarIniciativaAsync(int codigoUsuario, int codigoIniciativa, bool activo, string motivo)
         {
             return base.Channel.moderarIniciativaAsync(codigoUsuario, codigoIniciativa, activo, motivo);
+        }
+        
+        public frontend.webservices.EdicionPanel obtenerEdicionPanel(int codigoUsuario, int codigoPropuesta)
+        {
+            return base.Channel.obtenerEdicionPanel(codigoUsuario, codigoPropuesta);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.EdicionPanel> obtenerEdicionPanelAsync(int codigoUsuario, int codigoPropuesta)
+        {
+            return base.Channel.obtenerEdicionPanelAsync(codigoUsuario, codigoPropuesta);
+        }
+        
+        public frontend.webservices.RespuestaGuardado guardarPropuestaPanel(int codigoUsuario, int codigoPropuesta, string nombre, string descripcion, string problema, string objetivo, string beneficiarios, int codigoCategoria, string ubicacion, string periodoEjecucion, string estado, string informacionAdicional)
+        {
+            return base.Channel.guardarPropuestaPanel(codigoUsuario, codigoPropuesta, nombre, descripcion, problema, objetivo, beneficiarios, codigoCategoria, ubicacion, periodoEjecucion, estado, informacionAdicional);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarPropuestaPanelAsync(int codigoUsuario, int codigoPropuesta, string nombre, string descripcion, string problema, string objetivo, string beneficiarios, int codigoCategoria, string ubicacion, string periodoEjecucion, string estado, string informacionAdicional)
+        {
+            return base.Channel.guardarPropuestaPanelAsync(codigoUsuario, codigoPropuesta, nombre, descripcion, problema, objetivo, beneficiarios, codigoCategoria, ubicacion, periodoEjecucion, estado, informacionAdicional);
+        }
+        
+        public frontend.webservices.RespuestaGuardado guardarPerfilPanel(int codigoUsuario, string titular, string biografia, string informacionProfesional, string descripcionCandidatura, string correoPublico, string telefono, string sitioWeb, string facebook, string x, string instagram)
+        {
+            return base.Channel.guardarPerfilPanel(codigoUsuario, titular, biografia, informacionProfesional, descripcionCandidatura, correoPublico, telefono, sitioWeb, facebook, x, instagram);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarPerfilPanelAsync(int codigoUsuario, string titular, string biografia, string informacionProfesional, string descripcionCandidatura, string correoPublico, string telefono, string sitioWeb, string facebook, string x, string instagram)
+        {
+            return base.Channel.guardarPerfilPanelAsync(codigoUsuario, titular, biografia, informacionProfesional, descripcionCandidatura, correoPublico, telefono, sitioWeb, facebook, x, instagram);
         }
         
         public frontend.webservices.RespuestaAsistente preguntarAsistente(int codigoUsuario, string pregunta, string campanaSlug)

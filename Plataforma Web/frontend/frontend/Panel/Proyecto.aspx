@@ -24,6 +24,12 @@
         <p class="gc-alert gc-mb"><asp:Literal ID="litError" runat="server" /></p>
     </asp:PlaceHolder>
 
+    <asp:PlaceHolder ID="phBloqueo" runat="server" Visible="false">
+        <div class="gc-note gc-note--ambar gc-mb">
+            <span><asp:Literal ID="litBloqueo" runat="server" /></span>
+        </div>
+    </asp:PlaceHolder>
+
     <div class="row">
         <div class="col-lg-8">
             <div class="gc-card gc-mb">
@@ -119,8 +125,10 @@
                                 <div class="gc-drop">
                                     <span class="gc-quick__ico" aria-hidden="true">IMG</span>
                                     <div style="flex: 1 1 auto; min-width: 0;">
-                                        <asp:FileUpload ID="fuImagen" runat="server" CssClass="gc-input" />
-                                        <span class="gc-hint">JPG o PNG, hasta 2 MB. Se muestra en la tarjeta del proyecto.</span>
+                                        <asp:FileUpload ID="fuImagen" runat="server" CssClass="gc-input" Enabled="false" />
+                                        <span class="gc-hint">
+                                            La carga de imágenes todavía no está disponible. El resto del proyecto sí se guarda.
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -167,10 +175,11 @@
                 </div>
             </div>
 
-            <div class="gc-note gc-note--ambar">
+            <div class="gc-note">
                 <span>
-                    En esta etapa el formulario valida los datos pero todavía no los persiste. El guardado se
-                    conecta al Web Service de propuestas del backend.
+                    Todo proyecto se publica como declarado: es lo que la candidatura afirma. La plataforma lo
+                    marca como verificado cuando lo contrasta con una fuente, y si después cambiás su contenido
+                    vuelve a figurar como declarado.
                 </span>
             </div>
         </div>

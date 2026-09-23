@@ -30,6 +30,20 @@ namespace backend.Modelos
         public int codigo { get; set; }
     }
 
+
+    /// <summary>
+    /// Qué puede cambiar la candidatura en su panel antes de guardar, según
+    /// <c>spPanelEdicion</c> (script 24). <c>editable</c> habilita el
+    /// formulario, <c>textoEditable</c> el contenido de la propuesta, y
+    /// <c>motivo</c> explica lo que no se puede.
+    /// </summary>
+    public class EdicionPanel
+    {
+        public bool editable { get; set; }
+        public bool textoEditable { get; set; }
+        public string motivo { get; set; }
+    }
+
     /// <summary>Cargo visto desde la administración: con inactivos y conteo de candidaturas.</summary>
     public class CargoAdmin
     {
