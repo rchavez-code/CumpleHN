@@ -99,8 +99,52 @@ namespace frontend.Panel
             }
 
             btnGuardar.Visible = false;
+            fuFoto.Enabled = false;
+            btnSubirFoto.Visible = false;
             litBloqueo.Text = Server.HtmlEncode(_edicion.Motivo);
             phBloqueo.Visible = true;
+        }
+
+        /// <summary>
+        /// Sube la fotografía. Va aparte de «Guardar cambios» para que un
+        /// problema con la imagen no se mezcle con los del resto del perfil.
+        ///
+        /// El archivo llega en este postback y se reenvía al backend
+        /// (Servicios/Archivos.cs). El backend comprueba el tipo real, el
+        /// tamaño y que la cuenta sea de una candidatura, y da de baja la
+        /// foto anterior.
+        /// </summary>
+        protected void btnSubirFoto_Click(object sender, EventArgs e)
+        {
+            if (!_edicion.Editable) return;
+
+            if (!fuFoto.HasFile)
+            {
+                MostrarError("Elegí una fotografía antes de subirla.");
+                return;
+            }
+
+            // Se comprueba acá para no mandar al backend algo que va a
+            // rechazar. El backend lo vuelve a comprobar de todos modos.
+            if (fuFoto.PostedFile.ContentLength > Archivos.MaximoFoto)
+            {
+                MostrarError("La fotografía supera los 2 MB permitidos.");
+                return;
+            }
+
+            ResultadoGuardado r = Archivos.Subir(Sesion.CodigoUsuario, "Foto", 0,
+                                                 fuFoto.FileName, fuFoto.FileBytes);
+
+            if (!r.Ok)
+            {
+                MostrarError(r.Mensaje);
+                return;
+            }
+
+            // Se recarga para que el avatar y la verificación muestren la
+            // foto nueva, igual que al guardar el resto del perfil.
+            Sesion.DejarAviso(r.Mensaje);
+            Response.Redirect("~/Panel/Perfil");
         }
 
         protected void btnGuardar_Click(object sender, EventArgs e)

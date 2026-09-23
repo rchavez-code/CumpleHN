@@ -40,6 +40,11 @@ packages/
 #  secrets.config.ejemplo sí se versiona: dice qué hay que crear.
 secrets.config
 
+# --- Archivos subidos por las personas -----------------------
+#  Fotos de perfil y documentos de respaldo (script 25). Son datos,
+#  no código: viven junto a la base de datos, no en el historial.
+Plataforma Web/backend/backend/App_Data/Archivos/
+
 # --- Registros y temporales ----------------------------------
 *.log
 *.tmp

@@ -59,6 +59,33 @@
                     </div>
                 </asp:PlaceHolder>
 
+                <%-- Documentos de respaldo (script 25). Solo aparece si hay alguno. --%>
+                <asp:PlaceHolder ID="phRespaldos" runat="server" Visible="false">
+                    <div class="gc-card gc-mb">
+                        <div class="gc-card__head">
+                            <h3>Documentos de respaldo</h3>
+                        </div>
+                        <div class="gc-card__body">
+                            <asp:Repeater ID="rptRespaldos" runat="server">
+                                <HeaderTemplate><ul style="list-style: none; padding: 0; margin: 0;"></HeaderTemplate>
+                                <ItemTemplate>
+                                    <li style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
+                                        <a href="<%#: ResolveUrl((string)Eval("Url")) %>" target="_blank" rel="noopener"
+                                           style="flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere;"><%#: Eval("NombreOriginal") %></a>
+                                        <span class="gc-muted gc-small"><%#: Eval("TipoTexto") %> · <%#: Eval("TamanoTexto") %></span>
+                                    </li>
+                                </ItemTemplate>
+                                <FooterTemplate></ul></FooterTemplate>
+                            </asp:Repeater>
+                        </div>
+                        <div class="gc-card__foot">
+                            <span class="gc-muted gc-small">
+                                Los aporta la candidatura. La plataforma no los revisó: son parte de lo declarado.
+                            </span>
+                        </div>
+                    </div>
+                </asp:PlaceHolder>
+
                 <div class="gc-card gc-mb">
                     <div class="gc-card__head">
                         <h3>Seguimiento del cumplimiento</h3>
@@ -112,7 +139,7 @@
                         </div>
                         <div class="gc-card__body">
                             <a href="<%= UrlCandidato %>" style="display: flex; align-items: center; gap: 12px; color: inherit;">
-                                <span class="gc-avatar" aria-hidden="true"><%: InicialesAutor %></span>
+                                <span class="gc-avatar" style="<%: EstiloAutor %>" aria-hidden="true"><%: InicialesAutor %></span>
                                 <span>
                                     <strong style="display: block; font-size: .93rem;"><%: NombreAutor %></strong>
                                     <span class="gc-muted gc-small"><%: CargoAutor %></span>

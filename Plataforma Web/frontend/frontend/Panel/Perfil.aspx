@@ -44,10 +44,14 @@
                             <div class="gc-drop">
                                 <span class="gc-avatar gc-avatar--lg" style="<%= EstiloAvatar %>" aria-hidden="true"><%: Iniciales %></span>
                                 <div style="flex: 1 1 auto; min-width: 0;">
-                                    <asp:FileUpload ID="fuFoto" runat="server" CssClass="gc-input" Enabled="false" />
+                                    <asp:FileUpload ID="fuFoto" runat="server" CssClass="gc-input"
+                                        accept=".jpg,.jpeg,.png,image/jpeg,image/png" />
                                     <span class="gc-hint">
-                                        La carga de la fotografía todavía no está disponible. El resto del perfil sí se guarda.
+                                        JPG o PNG, hasta 2 MB. Se recorta en forma circular. La fotografía se sube
+                                        con su propio botón, aparte del resto del perfil.
                                     </span>
+                                    <asp:Button ID="btnSubirFoto" runat="server" CssClass="gc-btn gc-btn--ghost gc-btn--sm"
+                                        Text="Subir fotografía" OnClick="btnSubirFoto_Click" style="margin-top: 8px;" />
                                 </div>
                             </div>
                         </fieldset>

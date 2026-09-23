@@ -110,4 +110,46 @@ namespace frontend.Modelos
             get { return "~/Propuesta?id=" + Id; }
         }
     }
+
+    /// <summary>
+    /// Documento que la candidatura adjunta para respaldar un proyecto
+    /// (script 25). Lo aporta la propia candidatura, así que es declarado
+    /// como el resto del proyecto: la plataforma no lo revisó.
+    /// </summary>
+    public class ArchivoRespaldo
+    {
+        public int Id { get; set; }
+
+        /// <summary>El nombre con que se subió. El nombre en disco no sale del backend.</summary>
+        public string NombreOriginal { get; set; }
+
+        public string TipoContenido { get; set; }
+
+        public int TamanoBytes { get; set; }
+
+        public DateTime FechaRegistro { get; set; }
+
+        /// <summary>Dirección del manejador del frontend que entrega el archivo.</summary>
+        public string Url
+        {
+            get { return frontend.Servicios.Archivos.Url(Id); }
+        }
+
+        /// <summary>«PDF» o «Imagen», para la lista.</summary>
+        public string TipoTexto
+        {
+            get { return TipoContenido == "application/pdf" ? "PDF" : "Imagen"; }
+        }
+
+        /// <summary>El tamaño en KB o MB, con un decimal.</summary>
+        public string TamanoTexto
+        {
+            get
+            {
+                return TamanoBytes >= 1024 * 1024
+                    ? (TamanoBytes / 1024.0 / 1024.0).ToString("0.0") + " MB"
+                    : Math.Max(1, TamanoBytes / 1024) + " KB";
+            }
+        }
+    }
 }

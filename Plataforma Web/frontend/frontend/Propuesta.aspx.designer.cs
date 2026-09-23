@@ -27,6 +27,16 @@ namespace frontend
         protected global::System.Web.UI.WebControls.PlaceHolder phAdicional;
 
         /// <summary>
+        /// phRespaldos control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phRespaldos;
+
+        /// <summary>
+        /// rptRespaldos control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Repeater rptRespaldos;
+
+        /// <summary>
         /// phAutor control.
         /// </summary>
         protected global::System.Web.UI.WebControls.PlaceHolder phAutor;

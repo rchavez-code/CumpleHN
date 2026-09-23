@@ -555,7 +555,7 @@ namespace backend
             "SELECT k.codigoCandidato, k.slug, k.codigoCampana, ca.slug AS campanaSlug, ca.nombre AS campanaNombre, " +
             "       k.nombres, k.apellidos, ISNULL(k.partido,'') AS partido, ISNULL(k.partidoSiglas,'') AS partidoSiglas, " +
             "       cg.nombre AS cargo, cg.nivelGobierno, ISNULL(d.nombre,'') AS departamento, ISNULL(k.municipio,'') AS municipio, " +
-            "       ISNULL(k.fotoUrl,'') AS fotoUrl, ISNULL(k.titular,'') AS titular, ISNULL(k.biografia,'') AS biografia, " +
+            "       dbo.fnFotoCandidato(k.codigoCandidato) AS codigoFoto, ISNULL(k.titular,'') AS titular, ISNULL(k.biografia,'') AS biografia, " +
             "       ISNULL(k.informacionProfesional,'') AS informacionProfesional, " +
             "       ISNULL(k.descripcionCandidatura,'') AS descripcionCandidatura, " +
             "       ISNULL(k.correoPublico,'') AS correoPublico, ISNULL(k.telefono,'') AS telefono, " +
@@ -755,7 +755,7 @@ namespace backend
         private const string SelectPublicacion =
             "SELECT b.codigoPublicacion, ca.slug AS campanaSlug, b.codigoCandidato, " +
             "       k.slug AS candidatoSlug, (k.nombres + ' ' + k.apellidos) AS candidatoNombre, " +
-            "       cg.nombre AS candidatoCargo, ISNULL(k.fotoUrl,'') AS candidatoFotoUrl, " +
+            "       cg.nombre AS candidatoCargo, dbo.fnFotoCandidato(k.codigoCandidato) AS candidatoCodigoFoto, " +
             "       b.fecha, b.texto, ISNULL(b.imagenUrl,'') AS imagenUrl, " +
             "       ISNULL(cat.nombre,'') AS categoria, ISNULL(b.codigoPropuesta,0) AS codigoPropuesta, " +
             "       ISNULL(p.nombre,'') AS propuestaNombre, nv.nombre AS verificacion, " +
@@ -2075,7 +2075,7 @@ namespace backend
                 nivelGobierno = Texto(reader, "nivelGobierno"),
                 departamento = Texto(reader, "departamento"),
                 municipio = Texto(reader, "municipio"),
-                fotoUrl = Texto(reader, "fotoUrl"),
+                codigoFoto = Convert.ToInt32(reader["codigoFoto"]),
                 titular = Texto(reader, "titular"),
                 biografia = Texto(reader, "biografia"),
                 informacionProfesional = Texto(reader, "informacionProfesional"),
@@ -2135,7 +2135,7 @@ namespace backend
                 candidatoSlug = Texto(reader, "candidatoSlug"),
                 candidatoNombre = Texto(reader, "candidatoNombre"),
                 candidatoCargo = Texto(reader, "candidatoCargo"),
-                candidatoFotoUrl = Texto(reader, "candidatoFotoUrl"),
+                candidatoCodigoFoto = Convert.ToInt32(reader["candidatoCodigoFoto"]),
                 fecha = Convert.ToDateTime(reader["fecha"]),
                 texto = Texto(reader, "texto"),
                 imagenUrl = Texto(reader, "imagenUrl"),
@@ -4410,6 +4410,76 @@ namespace backend
             catch (Exception ex)
             {
                 return RechazoGuardado("No se pudo guardar el perfil: " + ex.Message);
+            }
+        }
+
+        // =============================================================
+        //  Archivos (script 25)
+        //
+        //  Los bytes van por los manejadores SubirArchivo.ashx y
+        //  VerArchivo.ashx. Acá quedan las dos operaciones que no mueven
+        //  bytes: listar los respaldos de una propuesta y quitar uno.
+        // =============================================================
+
+        /// <summary>
+        /// Documentos de respaldo activos de una propuesta, para el panel y
+        /// para la ficha pública.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<ArchivoRespaldo> listarArchivosPropuesta(int codigoPropuesta)
+        {
+            List<ArchivoRespaldo> lista = new List<ArchivoRespaldo>();
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand("dbo.spArchivosPropuesta", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoPropuesta", codigoPropuesta);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lista.Add(new ArchivoRespaldo
+                        {
+                            codigoArchivo = Convert.ToInt32(reader["codigoArchivo"]),
+                            nombreOriginal = Texto(reader, "nombreOriginal"),
+                            tipoContenido = Texto(reader, "tipoContenido"),
+                            tamanoBytes = Convert.ToInt32(reader["tamanoBytes"]),
+                            fechaRegistro = Convert.ToDateTime(reader["fechaRegistro"])
+                        });
+                    }
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
+        /// Quita un archivo por baja lógica. El archivo se queda en disco, pero
+        /// VerArchivo.ashx deja de entregarlo. La base comprueba que sea de la
+        /// candidatura de la cuenta y que todavía se pueda editar.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public RespuestaAdmin quitarArchivo(int codigoUsuario, int codigoArchivo)
+        {
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                if (CandidatoDeUsuario(conn, codigoUsuario) == 0)
+                    return Rechazo("La cuenta no está vinculada a una candidatura activa.");
+
+                SqlCommand cmd = new SqlCommand("dbo.spArchivoQuitar", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigoArchivo", codigoArchivo);
+
+                return LeerRespuesta(cmd);
             }
         }
 

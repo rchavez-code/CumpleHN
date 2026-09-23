@@ -139,6 +139,12 @@ namespace frontend
 
         // --------------------------------------------------------- Pestañas
 
+        /// <summary>La foto de una candidatura del riel, o nada si no tiene.</summary>
+        protected string EstiloAvatar(Candidato c)
+        {
+            return c != null && c.TieneFoto ? Vista.EstiloAvatar(ResolveUrl(c.FotoUrl)) : string.Empty;
+        }
+
         protected string UrlTab(string tab)
         {
             return ResolveUrl("~/Campana?c=" + _campana.Slug + "&t=" + tab);

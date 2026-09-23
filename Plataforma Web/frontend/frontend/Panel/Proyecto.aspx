@@ -118,20 +118,7 @@
                         <%-- ======================================== Material --%>
 
                         <fieldset class="gc-fieldset">
-                            <legend>Material y detalle</legend>
-
-                            <div class="gc-field">
-                                <label>Imagen o material de apoyo</label>
-                                <div class="gc-drop">
-                                    <span class="gc-quick__ico" aria-hidden="true">IMG</span>
-                                    <div style="flex: 1 1 auto; min-width: 0;">
-                                        <asp:FileUpload ID="fuImagen" runat="server" CssClass="gc-input" Enabled="false" />
-                                        <span class="gc-hint">
-                                            La carga de imágenes todavía no está disponible. El resto del proyecto sí se guarda.
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                            <legend>Detalle</legend>
 
                             <div class="gc-field">
                                 <label for="<%= txtAdicional.ClientID %>">Información adicional</label>
@@ -149,6 +136,57 @@
                         </div>
 
                     </div>
+                </div>
+            </div>
+
+            <%-- ======================================= Documentos de respaldo --%>
+            <%-- Tarjeta aparte del formulario: adjuntar tiene su propio botón y no
+                 depende de «Guardar proyecto». --%>
+
+            <div class="gc-card gc-mb">
+                <div class="gc-card__head">
+                    <h3>Documentos de respaldo</h3>
+                </div>
+                <div class="gc-card__body">
+                    <p class="gc-muted gc-small" style="margin: 0 0 12px;">
+                        Estudios, presupuestos o cualquier documento que sostenga el proyecto. Se publican en su
+                        ficha como material aportado por la candidatura. PDF, JPG o PNG, hasta 5 MB y hasta cinco
+                        documentos.
+                    </p>
+
+                    <%-- Proyecto sin guardar: todavía no hay a qué adjuntarlos. --%>
+                    <asp:PlaceHolder ID="phRespaldoNuevo" runat="server" Visible="false">
+                        <p class="gc-small" style="margin: 0;">Guardá el proyecto primero para adjuntar documentos.</p>
+                    </asp:PlaceHolder>
+
+                    <asp:PlaceHolder ID="phRespaldos" runat="server">
+                        <asp:Repeater ID="rptRespaldos" runat="server" OnItemCommand="rptRespaldos_ItemCommand">
+                            <HeaderTemplate><ul style="list-style: none; padding: 0; margin: 0 0 12px;"></HeaderTemplate>
+                            <ItemTemplate>
+                                <li style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
+                                    <a href="<%#: ResolveUrl((string)Eval("Url")) %>" target="_blank" rel="noopener"
+                                       style="flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere;"><%#: Eval("NombreOriginal") %></a>
+                                    <span class="gc-muted gc-small"><%#: Eval("TipoTexto") %> · <%#: Eval("TamanoTexto") %></span>
+                                    <asp:LinkButton runat="server" CssClass="gc-small" CommandName="Quitar"
+                                        CommandArgument='<%# Eval("Id") %>' Visible="<%# PuedeAdjuntar %>"
+                                        Text="Quitar" CausesValidation="false" />
+                                </li>
+                            </ItemTemplate>
+                            <FooterTemplate></ul></FooterTemplate>
+                        </asp:Repeater>
+
+                        <asp:PlaceHolder ID="phAdjuntar" runat="server">
+                            <div class="gc-drop">
+                                <span class="gc-quick__ico" aria-hidden="true">DOC</span>
+                                <div style="flex: 1 1 auto; min-width: 0;">
+                                    <asp:FileUpload ID="fuRespaldo" runat="server" CssClass="gc-input"
+                                        accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" />
+                                    <asp:Button ID="btnAdjuntar" runat="server" CssClass="gc-btn gc-btn--ghost gc-btn--sm"
+                                        Text="Adjuntar documento" OnClick="btnAdjuntar_Click" style="margin-top: 8px;" />
+                                </div>
+                            </div>
+                        </asp:PlaceHolder>
+                    </asp:PlaceHolder>
                 </div>
             </div>
         </div>

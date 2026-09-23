@@ -239,6 +239,7 @@
     <Content Include="Error.aspx" />
     <Content Include="Analitica.aspx" />
     <Content Include="Asistente.ashx" />
+    <Content Include="Archivo.ashx" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Analitica.aspx.cs">
@@ -253,6 +254,10 @@
     <Compile Include="Asistente.ashx.cs">
       <DependentUpon>Asistente.ashx</DependentUpon>
     </Compile>
+    <Compile Include="Archivo.ashx.cs">
+      <DependentUpon>Archivo.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="Servicios\Archivos.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Error.aspx.cs">

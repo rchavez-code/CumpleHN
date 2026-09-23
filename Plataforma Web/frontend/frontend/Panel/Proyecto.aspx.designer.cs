@@ -87,9 +87,34 @@ namespace frontend.Panel
         protected global::System.Web.UI.WebControls.TextBox txtPeriodo;
 
         /// <summary>
-        /// fuImagen control.
+        /// phRespaldoNuevo control.
         /// </summary>
-        protected global::System.Web.UI.WebControls.FileUpload fuImagen;
+        protected global::System.Web.UI.WebControls.PlaceHolder phRespaldoNuevo;
+
+        /// <summary>
+        /// phRespaldos control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phRespaldos;
+
+        /// <summary>
+        /// rptRespaldos control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Repeater rptRespaldos;
+
+        /// <summary>
+        /// phAdjuntar control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.PlaceHolder phAdjuntar;
+
+        /// <summary>
+        /// fuRespaldo control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.FileUpload fuRespaldo;
+
+        /// <summary>
+        /// btnAdjuntar control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Button btnAdjuntar;
 
         /// <summary>
         /// txtAdicional control.

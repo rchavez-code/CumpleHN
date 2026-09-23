@@ -126,7 +126,7 @@
                             <asp:Repeater ID="rptRail" runat="server">
                                 <ItemTemplate>
                                     <a href="<%#: ResolveUrl(((Candidato)Container.DataItem).Url) %>" style="display: flex; align-items: center; gap: 11px; color: inherit;">
-                                        <span class="gc-avatar gc-avatar--sm" aria-hidden="true"><%#: ((Candidato)Container.DataItem).Iniciales %></span>
+                                        <span class="gc-avatar gc-avatar--sm" style="<%#: EstiloAvatar((Candidato)Container.DataItem) %>" aria-hidden="true"><%#: ((Candidato)Container.DataItem).TieneFoto ? string.Empty : ((Candidato)Container.DataItem).Iniciales %></span>
                                         <span style="min-width: 0;">
                                             <strong style="display: block; font-size: .88rem;"><%#: ((Candidato)Container.DataItem).NombreCompleto %></strong>
                                             <span class="gc-muted gc-small"><%#: ((Candidato)Container.DataItem).Cargo %></span>

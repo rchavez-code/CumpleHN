@@ -456,6 +456,38 @@ namespace frontend.Servicios
                     descripcionCandidatura, correoPublico, telefono, sitioWeb, facebook, x, instagram), null));
         }
 
+        // =============================================================
+        //  Archivos
+        // =============================================================
+
+        public IList<ArchivoRespaldo> ObtenerArchivosPropuesta(int codigoPropuesta)
+        {
+            ws.ArchivoRespaldo[] datos = Ejecutar(
+                c => c.listarArchivosPropuesta(codigoPropuesta), new ws.ArchivoRespaldo[0]);
+
+            List<ArchivoRespaldo> lista = new List<ArchivoRespaldo>();
+            if (datos == null) return lista;
+
+            foreach (ws.ArchivoRespaldo d in datos)
+            {
+                lista.Add(new ArchivoRespaldo
+                {
+                    Id = d.codigoArchivo,
+                    NombreOriginal = d.nombreOriginal,
+                    TipoContenido = d.tipoContenido,
+                    TamanoBytes = d.tamanoBytes,
+                    FechaRegistro = d.fechaRegistro
+                });
+            }
+
+            return lista;
+        }
+
+        public Resultado QuitarArchivo(int codigoUsuario, int codigoArchivo)
+        {
+            return AResultado(Ejecutar(c => c.quitarArchivo(codigoUsuario, codigoArchivo), null));
+        }
+
         private static IList<Iniciativa> AIniciativas(ws.IniciativaPublica[] datos)
         {
             List<Iniciativa> lista = new List<Iniciativa>();
@@ -750,7 +782,7 @@ namespace frontend.Servicios
                 Nivel = ANivel(d.nivelGobierno),
                 Departamento = d.departamento,
                 Municipio = d.municipio,
-                FotoUrl = d.fotoUrl,
+                FotoUrl = Archivos.Url(d.codigoFoto),
                 Titular = d.titular,
                 Biografia = d.biografia,
                 InformacionProfesional = d.informacionProfesional,
@@ -807,7 +839,7 @@ namespace frontend.Servicios
                 CandidatoSlug = d.candidatoSlug,
                 CandidatoNombre = d.candidatoNombre,
                 CandidatoCargo = d.candidatoCargo,
-                CandidatoFotoUrl = d.candidatoFotoUrl,
+                CandidatoFotoUrl = Archivos.Url(d.candidatoCodigoFoto),
                 CandidatoIniciales = InicialesDe(d.candidatoNombre),
                 Fecha = d.fecha,
                 Texto = d.texto,

@@ -179,6 +179,18 @@ namespace frontend.Servicios
             string informacionProfesional, string descripcionCandidatura, string correoPublico,
             string telefono, string sitioWeb, string facebook, string x, string instagram);
 
+        // ----------------------------------------------------- Archivos
+
+        /* Subir y mostrar un archivo va por Servicios/Archivos.cs y los
+           manejadores, porque mueven bytes. Acá quedan las dos operaciones
+           que no los mueven. */
+
+        /// <summary>Documentos de respaldo activos de una propuesta.</summary>
+        IList<ArchivoRespaldo> ObtenerArchivosPropuesta(int codigoPropuesta);
+
+        /// <summary>Quita un archivo por baja lógica. Solo la candidatura dueña.</summary>
+        Resultado QuitarArchivo(int codigoUsuario, int codigoArchivo);
+
         // ----------------------------------------------------- Analítica
 
         /// <summary>

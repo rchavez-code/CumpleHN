@@ -63,9 +63,104 @@ namespace frontend.Panel
                 CargarCatalogos();
 
                 if (!_esNuevo) CargarDatos();
+
+                // Lo deja el adjuntar o el quitar un documento antes de
+                // volver a cargar la página.
+                string aviso = Sesion.TomarAviso();
+                if (!string.IsNullOrEmpty(aviso)) Ok(aviso);
+
+                // Solo en la primera carga: en un postback el repetidor se
+                // reconstruye solo desde el ViewState, que es lo que permite
+                // que el clic en «Quitar» llegue a rptRespaldos_ItemCommand.
+                CargarRespaldos();
             }
 
             AplicarBloqueo();
+        }
+
+        // ------------------------------------------- Documentos de respaldo
+
+        /// <summary>
+        /// Adjuntar y quitar exige un proyecto ya guardado y que se pueda
+        /// editar. No depende de que el texto esté cerrado por reacciones: un
+        /// documento respalda lo prometido, no lo cambia (script 25).
+        /// </summary>
+        protected bool PuedeAdjuntar
+        {
+            get { return !_esNuevo && _edicion.Editable; }
+        }
+
+        private void CargarRespaldos()
+        {
+            if (_esNuevo) return;
+
+            rptRespaldos.DataSource = Contenido.Datos.ObtenerArchivosPropuesta(_propuesta.Id);
+            rptRespaldos.DataBind();
+        }
+
+        /// <summary>
+        /// Adjunta un documento. El archivo llega en este postback y se reenvía
+        /// al backend, que comprueba el tipo real, el tamaño, el tope de cinco
+        /// y que el proyecto sea de esta candidatura.
+        /// </summary>
+        protected void btnAdjuntar_Click(object sender, EventArgs e)
+        {
+            if (!PuedeAdjuntar) return;
+
+            if (!fuRespaldo.HasFile)
+            {
+                MostrarError("Elegí un documento antes de adjuntarlo.");
+                return;
+            }
+
+            // Se comprueba acá para no mandar al backend algo que va a
+            // rechazar. El backend lo vuelve a comprobar de todos modos.
+            if (fuRespaldo.PostedFile.ContentLength > Archivos.MaximoRespaldo)
+            {
+                MostrarError("El documento supera los 5 MB permitidos.");
+                return;
+            }
+
+            ResultadoGuardado r = Archivos.Subir(Sesion.CodigoUsuario, "Respaldo", _propuesta.Id,
+                                                 fuRespaldo.FileName, fuRespaldo.FileBytes);
+
+            if (!r.Ok)
+            {
+                MostrarError(r.Mensaje);
+                return;
+            }
+
+            VolverConAviso(r.Mensaje);
+        }
+
+        /// <summary>«Quitar» de un documento: baja lógica en la base.</summary>
+        protected void rptRespaldos_ItemCommand(object source, RepeaterCommandEventArgs e)
+        {
+            if (e.CommandName != "Quitar" || !PuedeAdjuntar) return;
+
+            int codigoArchivo;
+            if (!int.TryParse(Convert.ToString(e.CommandArgument), out codigoArchivo)) return;
+
+            Resultado r = Contenido.Datos.QuitarArchivo(Sesion.CodigoUsuario, codigoArchivo);
+
+            if (!r.Ok)
+            {
+                MostrarError(r.Mensaje);
+                return;
+            }
+
+            VolverConAviso(r.Mensaje);
+        }
+
+        /// <summary>
+        /// Vuelve a cargar la misma página con un aviso. Así la lista de
+        /// documentos se lee de nuevo y un refresco del navegador no repite
+        /// la subida.
+        /// </summary>
+        private void VolverConAviso(string mensaje)
+        {
+            Sesion.DejarAviso(mensaje);
+            Response.Redirect("~/Panel/Proyecto?id=" + _propuesta.Id);
         }
 
         private void CargarCatalogos()
@@ -118,6 +213,12 @@ namespace frontend.Panel
             ddlCategoria.Enabled = textoAbierto;
             ddlEstado.Enabled = _edicion.Editable;
             btnGuardar.Visible = _edicion.Editable;
+
+            // Documentos: en un proyecto nuevo solo el aviso de guardar
+            // primero. Con el formulario cerrado, la lista sin «Adjuntar».
+            phRespaldoNuevo.Visible = _esNuevo;
+            phRespaldos.Visible = !_esNuevo;
+            phAdjuntar.Visible = PuedeAdjuntar;
 
             if (!textoAbierto && !string.IsNullOrEmpty(_edicion.Motivo))
             {
@@ -217,6 +318,13 @@ namespace frontend.Panel
             }
 
             return 0;
+        }
+
+        private void Ok(string mensaje)
+        {
+            litOk.Text = Server.HtmlEncode(mensaje);
+            phOk.Visible = true;
+            phError.Visible = false;
         }
 
         private void MostrarError(string mensaje)

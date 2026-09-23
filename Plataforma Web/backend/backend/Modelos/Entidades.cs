@@ -60,7 +60,8 @@ namespace backend.Modelos
         public string departamento { get; set; }
         public string municipio { get; set; }
 
-        public string fotoUrl { get; set; }
+        /// <summary>Código de la foto activa en Archivos (script 25), o 0 si no tiene.</summary>
+        public int codigoFoto { get; set; }
         public string titular { get; set; }
         public string biografia { get; set; }
         public string informacionProfesional { get; set; }
@@ -130,7 +131,8 @@ namespace backend.Modelos
         public string candidatoSlug { get; set; }
         public string candidatoNombre { get; set; }
         public string candidatoCargo { get; set; }
-        public string candidatoFotoUrl { get; set; }
+        /// <summary>Código de la foto activa de la candidatura, o 0 si no tiene.</summary>
+        public int candidatoCodigoFoto { get; set; }
 
         public DateTime fecha { get; set; }
         public string texto { get; set; }
@@ -157,5 +159,18 @@ namespace backend.Modelos
         public int codigo { get; set; }
         public string nombre { get; set; }
         public string detalle { get; set; }
+    }
+
+    /// <summary>
+    /// Documento de respaldo de una propuesta (script 25). No lleva el nombre
+    /// en disco: fuera del backend un archivo se identifica solo por su código.
+    /// </summary>
+    public class ArchivoRespaldo
+    {
+        public int codigoArchivo { get; set; }
+        public string nombreOriginal { get; set; }
+        public string tipoContenido { get; set; }
+        public int tamanoBytes { get; set; }
+        public DateTime fechaRegistro { get; set; }
     }
 }

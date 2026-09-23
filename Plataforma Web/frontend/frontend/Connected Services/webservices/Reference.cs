@@ -255,6 +255,20 @@ namespace frontend.webservices
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/guardarPerfilPanel", ReplyAction="*")]
         System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarPerfilPanelAsync(int codigoUsuario, string titular, string biografia, string informacionProfesional, string descripcionCandidatura, string correoPublico, string telefono, string sitioWeb, string facebook, string x, string instagram);
         
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarArchivosPropuesta", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.ArchivoRespaldo[] listarArchivosPropuesta(int codigoPropuesta);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarArchivosPropuesta", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.ArchivoRespaldo[]> listarArchivosPropuestaAsync(int codigoPropuesta);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/quitarArchivo", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.RespuestaAdmin quitarArchivo(int codigoUsuario, int codigoArchivo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/quitarArchivo", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> quitarArchivoAsync(int codigoUsuario, int codigoArchivo);
+        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/preguntarAsistente", ReplyAction="*")]
         [System.ServiceModel.XmlSerializerFormatAttribute()]
         frontend.webservices.RespuestaAsistente preguntarAsistente(int codigoUsuario, string pregunta, string campanaSlug);
@@ -4304,7 +4318,7 @@ namespace frontend.webservices
         
         private string candidatoCargoField;
         
-        private string candidatoFotoUrlField;
+        private int candidatoCodigoFotoField;
         
         private System.DateTime fechaField;
         
@@ -4412,15 +4426,15 @@ namespace frontend.webservices
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=6)]
-        public string candidatoFotoUrl
+        public int candidatoCodigoFoto
         {
             get
             {
-                return this.candidatoFotoUrlField;
+                return this.candidatoCodigoFotoField;
             }
             set
             {
-                this.candidatoFotoUrlField = value;
+                this.candidatoCodigoFotoField = value;
             }
         }
         
@@ -4966,7 +4980,7 @@ namespace frontend.webservices
         
         private string municipioField;
         
-        private string fotoUrlField;
+        private int codigoFotoField;
         
         private string titularField;
         
@@ -5212,15 +5226,15 @@ namespace frontend.webservices
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Order=15)]
-        public string fotoUrl
+        public int codigoFoto
         {
             get
             {
-                return this.fotoUrlField;
+                return this.codigoFotoField;
             }
             set
             {
-                this.fotoUrlField = value;
+                this.codigoFotoField = value;
             }
         }
         
@@ -6029,6 +6043,96 @@ namespace frontend.webservices
             set
             {
                 this.restantesField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class ArchivoRespaldo
+    {
+        
+        private int codigoArchivoField;
+        
+        private string nombreOriginalField;
+        
+        private string tipoContenidoField;
+        
+        private int tamanoBytesField;
+        
+        private System.DateTime fechaRegistroField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoArchivo
+        {
+            get
+            {
+                return this.codigoArchivoField;
+            }
+            set
+            {
+                this.codigoArchivoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string nombreOriginal
+        {
+            get
+            {
+                return this.nombreOriginalField;
+            }
+            set
+            {
+                this.nombreOriginalField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string tipoContenido
+        {
+            get
+            {
+                return this.tipoContenidoField;
+            }
+            set
+            {
+                this.tipoContenidoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public int tamanoBytes
+        {
+            get
+            {
+                return this.tamanoBytesField;
+            }
+            set
+            {
+                this.tamanoBytesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=4)]
+        public System.DateTime fechaRegistro
+        {
+            get
+            {
+                return this.fechaRegistroField;
+            }
+            set
+            {
+                this.fechaRegistroField = value;
             }
         }
     }
@@ -8657,6 +8761,26 @@ namespace frontend.webservices
         public System.Threading.Tasks.Task<frontend.webservices.RespuestaGuardado> guardarPerfilPanelAsync(int codigoUsuario, string titular, string biografia, string informacionProfesional, string descripcionCandidatura, string correoPublico, string telefono, string sitioWeb, string facebook, string x, string instagram)
         {
             return base.Channel.guardarPerfilPanelAsync(codigoUsuario, titular, biografia, informacionProfesional, descripcionCandidatura, correoPublico, telefono, sitioWeb, facebook, x, instagram);
+        }
+        
+        public frontend.webservices.ArchivoRespaldo[] listarArchivosPropuesta(int codigoPropuesta)
+        {
+            return base.Channel.listarArchivosPropuesta(codigoPropuesta);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.ArchivoRespaldo[]> listarArchivosPropuestaAsync(int codigoPropuesta)
+        {
+            return base.Channel.listarArchivosPropuestaAsync(codigoPropuesta);
+        }
+        
+        public frontend.webservices.RespuestaAdmin quitarArchivo(int codigoUsuario, int codigoArchivo)
+        {
+            return base.Channel.quitarArchivo(codigoUsuario, codigoArchivo);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.RespuestaAdmin> quitarArchivoAsync(int codigoUsuario, int codigoArchivo)
+        {
+            return base.Channel.quitarArchivoAsync(codigoUsuario, codigoArchivo);
         }
         
         public frontend.webservices.RespuestaAsistente preguntarAsistente(int codigoUsuario, string pregunta, string campanaSlug)

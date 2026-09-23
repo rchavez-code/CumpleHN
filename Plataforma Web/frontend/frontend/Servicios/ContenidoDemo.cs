@@ -469,6 +469,16 @@ namespace frontend.Servicios
         private const string SinBasePanel =
             "Guardar desde el panel necesita la base de datos. Este origen de datos es solo de demostración.";
 
+        public IList<ArchivoRespaldo> ObtenerArchivosPropuesta(int codigoPropuesta)
+        {
+            return new List<ArchivoRespaldo>();
+        }
+
+        public Resultado QuitarArchivo(int codigoUsuario, int codigoArchivo)
+        {
+            return new Resultado { Ok = false, Mensaje = SinBasePanel };
+        }
+
         public EdicionPanel ObtenerEdicionPanel(int codigoUsuario, int codigoPropuesta)
         {
             return new EdicionPanel { Editable = false, TextoEditable = false, Motivo = SinBasePanel };

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Web.UI;
 using frontend.Modelos;
 using frontend.Servicios;
@@ -50,6 +51,12 @@ namespace frontend
             Page.Title = _propuesta.Nombre;
 
             phAdicional.Visible = !string.IsNullOrEmpty(_propuesta.InformacionAdicional);
+
+            // Documentos de respaldo: la tarjeta aparece solo si hay alguno.
+            IList<ArchivoRespaldo> respaldos = Contenido.Datos.ObtenerArchivosPropuesta(_propuesta.Id);
+            phRespaldos.Visible = respaldos.Count > 0;
+            rptRespaldos.DataSource = respaldos;
+            rptRespaldos.DataBind();
             phAutor.Visible = _autor != null;
 
             interPropuesta.TipoObjeto = TiposObjeto.Propuesta;
@@ -79,9 +86,20 @@ namespace frontend
             get { return _autor != null ? _autor.Cargo : string.Empty; }
         }
 
+        /// <summary>Iniciales solo cuando la candidatura no tiene foto, como en CandidatoCard.</summary>
         protected string InicialesAutor
         {
-            get { return _autor != null ? _autor.Iniciales : string.Empty; }
+            get { return _autor != null && !_autor.TieneFoto ? _autor.Iniciales : string.Empty; }
+        }
+
+        protected string EstiloAutor
+        {
+            get
+            {
+                return _autor != null && _autor.TieneFoto
+                    ? Vista.EstiloAvatar(ResolveUrl(_autor.FotoUrl))
+                    : string.Empty;
+            }
         }
 
         protected string UrlCandidato

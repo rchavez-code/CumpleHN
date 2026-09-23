@@ -22,6 +22,11 @@ namespace frontend.Panel
         protected global::System.Web.UI.WebControls.PlaceHolder phBloqueo;
 
         /// <summary>
+        /// btnSubirFoto control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Button btnSubirFoto;
+
+        /// <summary>
         /// litBloqueo control.
         /// </summary>
         protected global::System.Web.UI.WebControls.Literal litBloqueo;
