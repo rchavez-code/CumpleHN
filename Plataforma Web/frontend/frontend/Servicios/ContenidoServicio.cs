@@ -1707,6 +1707,39 @@ namespace frontend.Servicios
             };
         }
 
+        public IList<ConsultaAsistente> ObtenerConsultasAsistente(int codigoUsuario)
+        {
+            return AConsultas(Ejecutar(
+                c => c.listarConsultasIA(codigoUsuario), new ws.ConsultaIA[0]));
+        }
+
+        public IList<ConsultaAsistente> ObtenerReporteAsistente(int codigoUsuario, IList<int> codigos)
+        {
+            int[] lista = new List<int>(codigos).ToArray();
+
+            return AConsultas(Ejecutar(
+                c => c.reporteConsultasIA(codigoUsuario, lista), new ws.ConsultaIA[0]));
+        }
+
+        private static IList<ConsultaAsistente> AConsultas(ws.ConsultaIA[] datos)
+        {
+            List<ConsultaAsistente> lista = new List<ConsultaAsistente>();
+            if (datos == null) return lista;
+
+            foreach (ws.ConsultaIA d in datos)
+            {
+                lista.Add(new ConsultaAsistente
+                {
+                    Codigo = d.codigoConsulta,
+                    Pregunta = d.pregunta ?? string.Empty,
+                    Respuesta = d.respuesta ?? string.Empty,
+                    Fecha = d.fecha
+                });
+            }
+
+            return lista;
+        }
+
         /// <summary>
         /// Convierte la respuesta del servicio, distinguiendo el rechazo de la
         /// acción (que trae su propio mensaje) de la caída del backend.

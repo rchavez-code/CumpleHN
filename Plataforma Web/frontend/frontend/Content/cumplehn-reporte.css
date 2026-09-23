@@ -1,0 +1,165 @@
+/* ==========================================================================
+   CumpleHN — Reporte de consultas al asistente
+   --------------------------------------------------------------------------
+   Solo lo usa ReporteAsistente.aspx, así que se enlaza desde su HeadContent
+   y no desde las plantillas. Prefijo gc-rep, verificado con grep en
+   cumplehn.css y cumplehn-analitica.css antes de nombrarlo.
+
+   El reporte se piensa primero como documento impreso: una columna de
+   lectura, la fecha de cada consulta a la vista y nada que dependa del
+   color para entenderse.
+   ========================================================================== */
+
+.gc-rep { padding-top: 40px; padding-bottom: 60px; max-width: 880px; }
+
+.gc-rep__intro { margin: 0 0 22px; max-width: 62ch; }
+
+/* ------------------------------------------------------------ Elegir */
+
+.gc-rep__barra-lista {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--gc-line);
+}
+
+.gc-rep__todas {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-weight: 600;
+    font-size: .9rem;
+    cursor: pointer;
+}
+
+.gc-rep__lista { list-style: none; margin: 0; padding: 0; }
+
+.gc-rep__lista li + li { border-top: 1px solid var(--gc-line-2); }
+
+.gc-rep__op {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0;
+    padding: 13px 20px;
+    cursor: pointer;
+}
+
+.gc-rep__op:hover { background: var(--gc-bg); }
+
+.gc-rep__op input,
+.gc-rep__todas input { width: 16px; height: 16px; accent-color: var(--gc-turquesa); }
+
+.gc-rep__op-preg { color: var(--gc-ink); line-height: 1.45; }
+
+.gc-rep__op-fecha {
+    color: var(--gc-muted);
+    font-size: .8rem;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ Reporte */
+
+.gc-rep__acciones {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.gc-rep__doc { padding: 40px 48px; }
+
+.gc-rep__cab {
+    padding-bottom: 20px;
+    margin-bottom: 8px;
+    border-bottom: 2px solid var(--gc-ink);
+}
+
+.gc-rep__cab h1 { font-size: 1.9rem; margin: 0 0 6px; }
+
+.gc-rep__meta { margin: 0; color: var(--gc-muted); font-size: .88rem; }
+
+.gc-rep__item { padding: 24px 0; border-bottom: 1px solid var(--gc-line); }
+
+.gc-rep__item-cab {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.gc-rep__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    border: 1px solid var(--gc-line);
+    border-radius: var(--gc-r-pill);
+    font-size: .8rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.gc-rep__fecha { color: var(--gc-muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
+
+.gc-rep__rotulo {
+    margin: 14px 0 4px;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--gc-muted);
+}
+
+.gc-rep__preg { margin: 0; font-weight: 600; font-size: 1.02rem; line-height: 1.5; }
+
+.gc-rep__resp { color: var(--gc-ink-2); line-height: 1.6; }
+.gc-rep__resp p { margin: 0 0 .7em; }
+.gc-rep__resp ul,
+.gc-rep__resp ol { margin: 0 0 .7em; padding-left: 1.4em; }
+
+/* La caja de tablas la pone cumplehn-respuesta-ia.js. En el tablero su
+   estilo vive en cumplehn-analitica.css, que esta página no carga. */
+.gc-rep__resp .gc-ia__tabla { overflow-x: auto; margin: 12px 0; }
+.gc-rep__resp .gc-table { font-size: .85rem; }
+
+.gc-rep__pie {
+    margin: 22px 0 0;
+    color: var(--gc-muted);
+    font-size: .8rem;
+    line-height: 1.5;
+}
+
+/* ------------------------------------------------------------ Teléfono */
+
+@media (max-width: 575.98px) {
+    .gc-rep__doc { padding: 24px 18px; }
+    .gc-rep__op { grid-template-columns: auto 1fr; }
+    .gc-rep__op-fecha { grid-column: 2; }
+}
+
+/* ------------------------------------------------------------ Impresión
+
+   cumplehn.css ya esconde encabezado y pie del sitio. Acá se esconde lo
+   que es de la pantalla y no del documento: los botones y la franja de
+   aviso, que acompaña a la cuenta y no al reporte. */
+
+@page { margin: 18mm 16mm; }
+
+@media print {
+    .gc-rep { padding: 0; max-width: none; }
+    .gc-rep__acciones, .gc-franja { display: none; }
+    .gc-rep__doc { border: 0; padding: 0; }
+    .gc-rep__item-cab, .gc-rep__rotulo { break-after: avoid; }
+    .gc-rep__preg { break-inside: avoid; }
+    .gc-rep__resp .gc-ia__tabla { overflow: visible; }
+    .gc-rep__resp tr { break-inside: avoid; }
+}

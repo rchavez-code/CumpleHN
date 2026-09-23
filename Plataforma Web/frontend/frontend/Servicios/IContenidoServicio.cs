@@ -414,6 +414,18 @@ namespace frontend.Servicios
         RespuestaAsistente PreguntarAsistente(int codigoUsuario, string pregunta,
                                               string campanaSlug);
 
+        /// <summary>
+        /// Las consultas respondidas de una persona, de la más reciente a la
+        /// más antigua y sin la respuesta, para elegir cuáles van al reporte.
+        /// </summary>
+        IList<ConsultaAsistente> ObtenerConsultasAsistente(int codigoUsuario);
+
+        /// <summary>
+        /// Las consultas elegidas, completas y en orden cronológico. La base
+        /// descarta las que no son de esta persona.
+        /// </summary>
+        IList<ConsultaAsistente> ObtenerReporteAsistente(int codigoUsuario, IList<int> codigos);
+
         // ------------------------------------------------------ Catálogos
 
         /// <summary>Categorías temáticas disponibles para clasificar propuestas.</summary>

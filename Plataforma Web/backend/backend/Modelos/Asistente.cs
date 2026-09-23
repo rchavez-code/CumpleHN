@@ -123,4 +123,20 @@ namespace backend.Modelos
         /// <summary>Preguntas que le quedan hoy a esta persona.</summary>
         public int restantes { get; set; }
     }
+
+    /// <summary>
+    /// Una consulta ya respondida, como la ve quien la hizo al armar su
+    /// reporte. En el historial para elegir la respuesta viaja vacía: puede
+    /// ocupar varios kilobytes y para elegir no hace falta.
+    /// </summary>
+    public class ConsultaIA
+    {
+        public int codigoConsulta { get; set; }
+        public string pregunta { get; set; }
+
+        /// <summary>HTML simple, tal como lo redactó el modelo. Sin limpiar.</summary>
+        public string respuesta { get; set; }
+
+        public System.DateTime fecha { get; set; }
+    }
 }

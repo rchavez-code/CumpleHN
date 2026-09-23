@@ -108,6 +108,7 @@
     <Content Include="Candidatos.aspx" />
     <Content Include="Confirmar.aspx" />
     <Content Include="MiCuenta.aspx" />
+    <Content Include="ReporteAsistente.aspx" />
     <None Include="Connected Services\webservices\WebServiceGlobal.disco" />
     <None Include="Connected Services\webservices\configuration91.svcinfo" />
     <None Include="Connected Services\webservices\configuration.svcinfo" />
@@ -226,6 +227,8 @@
     <Content Include="Content\cumplehn.css" />
     <Content Include="Content\cumplehn-analitica.css" />
     <Content Include="Scripts\cumplehn-analitica.js" />
+    <Content Include="Content\cumplehn-reporte.css" />
+    <Content Include="Scripts\cumplehn-respuesta-ia.js" />
     <Content Include="Controles\CampanaCard.ascx" />
     <Content Include="Controles\CandidatoCard.ascx" />
     <Content Include="Controles\PropuestaCard.ascx" />
@@ -394,6 +397,13 @@
     </Compile>
     <Compile Include="MiCuenta.aspx.designer.cs">
       <DependentUpon>MiCuenta.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ReporteAsistente.aspx.cs">
+      <DependentUpon>ReporteAsistente.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="ReporteAsistente.aspx.designer.cs">
+      <DependentUpon>ReporteAsistente.aspx</DependentUpon>
     </Compile>
     <Compile Include="Confirmar.aspx.designer.cs">
       <DependentUpon>Confirmar.aspx</DependentUpon>

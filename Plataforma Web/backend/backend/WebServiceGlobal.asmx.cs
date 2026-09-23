@@ -4620,6 +4620,90 @@ namespace backend
         }
 
         /// <summary>
+        /// Las consultas respondidas de una persona, de la más reciente a la
+        /// más antigua, para que elija cuáles van al reporte. Sin respuesta.
+        ///
+        /// No comprueba el módulo: son datos de la propia persona, no una
+        /// participación, y apagar el asistente no debería esconderle lo que
+        /// ya preguntó. La página sí lo comprueba, como todas las del módulo.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<ConsultaIA> listarConsultasIA(int codigoUsuario)
+        {
+            List<ConsultaIA> lista = new List<ConsultaIA>();
+            if (codigoUsuario <= 0) return lista;
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand("dbo.spIAHistorialUsuario", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+
+                return LeerConsultas(cmd, false);
+            }
+        }
+
+        /// <summary>
+        /// Las consultas elegidas, completas y en orden cronológico, para el
+        /// reporte. El procedimiento filtra por dueño: un código ajeno en la
+        /// lista se descarta sin error.
+        ///
+        /// El tope de cien no lo pide la base sino el tamaño de la respuesta:
+        /// cada una puede ocupar varios kilobytes de HTML.
+        /// </summary>
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public List<ConsultaIA> reporteConsultasIA(int codigoUsuario, int[] codigos)
+        {
+            List<ConsultaIA> lista = new List<ConsultaIA>();
+            if (codigoUsuario <= 0 || codigos == null || codigos.Length == 0) return lista;
+
+            List<string> validos = new List<string>();
+            foreach (int c in codigos)
+            {
+                if (c > 0 && validos.Count < 100) validos.Add(c.ToString());
+            }
+
+            if (validos.Count == 0) return lista;
+
+            using (SqlConnection conn = new SqlConnection(cadenaConexion))
+            {
+                conn.Open();
+
+                SqlCommand cmd = new SqlCommand("dbo.spIAReporteConsultas", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@codigoUsuario", codigoUsuario);
+                cmd.Parameters.AddWithValue("@codigos", string.Join(",", validos.ToArray()));
+
+                return LeerConsultas(cmd, true);
+            }
+        }
+
+        private static List<ConsultaIA> LeerConsultas(SqlCommand cmd, bool conRespuesta)
+        {
+            List<ConsultaIA> lista = new List<ConsultaIA>();
+
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    lista.Add(new ConsultaIA
+                    {
+                        codigoConsulta = Convert.ToInt32(reader["codigoConsulta"]),
+                        pregunta = Texto(reader, "pregunta"),
+                        respuesta = conRespuesta ? Texto(reader, "respuesta") : string.Empty,
+                        fecha = Convert.ToDateTime(reader["fecha"])
+                    });
+                }
+            }
+
+            return lista;
+        }
+
+        /// <summary>
         /// Deja la consulta en ConsultasIA. Usa la conexión normal y no la del
         /// asistente, que no tiene permiso de escritura: la bitácora es una
         /// decisión del servicio, no algo que el modelo pueda provocar.

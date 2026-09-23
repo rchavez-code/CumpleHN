@@ -852,6 +852,10 @@
                     </div>
                 </div>
 
+                <p class="gc-muted gc-small" style="margin: 14px 0 0; text-align: right;">
+                    <a href="<%: ResolveUrl("~/ReporteAsistente") %>">Mis consultas y reportes</a>
+                </p>
+
                 <% } else { %>
 
                 <p class="gc-muted gc-small" style="margin-top: 6px;">
@@ -877,6 +881,7 @@
     <input type="hidden" id="gcCampanaSlug" value="<%: CampanaSlugActual %>" />
     <input type="hidden" id="gcPestana" name="gcPestana" value="<%: PestanaActiva %>" />
 
+    <script src="<%= Recurso("~/Scripts/cumplehn-respuesta-ia.js") %>"></script>
     <script src="<%= Recurso("~/Scripts/cumplehn-analitica.js") %>"></script>
 
 </asp:Content>

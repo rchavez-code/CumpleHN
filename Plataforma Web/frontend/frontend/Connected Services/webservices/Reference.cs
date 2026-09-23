@@ -276,6 +276,20 @@ namespace frontend.webservices
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/preguntarAsistente", ReplyAction="*")]
         System.Threading.Tasks.Task<frontend.webservices.RespuestaAsistente> preguntarAsistenteAsync(int codigoUsuario, string pregunta, string campanaSlug);
         
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarConsultasIA", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.ConsultaIA[] listarConsultasIA(int codigoUsuario);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/listarConsultasIA", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.ConsultaIA[]> listarConsultasIAAsync(int codigoUsuario);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/reporteConsultasIA", ReplyAction="*")]
+        [System.ServiceModel.XmlSerializerFormatAttribute()]
+        frontend.webservices.ConsultaIA[] reporteConsultasIA(int codigoUsuario, int[] codigos);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/reporteConsultasIA", ReplyAction="*")]
+        System.Threading.Tasks.Task<frontend.webservices.ConsultaIA[]> reporteConsultasIAAsync(int codigoUsuario, int[] codigos);
+        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ValidarLogin", ReplyAction="*")]
         [System.ServiceModel.XmlSerializerFormatAttribute()]
         frontend.webservices.RespuestaLogin ValidarLogin(string usuario, string clave);
@@ -5963,6 +5977,80 @@ namespace frontend.webservices
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
+    public partial class ConsultaIA
+    {
+        
+        private int codigoConsultaField;
+        
+        private string preguntaField;
+        
+        private string respuestaField;
+        
+        private System.DateTime fechaField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=0)]
+        public int codigoConsulta
+        {
+            get
+            {
+                return this.codigoConsultaField;
+            }
+            set
+            {
+                this.codigoConsultaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=1)]
+        public string pregunta
+        {
+            get
+            {
+                return this.preguntaField;
+            }
+            set
+            {
+                this.preguntaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+        public string respuesta
+        {
+            get
+            {
+                return this.respuestaField;
+            }
+            set
+            {
+                this.respuestaField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Order=3)]
+        public System.DateTime fecha
+        {
+            get
+            {
+                return this.fechaField;
+            }
+            set
+            {
+                this.fechaField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("svcutil", "4.8.3928.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://tempuri.org/")]
     public partial class RespuestaAsistente
     {
         
@@ -8791,6 +8879,26 @@ namespace frontend.webservices
         public System.Threading.Tasks.Task<frontend.webservices.RespuestaAsistente> preguntarAsistenteAsync(int codigoUsuario, string pregunta, string campanaSlug)
         {
             return base.Channel.preguntarAsistenteAsync(codigoUsuario, pregunta, campanaSlug);
+        }
+        
+        public frontend.webservices.ConsultaIA[] listarConsultasIA(int codigoUsuario)
+        {
+            return base.Channel.listarConsultasIA(codigoUsuario);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.ConsultaIA[]> listarConsultasIAAsync(int codigoUsuario)
+        {
+            return base.Channel.listarConsultasIAAsync(codigoUsuario);
+        }
+        
+        public frontend.webservices.ConsultaIA[] reporteConsultasIA(int codigoUsuario, int[] codigos)
+        {
+            return base.Channel.reporteConsultasIA(codigoUsuario, codigos);
+        }
+        
+        public System.Threading.Tasks.Task<frontend.webservices.ConsultaIA[]> reporteConsultasIAAsync(int codigoUsuario, int[] codigos)
+        {
+            return base.Channel.reporteConsultasIAAsync(codigoUsuario, codigos);
         }
         
         public frontend.webservices.RespuestaLogin ValidarLogin(string usuario, string clave)

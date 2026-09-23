@@ -251,6 +251,16 @@ namespace frontend.Servicios
             };
         }
 
+        public IList<ConsultaAsistente> ObtenerConsultasAsistente(int codigoUsuario)
+        {
+            return new List<ConsultaAsistente>();
+        }
+
+        public IList<ConsultaAsistente> ObtenerReporteAsistente(int codigoUsuario, IList<int> codigos)
+        {
+            return new List<ConsultaAsistente>();
+        }
+
         // =============================================================
         //  Catálogos
         // =============================================================
