@@ -1,0 +1,287 @@
+
+<style>
+/* ------------------------------------------------- Piezas de lamina propia */
+
+/* Portada */
+.portada { display: flex; flex-direction: column; justify-content: center; height: 100%; }
+.marca { font-family: var(--display); font-weight: 700; font-size: 74px; letter-spacing: -.03em; line-height: 1; margin: 0 0 18px; }
+.marca em { font-style: normal; color: var(--escarlata); }
+.portada__sub { font-family: var(--display); font-size: 27px; font-weight: 600; line-height: 1.24; color: var(--tinta-2); max-width: 21ch; margin: 0 0 34px; }
+.portada__meta { display: flex; gap: 46px; font-size: 14px; line-height: 1.6; color: var(--suave); border-top: 1px solid var(--linea); padding-top: 18px; }
+.portada__meta b { display: block; font-weight: 600; color: var(--tinta); font-size: 14.5px; }
+.portada__sello {
+    position: absolute;
+    right: 64px; top: 96px;
+    width: 236px; height: 236px;
+    opacity: .96;
+}
+
+/* Fuentes dispersas de la lamina del problema */
+.dispersion { position: relative; height: 246px; }
+.fuente {
+    position: absolute;
+    background: var(--superficie);
+    border: 1px solid var(--linea);
+    border-radius: var(--r-sm);
+    box-shadow: var(--sh);
+    padding: 9px 14px;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--tinta-2);
+    white-space: nowrap;
+}
+.fuente::before {
+    content: "";
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 99px;
+    background: var(--tenue);
+    margin-right: 9px;
+    vertical-align: middle;
+}
+@keyframes flotar { from { transform: translateY(0) rotate(var(--g)); } to { transform: translateY(-7px) rotate(var(--g)); } }
+html.js .es-activa .fuente { animation: flotar var(--dur, 4s) ease-in-out infinite alternate; animation-delay: var(--esp, 0s); }
+@media (prefers-reduced-motion: reduce) { html.js .es-activa .fuente { animation: none; } }
+
+/* Cita destacada */
+.cita {
+    border-left: 3px solid var(--ambar-vivo);
+    padding: 4px 0 4px 20px;
+    font-family: var(--display);
+    font-size: 25px;
+    line-height: 1.35;
+    color: var(--tinta);
+}
+.cita--noche { color: #eaf1f9; border-left-color: var(--ambar-vivo); }
+.cita__f { display: block; font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--suave); margin-top: 10px; letter-spacing: .01em; }
+.lamina--noche .cita__f { color: #8ba3bf; }
+
+/* Lista de negaciones */
+.no-hace { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 11px; }
+.no-hace li { position: relative; padding-left: 30px; font-size: 16.5px; line-height: 1.4; color: var(--tinta-2); }
+.no-hace li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 7px;
+    width: 15px; height: 2px;
+    background: var(--escarlata);
+}
+
+/* Fichas de modulo */
+.modulo {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    padding: 9px 12px;
+    background: var(--superficie);
+    border: 1px solid var(--linea);
+    border-left: 3px solid var(--turquesa);
+    border-radius: var(--r-sm);
+    font-size: 13.5px;
+    line-height: 1.35;
+}
+.modulo b { font-weight: 600; }
+.modulo__n { font-family: var(--mono); font-size: 11px; color: var(--tenue); }
+</style>
+
+<div class="marco">
+<div class="pista" id="pista">
+
+<!-- ═══════════════════════════════════ 1 · Portada ═══════════════════════ -->
+<section class="lamina" data-seccion="Portada">
+    <svg class="portada__sello" viewBox="0 0 200 200" aria-hidden="true">
+        <defs>
+            <linearGradient id="gPluma" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#c3372c"/>
+                <stop offset="38%" stop-color="#d3901f"/>
+                <stop offset="70%" stop-color="#2c7a58"/>
+                <stop offset="100%" stop-color="#17708a"/>
+            </linearGradient>
+        </defs>
+        <circle cx="100" cy="100" r="86" fill="none" stroke="#e3e1dd" stroke-width="1.5"/>
+        <circle cx="100" cy="100" r="74" fill="none" stroke="url(#gPluma)" stroke-width="2.5"
+                stroke-dasharray="349 116" stroke-linecap="round" transform="rotate(-90 100 100)"/>
+        <!-- Cuatro barras: una promesa que avanza de declarada a verificada. -->
+        <g transform="translate(66 74)">
+            <rect x="0"  y="0"  width="26" height="9" rx="4.5" fill="#c3372c"/>
+            <rect x="0"  y="17" width="44" height="9" rx="4.5" fill="#d3901f"/>
+            <rect x="0"  y="34" width="62" height="9" rx="4.5" fill="#2c7a58"/>
+            <rect x="0"  y="51" width="36" height="9" rx="4.5" fill="#17708a"/>
+        </g>
+    </svg>
+
+    <div class="portada">
+        <p class="ceja anim" style="--i:0">Centro Universitario Tecnológico · CEUTEC · Facultad de Ingeniería</p>
+        <h1 class="marca anim" style="--i:1">Cumple<em>HN</em></h1>
+        <p class="portada__sub anim" style="--i:2">Plataforma web para el seguimiento ciudadano de promesas políticas en Honduras</p>
+        <div class="portada__meta anim" style="--i:3">
+            <div><b>Roy Guillermo Chávez Espinal</b>Cuenta 31521560<br>Ingeniería en Informática</div>
+            <div><b>Asesor</b>Ing. Rafael Cerrato</div>
+            <div><b>Defensa de proyecto de graduación</b>Tegucigalpa, M.D.C. · 2026</div>
+        </div>
+    </div>
+    <div class="notas">Presentarse y enunciar la tesis en una línea: la información sobre promesas políticas existe, pero está dispersa, y esa dispersión tiene un costo medible sobre la decisión de voto. 40 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 2 · El problema ═══════════════════ -->
+<section class="lamina" data-seccion="El problema">
+    <p class="ceja anim" style="--i:0">El problema</p>
+    <h2 class="titulo anim" style="--i:1">La información existe. Está dispersa.</h2>
+    <p class="bajada anim" style="--i:2">Lo que un candidato promete queda registrado en muchos lugares a la vez, y en ninguno de forma comparable. No hay un esquema común de clasificación, ni indicadores de cumplimiento, ni una manera de contrastar lo dicho con lo hecho.</p>
+
+    <div class="cuerpo">
+        <div class="dispersion">
+            <span class="fuente" style="left:2%;   top:14px;  --g:-2.5deg; --dur:4.2s; --esp:0s;   transform:rotate(-2.5deg)" data-paso="1">Discursos de campaña</span>
+            <span class="fuente" style="left:33%;  top:0;     --g:1.5deg;  --dur:5.1s; --esp:.4s;  transform:rotate(1.5deg)"  data-paso="1">Entrevistas en radio y televisión</span>
+            <span class="fuente" style="left:71%;  top:34px;  --g:-1.2deg; --dur:4.6s; --esp:.9s;  transform:rotate(-1.2deg)" data-paso="1">Redes sociales</span>
+            <span class="fuente" style="left:9%;   top:96px;  --g:2deg;    --dur:5.4s; --esp:.2s;  transform:rotate(2deg)"    data-paso="2">Debates</span>
+            <span class="fuente" style="left:31%;  top:126px; --g:-1.8deg; --dur:4.4s; --esp:1.1s; transform:rotate(-1.8deg)" data-paso="2">Planes de gobierno inscritos ante el CNE</span>
+            <span class="fuente" style="left:63%;  top:112px; --g:1.1deg;  --dur:4.9s; --esp:.6s;  transform:rotate(1.1deg)"  data-paso="2">Medios de comunicación</span>
+            <span class="fuente" style="left:14%;  top:186px; --g:-.8deg;  --dur:5.2s; --esp:1.4s; transform:rotate(-.8deg)"  data-paso="2">Comparecencias públicas</span>
+            <span class="fuente" style="left:56%;  top:196px; --g:1.7deg;  --dur:4.1s; --esp:.8s;  transform:rotate(1.7deg)"  data-paso="2">Portales oficiales del Estado</span>
+        </div>
+
+        <div class="cita" data-paso="3">Reunir lo que un solo candidato prometió obliga a un esfuerzo individual que casi nadie hace, y esa dificultad empuja la decisión hacia la percepción.
+            <span class="cita__f">Capítulo II · Planteamiento del problema</span>
+        </div>
+    </div>
+
+    <p class="pie-lamina">Restricción de alcance acordada con el asesor: la plataforma documenta la <strong>dispersión</strong> de la información, sin pronunciarse sobre la existencia o suficiencia de los mecanismos institucionales.</p>
+    <div class="notas">No decir "no existe un mecanismo oficial": es la restricción del asesor. Decir dispersión. 50 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 3 · La medición ═══════════════════ -->
+<section class="lamina" data-seccion="Evidencia">
+    <p class="ceja anim" style="--i:0">Evidencia · Encuesta del proyecto</p>
+    <h2 class="titulo anim" style="--i:1">No es una intuición. Está medido.</h2>
+    <p class="bajada anim" style="--i:2">Instrumento de 18 ítems cerrados aplicado en junio de 2026 a 150 personas. Escala Likert de 1 a 5, sin valores faltantes.</p>
+
+    <div class="cuerpo">
+        <div class="rejilla rejilla--4" style="align-items:start">
+            <div class="tarjeta dato" data-paso="1">
+                <span class="cifra cifra--xl dato__n" data-cifra="84.7" data-suf=" %">0 %</span>
+                <span class="pista-b"><span class="pista-b__v" style="--w:84.7%"></span></span>
+                <span class="dato__d">dice que la información sobre promesas y gestión está <strong>dispersa entre muchas fuentes</strong></span>
+            </div>
+            <div class="tarjeta dato" data-paso="2">
+                <span class="cifra cifra--xl dato__n" data-cifra="75.3" data-suf=" %">0 %</span>
+                <span class="pista-b"><span class="pista-b__v" style="--w:75.3%"></span></span>
+                <span class="dato__d">no logra encontrar <strong>si un candidato cumplió</strong> lo que prometió antes</span>
+            </div>
+            <div class="tarjeta dato" data-paso="3">
+                <span class="cifra cifra--xl dato__n" data-cifra="74.0" data-suf=" %">0 %</span>
+                <span class="pista-b"><span class="pista-b__v" style="--w:74%"></span></span>
+                <span class="dato__d">no la encuentra <strong>organizada ni fácil de comparar</strong></span>
+            </div>
+            <div class="tarjeta dato tarjeta--filo f-escarlata" data-paso="4">
+                <span class="cifra cifra--xl dato__n" data-cifra="11.3" data-suf=" %" style="color:var(--escarlata)">0 %</span>
+                <span class="pista-b"><span class="pista-b__v pista-b__v--escarlata" style="--w:11.3%"></span></span>
+                <span class="dato__d">— y solo esa fracción <strong>sabe dónde buscar</strong> información confiable</span>
+            </div>
+        </div>
+
+        <div class="fila" data-paso="5" style="gap:36px">
+            <p class="bajada" style="max-width:none;font-size:17px;margin:0"><strong>64.0 %</strong> no sabía que existen mecanismos institucionales de seguimiento a la gestión pública, y <strong>51.3 %</strong> no puede nombrar una sola promesa específica de la última campaña.</p>
+        </div>
+    </div>
+
+    <p class="pie-lamina">n = 150 · junio de 2026 · muestreo no probabilístico por conveniencia sobre estudiantes universitarios hondureños mayores de 18 años. Los resultados describen a quienes respondieron, no a la población hondureña.</p>
+    <div class="notas">Declarar el muestreo aquí, sin que lo pregunten. Es lo mismo que hace la plataforma con sus propias cifras. 55 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 4 · La demanda ════════════════════ -->
+<section class="lamina" data-seccion="Evidencia">
+    <p class="ceja anim" style="--i:0">Evidencia · Encuesta del proyecto</p>
+    <h2 class="titulo anim" style="--i:1">Y hay demanda de la herramienta.</h2>
+
+    <div class="cuerpo">
+        <div class="rejilla rejilla--3">
+            <div class="tarjeta dato tarjeta--filo f-verde" data-paso="1">
+                <span class="etiqueta">La usaría antes de votar</span>
+                <span class="cifra cifra--l dato__n" data-cifra="84.7" data-suf=" %" style="color:var(--verde)">0 %</span>
+                <span class="dato__d">usaría una plataforma que muestre estadísticamente el cumplimiento por candidato. Media de 4.31 sobre 5, <strong>la más alta de todo el instrumento</strong>.</span>
+            </div>
+            <div class="tarjeta dato tarjeta--filo f-azul" data-paso="2">
+                <span class="etiqueta">Quiere preguntar en lenguaje natural</span>
+                <span class="cifra cifra--l dato__n" data-cifra="78.7" data-suf=" %">0 %</span>
+                <span class="dato__d">quiere poder preguntar «¿qué candidatos cumplieron sus promesas de educación?» y recibir una respuesta basada en datos.</span>
+            </div>
+            <div class="tarjeta dato tarjeta--filo f-ambar" data-paso="3">
+                <span class="etiqueta">Confiaría en la IA — con una condición</span>
+                <span class="cifra cifra--l dato__n" data-cifra="77.3" data-suf=" %" style="color:var(--ambar)">0 %</span>
+                <span class="dato__d">confiaría en las respuestas de un asistente de inteligencia artificial <strong>si estuvieran respaldadas por fuentes verificables</strong>.</span>
+            </div>
+        </div>
+
+        <div class="cita" data-paso="4">Esa condición no es un detalle del instrumento: es el requisito que gobierna todo el diseño del módulo de IA.
+            <span class="cita__f">Por eso el asistente responde siempre con su lista de fuentes, y esas fuentes se arman con las consultas que realmente se ejecutaron.</span>
+        </div>
+    </div>
+
+    <p class="pie-lamina">Ítems 14, 15 y 16 del instrumento · acuerdo = respuestas 4 y 5 en la escala Likert · n = 150.</p>
+    <div class="notas">Enganchar aquí con la lámina 16: la condición de la encuesta es literalmente la especificación del módulo. 50 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 5 · Objetivo ══════════════════════ -->
+<section class="lamina" data-seccion="Objetivo">
+    <p class="ceja anim" style="--i:0">Capítulo III · Objetivo general</p>
+    <h2 class="titulo anim" style="--i:1">Decidir con fundamentos, no con percepciones.</h2>
+
+    <div class="cuerpo">
+        <div class="fila fila--top" style="gap:34px">
+            <div class="col col--ancha" data-paso="1">
+                <div class="cita" style="border-left-color:var(--azul);font-size:20px;line-height:1.45">Facilitar el seguimiento ciudadano del cumplimiento de promesas y de la trayectoria de gestión de los candidatos y funcionarios políticos en Honduras, mediante el desarrollo de una plataforma web que centralice y visualice estadísticamente esta información, con el fin de apoyar a la ciudadanía en la toma de decisiones fundamentadas en evidencia cuantitativa al momento de votar.
+                    <span class="cita__f">Objetivo general, texto íntegro</span>
+                </div>
+            </div>
+            <div class="col" data-paso="2">
+                <span class="etiqueta" style="color:var(--escarlata)">Y lo que CumpleHN no hace</span>
+                <ul class="no-hace">
+                    <li>No rankea candidaturas por calidad.</li>
+                    <li>No recomienda por quién votar.</li>
+                    <li>No emite un veredicto sobre quién cumple mejor.</li>
+                    <li>No deja que la candidatura se asigne su propio estado de cumplimiento.</li>
+                    <li>No presenta como hecho comprobado lo que solo está declarado.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="cita" style="border-left-color:var(--verde)" data-paso="3">Entrega la evidencia organizada para que cada persona la pondere según el criterio que considere de mayor peso — seguridad, salud, educación, economía, infraestructura o transparencia — y decida por su cuenta.
+        </div>
+    </div>
+
+    <div class="notas">Esta es la lámina de la neutralidad declarada. Si la terna solo se lleva una idea, que sea esta. 55 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 6 · La plataforma ═════════════════ -->
+<section class="lamina" data-seccion="La plataforma">
+    <p class="ceja anim" style="--i:0">El producto</p>
+    <h2 class="titulo anim" style="--i:1">Seis módulos, una sola fuente de consulta</h2>
+
+    <div class="cuerpo">
+        <div class="fila fila--top" style="gap:26px">
+            <div class="col col--ancha anim" style="--i:2">
+                <div class="captura-marco">
+                    <div class="captura-marco__barra">
+                        <span class="captura-marco__punto"></span><span class="captura-marco__punto"></span><span class="captura-marco__punto"></span>
+                        <span class="captura-marco__url">cumplehn · portada pública</span>
+                    </div>
+                    <img src="{{IMG:portada}}" alt="Portada de CumpleHN con la campaña electoral actual, las encuestas de percepción y las candidaturas registradas.">
+                </div>
+            </div>
+            <div class="col col--estrecha">
+                <div class="rejilla" style="gap:9px">
+                    <div class="modulo" data-paso="1"><span class="modulo__n">01</span><span><b>Perfiles</b> de candidaturas y partidos</span></div>
+                    <div class="modulo" data-paso="1"><span class="modulo__n">02</span><span><b>Propuestas</b> con categoría, evidencia y estado de cumplimiento</span></div>
+                    <div class="modulo" data-paso="2"><span class="modulo__n">03</span><span><b>Consulta ciudadana</b> con búsqueda y filtros</span></div>
+                    <div class="modulo" data-paso="2"><span class="modulo__n">04</span><span><b>Tablero estadístico</b> de doce indicadores</span></div>
+                    <div class="modulo" data-paso="3"><span class="modulo__n">05</span><span><b>Participación</b>: valoraciones, comentarios y encuestas</span></div>
+                    <div class="modulo" data-paso="3" style="border-left-color:var(--escarlata)"><span class="modulo__n">06</span><span><b>Asistente de IA</b> en lenguaje natural</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p class="pie-lamina">Los seis módulos comprometidos en el FO-GR-013 aprobado están construidos y funcionando. Las cifras de la portada se leen en vivo de la base de datos.</p>
+    <div class="notas">Aquí es donde la terna ve por primera vez que la plataforma existe. No detenerse en la interfaz: el peso está en las láminas técnicas. 40 s.</div>
+</section>

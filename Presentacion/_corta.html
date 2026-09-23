@@ -1,0 +1,237 @@
+
+<style>
+/* Tecnologías por capa */
+.tec { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.tec__col { background: var(--superficie); border: 1px solid var(--linea); border-radius: var(--r); padding: 16px 18px; }
+.tec__h { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--turquesa); margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--linea-2); }
+.tec__i { display: flex; flex-direction: column; gap: 2px; padding: 7px 0; }
+.tec__i + .tec__i { border-top: 1px solid var(--linea-2); }
+.tec__n { font-weight: 600; font-size: 14.5px; }
+.tec__d { font-size: 12.5px; color: var(--suave); line-height: 1.35; }
+
+/* Logro: número grande de sección + tarjeta */
+.logro { display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start; }
+.logro__n { font-family: var(--display); font-weight: 700; font-size: 26px; line-height: 1; color: var(--escarlata); border-top: 2px solid var(--escarlata); padding-top: 8px; }
+.logro__t { font-family: var(--display); font-weight: 700; font-size: 17px; line-height: 1.2; margin: 0 0 5px; }
+.logro__d { font-size: 13.5px; line-height: 1.45; color: var(--tinta-2); margin: 0; }
+.lamina--noche .logro__n { color: #f0b552; border-top-color: #f0b552; }
+.lamina--noche .logro__t { color: #fff; }
+.lamina--noche .logro__d { color: #bacadd; }
+
+/* Lámina con pocas tarjetas: más grandes y centradas, para que no floten arriba */
+.lamina--amplia .cuerpo { justify-content: center; }
+.lamina--amplia .tarjeta { padding: 26px 28px; }
+.lamina--amplia .tarjeta__t { font-size: 22px; margin-bottom: 12px; }
+.lamina--amplia .tarjeta__d { font-size: 16.5px; line-height: 1.55; }
+</style>
+
+<div class="marco">
+<div class="pista" id="pista">
+
+<!-- ═══════════════════════════════════ 1 · Portada ═══════════════════════ -->
+<section class="lamina" data-seccion="Portada">
+    <svg class="portada__sello" viewBox="0 0 200 200" aria-hidden="true">
+        <defs>
+            <linearGradient id="gPluma" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#c3372c"/><stop offset="38%" stop-color="#d3901f"/>
+                <stop offset="70%" stop-color="#2c7a58"/><stop offset="100%" stop-color="#17708a"/>
+            </linearGradient>
+        </defs>
+        <circle cx="100" cy="100" r="86" fill="none" stroke="#e3e1dd" stroke-width="1.5"/>
+        <circle cx="100" cy="100" r="74" fill="none" stroke="url(#gPluma)" stroke-width="2.5" stroke-dasharray="349 116" stroke-linecap="round" transform="rotate(-90 100 100)"/>
+        <g transform="translate(66 74)">
+            <rect x="0" y="0"  width="26" height="9" rx="4.5" fill="#c3372c"/>
+            <rect x="0" y="17" width="44" height="9" rx="4.5" fill="#d3901f"/>
+            <rect x="0" y="34" width="62" height="9" rx="4.5" fill="#2c7a58"/>
+            <rect x="0" y="51" width="36" height="9" rx="4.5" fill="#17708a"/>
+        </g>
+    </svg>
+    <div class="portada">
+        <p class="ceja anim" style="--i:0">Centro Universitario Tecnológico · CEUTEC · Facultad de Ingeniería</p>
+        <h1 class="marca anim" style="--i:1">Cumple<em>HN</em></h1>
+        <p class="portada__sub anim" style="--i:2">Plataforma web para el seguimiento ciudadano de promesas políticas en Honduras</p>
+        <div class="portada__meta anim" style="--i:3">
+            <div><b>Roy Guillermo Chávez Espinal</b>Cuenta 31521560<br>Ingeniería en Informática</div>
+            <div><b>Proyecto de graduación</b>Tegucigalpa, M.D.C. · 2026</div>
+        </div>
+    </div>
+    <div class="notas">Una frase: la información sobre promesas políticas existe pero está dispersa, y CumpleHN la ordena para que cada persona decida con evidencia. 30 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 2 · Objetivo ══════════════════════ -->
+<section class="lamina" data-seccion="Objetivo">
+    <p class="ceja anim" style="--i:0">Objetivo general</p>
+    <h2 class="titulo anim" style="--i:1">Decidir con fundamentos, no con percepciones.</h2>
+
+    <div class="cuerpo">
+        <div class="fila fila--top" style="gap:34px">
+            <div class="col col--ancha" data-paso="1">
+                <div class="cita" style="border-left-color:var(--azul);font-size:20px;line-height:1.45">Facilitar el seguimiento ciudadano del cumplimiento de promesas y de la trayectoria de gestión de los candidatos y funcionarios políticos en Honduras, mediante el desarrollo de una plataforma web que centralice y visualice estadísticamente esta información, con el fin de apoyar a la ciudadanía en la toma de decisiones fundamentadas en evidencia cuantitativa al momento de votar.
+                </div>
+            </div>
+            <div class="col" data-paso="2">
+                <span class="etiqueta" style="color:var(--escarlata)">Lo que CumpleHN no hace</span>
+                <ul class="no-hace">
+                    <li>No rankea candidaturas por calidad.</li>
+                    <li>No recomienda por quién votar.</li>
+                    <li>No emite un veredicto sobre quién cumple mejor.</li>
+                    <li>No presenta como hecho comprobado lo que solo está declarado.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="cita" style="border-left-color:var(--verde)" data-paso="3">Entrega la evidencia organizada para que cada persona la pondere según el criterio que considere de mayor peso. Seguridad, salud, educación, economía, infraestructura o transparencia y decida por su cuenta.</div>
+    </div>
+    <p class="pie-lamina">El problema que responde está medido: en la encuesta del proyecto (n = 150), 84.7 % percibe la información dispersa y 84.7 % usaría una plataforma como esta antes de votar.</p>
+    <div class="notas">La columna de la derecha es la neutralidad declarada. Si solo se llevan una idea, que sea esa. 50 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 3 · Tecnologías ═══════════════════ -->
+<section class="lamina" data-seccion="Tecnologías">
+    <p class="ceja anim" style="--i:0">Tecnologías utilizadas</p>
+    <h2 class="titulo anim" style="--i:1">Tres capas separadas, y una sola habla con la base</h2>
+
+    <div class="cuerpo">
+        <div class="tec">
+            <div class="tec__col" data-paso="1">
+                <p class="tec__h">Presentación</p>
+                <div class="tec__i"><span class="tec__n">ASP.NET Web Forms</span><span class="tec__d">.NET Framework 4.7.2 · C#</span></div>
+                <div class="tec__i"><span class="tec__n">Bootstrap 5 + jQuery</span><span class="tec__d">Solo la grilla. Sin dependencias externas en tiempo de ejecución.</span></div>
+                <div class="tec__i"><span class="tec__n">CSS</span><span class="tec__d">Sistema de diseño con tokens, SVG generado en el servidor.</span></div>
+                <div class="tec__i"><span class="tec__n">IIS Express</span><span class="tec__d">Puerto 5080</span></div>
+            </div>
+            <div class="tec__col" data-paso="2">
+                <p class="tec__h">Servicio</p>
+                <div class="tec__i"><span class="tec__n">Web Service ASMX</span><span class="tec__d">SOAP y JSON desde el mismo servicio. 51 métodos.</span></div>
+                <div class="tec__i"><span class="tec__n">ADO.NET</span><span class="tec__d">Siempre con parámetros y procedimientos almacenados.</span></div>
+                <div class="tec__i"><span class="tec__n">SHA-256 criptográfico</span><span class="tec__d">Contraseñas y tokens de confirmación nunca en claro.</span></div>
+                <div class="tec__i"><span class="tec__n">SMTP</span><span class="tec__d">Confirmación de correo con contraseña de aplicación.</span></div>
+            </div>
+            <div class="tec__col" data-paso="3">
+                <p class="tec__h">Datos</p>
+                <div class="tec__i"><span class="tec__n">SQL Server Express</span><span class="tec__d">Base <code>BDCUMPLEHN</code>, 23 tablas y 35 llaves foráneas.</span></div>
+                <div class="tec__i"><span class="tec__n">Índices únicos y bajas lógicas</span><span class="tec__d">Un voto por persona, nada se borra, se usa bitácora</span></div>
+                <div class="tec__i"><span class="tec__n">Login restringido</span><span class="tec__d"><code>cumplehn_ia</code>: solo EXECUTE, cero permisos de tabla.</span></div>
+            </div>
+            <div class="tec__col" data-paso="4" style="border-left:3px solid var(--escarlata)">
+                <p class="tec__h" style="color:var(--escarlata)">Inteligencia artificial</p>
+                <div class="tec__i"><span class="tec__n">Claude Sonnet 5</span><span class="tec__d">SDK oficial de Anthropic para .NET.</span></div>
+                <div class="tec__i"><span class="tec__n">Uso de herramientas</span><span class="tec__d">4 herramientas, cada una un procedimiento almacenado tipado.</span></div>
+            </div>
+        </div>
+    </div>
+    <p class="pie-lamina">La cadena de conexión vive solo en el Web Service. El frontend no la tiene y no puede consultar la base. El modelo tampoco: recibe la fila que un procedimiento le devuelve.</p>
+    <div class="notas">No leer la lista. Decir el principio: tres capas, cada una con una responsabilidad, y la base como única fuente de verdad. 50 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 4 · Logros · módulos ══════════════ -->
+<section class="lamina" data-seccion="Logros">
+    <p class="ceja anim" style="--i:0">Logros · Lo que se construyó</p>
+    <h2 class="titulo anim" style="--i:1">Siete módulos en la plataforma</h2>
+
+    <div class="cuerpo">
+        <div class="rejilla rejilla--3" style="gap:14px">
+            <div class="tarjeta tarjeta--filo" data-paso="1">
+                <h3 class="tarjeta__t">Perfiles y catálogos</h3>
+                <p class="tarjeta__d">Candidaturas, partidos y campañas con ficha pública y nivel de verificación. La administración da de alta, verifica y modera con motivo obligatorio y bitácora.</p>
+            </div>
+            <div class="tarjeta tarjeta--filo" data-paso="1">
+                <h3 class="tarjeta__t">Propuestas con seguimiento</h3>
+                <p class="tarjeta__d">Cada promesa lleva categoría, evidencia y estado de cumplimiento. La candidatura declara, la plataforma califica.</p>
+            </div>
+            <div class="tarjeta tarjeta--filo" data-paso="2">
+                <h3 class="tarjeta__t">Consulta ciudadana</h3>
+                <p class="tarjeta__d">Búsqueda y filtros por campaña, categoría, partido y departamento en todo el sitio público. Consultar es libre, participar requiere cuenta confirmada.</p>
+            </div>
+            <div class="tarjeta tarjeta--filo f-azul" data-paso="2">
+                <h3 class="tarjeta__t">Tablero de doce indicadores</h3>
+                <p class="tarjeta__d">La base calcula, el servicio transporta, la página dibuja. Una sola llamada para que los doce gráficos correspondan al mismo instante.</p>
+            </div>
+            <div class="tarjeta tarjeta--filo f-verde" data-paso="3">
+                <h3 class="tarjeta__t">Participación ciudadana</h3>
+                <p class="tarjeta__d">Valoraciones, comentarios, encuestas de percepción e iniciativas propuestas por la ciudadanía. Registro público con confirmación de correo.</p>
+            </div>
+            <div class="tarjeta tarjeta--filo f-escarlata" data-paso="3">
+                <h3 class="tarjeta__t">Asistente de IA</h3>
+                <p class="tarjeta__d">Preguntas en español, respuestas con fuentes reales. Conectado a un modelo de lenguaje con cuota diaria y bitácora de cada consulta.</p>
+            </div>
+        </div>
+        <div class="tarjeta tarjeta--filo f-ambar" data-paso="4" style="display:grid;grid-template-columns:auto 1fr;gap:6px 22px;align-items:baseline">
+            <span class="etiqueta" style="color:var(--ambar);margin:0;grid-column:1/-1">Modelo de sostenibilidad</span>
+            <h3 class="tarjeta__t" style="margin:0;white-space:nowrap">Espacios para organizaciones</h3>
+            <p class="tarjeta__d">El mismo motor al servicio de un colegio profesional, una cooperativa o un sindicato para su propia elección: sitio propio, planillas, padrón de miembros y tablero. Aislamiento por espacio en la base, planes con vigencia y solicitud desde una página pública. CumpleHN sigue gratuito y neutral, y es un espacio más.</p>
+        </div>
+    </div>
+    <div class="notas">Pasada rápida, uno por uno. El detalle de IA viene en la siguiente. 45 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 5 · Logros · IA ═══════════════════ -->
+<section class="lamina lamina--noche" data-seccion="Logros">
+    <p class="ceja anim" style="--i:0">Logros · El módulo de inteligencia artificial</p>
+    <h2 class="titulo anim" style="--i:1">El modelo nunca ve la base. Ve la fila que un procedimiento le devuelve.</h2>
+
+    <div class="cuerpo">
+        <div class="rejilla rejilla--2" style="gap:16px 34px">
+            <div class="logro" data-paso="1">
+                <span class="logro__n">1</span>
+                <div><h3 class="logro__t">Responde con sus fuentes, y las fuentes son reales</h3>
+                <p class="logro__d">Se arman con las consultas que de verdad se ejecutaron, no con lo que el modelo dice haber usado.</p></div>
+            </div>
+            <div class="logro" data-paso="2">
+                <span class="logro__n">2</span>
+                <div><h3 class="logro__t">Nunca escribe SQL</h3>
+                <p class="logro__d">Recibe cuatro herramientas y cada una es un procedimiento almacenado con parámetros tipados. Lo único que conoce de la plataforma es lo que ese procedimiento le devuelve.</p></div>
+            </div>
+            <div class="logro" data-paso="3">
+                <span class="logro__n">3</span>
+                <div><h3 class="logro__t">Un login que no puede leer tablas</h3>
+                <p class="logro__d"><span class="chip-m">cumplehn_ia</span> solo tiene <span class="chip-m">EXECUTE</span> sobre 13 procedimientos y <span class="chip-m">DENY</span> sobre todo lo que vincula a una persona con su preferencia política. Verificado con <span class="chip-m">EXECUTE AS</span>.</p></div>
+            </div>
+            <div class="logro" data-paso="4">
+                <span class="logro__n">4</span>
+                <div><h3 class="logro__t">Neutral por regla, no por suerte</h3>
+                <p class="logro__d">No rankea candidaturas, dice siempre el nivel de verificación y responde que no sabe en vez de completar. El texto que devuelven las herramientas es dato, nunca instrucción.</p></div>
+            </div>
+            <div class="logro" data-paso="5">
+                <span class="logro__n">5</span>
+                <div><h3 class="logro__t">La respuesta no puede ejecutar nada</h3>
+                <p class="logro__d">Se reconstruye en el navegador con <span class="chip-m">DOMParser</span> y lista blanca, sin copiar un solo atributo. Sin <span class="chip-m">onerror</span>, <span class="chip-m">href</span> ni <span class="chip-m">src</span>, ninguna etiqueta puede hacer daño.</p></div>
+            </div>
+            <div class="logro" data-paso="6">
+                <span class="logro__n">6</span>
+                <div><h3 class="logro__t">Límite de uso diario</h3>
+                <p class="logro__d">Cuota de 20 consultas por persona y día, y bitácora de cada pregunta, responda o falle.</p></div>
+            </div>
+        </div>
+    </div>
+    <div class="notas">La lámina con más peso. Ir punto por punto. Si hay tiempo, demo en vivo de una pregunta. 75 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 6 · Logros · neutralidad y seguridad ═ -->
+<section class="lamina lamina--amplia" data-seccion="Logros">
+    <p class="ceja anim" style="--i:0">Logros · Neutralidad y seguridad</p>
+    <h2 class="titulo anim" style="--i:1">La neutralidad no se declara: se construye</h2>
+
+    <div class="cuerpo">
+        <div class="rejilla rejilla--2" style="gap:14px">
+            <div class="tarjeta tarjeta--filo f-azul" data-paso="1">
+                <h3 class="tarjeta__t">Verificación y cumplimiento son dos ejes distintos</h3>
+                <p class="tarjeta__d">Una propuesta puede estar <strong>Verificada</strong> y seguir <strong>Declarada</strong>. La candidatura no se califica a sí misma: los estados de cumplimiento los asigna la plataforma con evidencia, y todo se muestra como declarado hasta que exista fuente verificable.</p>
+            </div>
+            <div class="tarjeta tarjeta--filo f-ambar" data-paso="2">
+                <h3 class="tarjeta__t">Nada se borra, y todo queda anotado</h3>
+                <p class="tarjeta__d">Retirar es baja lógica con motivo obligatorio, nunca <span class="chip-m">DELETE</span>. Cada acción de administración escribe en <span class="chip-m">Auditoria</span>, que no tiene pantalla ni método para editarse.</p>
+            </div>
+        </div>
+    </div>
+    <div class="notas">Terminar con el pie: declarar lo pendiente antes de que lo pregunten es la misma política que sostiene la plataforma. 50 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 7 · Cifras y cierre ═══════════════ -->
+<section class="lamina lamina--noche" data-seccion="Cierre">
+    <div class="cuerpo" style="justify-content:center">
+        <div class="anim" style="--i:0">
+            <p class="cierre-frase" style="font-size:44px;max-width:22ch">CumpleHN no dice quién cumple mejor.<br>Ordena la evidencia para que <em>cada quien lo juzgue</em>.</p>
+        </div>
+    </div>
+    <div class="notas">Leer la frase, callar, esperar preguntas. 30 s.</div>
+</section>

@@ -1,0 +1,24 @@
+Presentarse y enunciar la tesis en una línea: la información sobre promesas políticas existe, pero está dispersa, y esa dispersión tiene un costo medible sobre la decisión de voto. 40 s.
+No decir "no existe un mecanismo oficial": es la restricción del asesor. Decir dispersión. 50 s.
+Declarar el muestreo aquí, sin que lo pregunten. Es lo mismo que hace la plataforma con sus propias cifras. 55 s.
+Enganchar aquí con la lámina 16: la condición de la encuesta es literalmente la especificación del módulo. 50 s.
+Esta es la lámina de la neutralidad declarada. Si la terna solo se lleva una idea, que sea esta. 55 s.
+Aquí es donde la terna ve por primera vez que la plataforma existe. No detenerse en la interfaz: el peso está en las láminas técnicas. 40 s.
+Insistir en la separación: es lo que permite que el frontend se pruebe con datos en memoria y que el ASMX sea el único punto de escritura. 55 s.
+Si preguntan por qué no hay FK: porque el destino depende del tipo. Es la decisión de diseño más discutible y hay que defenderla, no esconderla. 55 s.
+La cita del final es la prueba de que la regla se cumple de punta a punta: del modelo de datos al prompt. 60 s.
+Si preguntan por qué no se usa el elemento authorization del Web.config: porque ese mecanismo se apoya en la autenticación de formularios, y acá la sesión se valida contra el Web Service. 50 s.
+Mencionar que no hay librería de gráficos: todo son repetidores, CSS y SVG generado en el servidor. Los tooltips son elementos title nativos, que lee el lector de pantalla. 50 s.
+Aclarar sin que lo pregunten: la oferta son datos demo, así que la brecha ilustra el indicador, no diagnostica a la política hondureña. 55 s.
+Si hay tiempo y la red aguanta, acá va la demo en vivo: una pregunta de verdad. Si falla, esta captura ya lo demuestra y no se nota. 50 s.
+Esta es la lámina técnica central. Ir paso por paso con la barra espaciadora, sin apurar. 75 s.
+El argumento no es "le pusimos permisos". Es que la superficie de datos se diseñó columna por columna, y el permiso es la red de seguridad de abajo. 55 s.
+Cerrar con: lo que se evalúa no es si la respuesta suena bien, sino si sostiene las tres reglas — negarse a rankear, decir el nivel de verificación, y responder que no sabe en vez de completar. 60 s.
+Es la tercera pata del módulo de participación que el FO-GR-013 ya contemplaba: «comentarios, valoraciones o votaciones de percepción». No es alcance nuevo. 45 s.
+Última lámina. Después de la frase, callar y esperar las preguntas. Las láminas de respaldo se abren con la tecla B. 40 s.
+Respaldo · Antecedentes. Usar si preguntan «¿esto no existe ya?»: PolitiFact, Chequeado, Del Dicho al Hecho y el IAIP, con lo que cada uno no cubre.
+Respaldo · Metodología. Enfoque, población, muestreo por conveniencia y la fórmula n = Z²pq/e² que da 150.
+Respaldo · Limitaciones declaradas. La más importante de las seis: si la terna encuentra una debilidad que ya declaraste, deja de ser una debilidad y pasa a ser rigor.
+Respaldo · Seguridad. Lo resuelto (A01, A03, XSS, redirección abierta) y la deuda conocida, dicha de frente.
+Respaldo · Los doce indicadores del tablero, cada uno con el procedimiento almacenado que lo calcula.
+Respaldo · Área de administración. Verificación, moderación, catálogos e interruptores, las cuatro con bitácora.

@@ -1,0 +1,413 @@
+<title>Defensa CumpleHN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+
+<style>
+/* ==========================================================================
+   Defensa CumpleHN — deck de 1280x720 escalado por transform.
+   Los tokens vienen de Content/cumplehn.css de la plataforma: la
+   presentacion y el sitio tienen que verse de la misma familia.
+   ========================================================================== */
+
+:root {
+    /* Neutros. El papel tira apenas a calido para leerse como documento
+       y no como interfaz. */
+    --tinta:      #14171c;
+    --tinta-2:    #39404a;
+    --suave:      #6a7078;
+    --tenue:      #9aa0a8;
+    --linea:      #e3e1dd;
+    --linea-2:    #eeece8;
+    --papel:      #f7f7f5;
+    --superficie: #ffffff;
+
+    /* Guacamaya roja (Ara macao), ave nacional. Acentos, nunca fondo. */
+    --escarlata:   #c3372c;
+    --escarlata-l: #fdf2f1;
+    --ambar:       #b8791a;
+    --ambar-vivo:  #d3901f;
+    --ambar-l:     #fdf6e9;
+    --verde:       #2c7a58;
+    --verde-l:     #eef7f2;
+    --turquesa:    #17708a;
+    --turquesa-l:  #eef6f8;
+
+    /* Azul de la bandera. Identidad, no dato. */
+    --azul:   #1b4f9c;
+    --azul-l: #eff3fa;
+    --noche:  #0e2340;
+
+    --display: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --sans:    "IBM Plex Sans", "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    --mono:    "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+
+    --r:    10px;
+    --r-sm: 6px;
+    --sh:   0 1px 2px rgba(14,35,64,.05), 0 8px 24px rgba(14,35,64,.07);
+    --sh-2: 0 2px 6px rgba(14,35,64,.08), 0 18px 48px rgba(14,35,64,.12);
+}
+
+/* El deck es un objeto proyectado: se compromete a un solo mundo visual y no
+   invierte con el tema del visor. Por eso pinta fondo y color explicitamente
+   en vez de heredar el del anfitrion. */
+:root { color-scheme: light; }
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: #1c2127;
+    color: var(--tinta);
+    font-family: var(--sans);
+    overflow: hidden;
+}
+
+/* ------------------------------------------------------------ 1. Escenario */
+
+.marco {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding-bottom: 34px;
+    background: radial-gradient(120% 90% at 50% 0%, #2c333b 0%, #1c2127 60%, #171b20 100%);
+}
+
+.pista {
+    position: relative;
+    width: 1280px;
+    height: 720px;
+    flex: none;
+    transform: scale(var(--esc, 1));
+    transform-origin: center center;
+    box-shadow: 0 30px 90px rgba(0,0,0,.45);
+}
+
+.lamina {
+    position: absolute;
+    inset: 0;
+    padding: 52px 64px 56px;
+    background: var(--papel);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .3s ease;
+}
+
+/* Sin JS se ve la portada igual: nada queda esperando a un script. */
+.lamina:first-of-type { opacity: 1; visibility: visible; }
+html.js .lamina { opacity: 0; visibility: hidden; }
+html.js .lamina.es-activa { opacity: 1; visibility: visible; }
+
+/* Filo guacamaya: el mismo remate que llevan las tarjetas de la plataforma. */
+.lamina::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 5px;
+    z-index: 3;
+    background: linear-gradient(90deg,
+        var(--escarlata) 0 25%, var(--ambar-vivo) 25% 50%,
+        var(--verde) 50% 75%, var(--turquesa) 75% 100%);
+}
+
+.lamina--noche {
+    background: linear-gradient(158deg, #123054 0%, #0d2140 52%, #0a1728 100%);
+    color: #e8eef6;
+}
+
+.lamina--centro { justify-content: center; }
+
+/* ---------------------------------------------------------- 2. Tipografia */
+
+.ceja {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--turquesa);
+    margin: 0 0 9px;
+}
+.lamina--noche .ceja { color: #7fc4d8; }
+
+h1, h2, h3 {
+    font-family: var(--display);
+    font-weight: 700;
+    letter-spacing: -.015em;
+    line-height: 1.12;
+    text-wrap: balance;
+    margin: 0;
+}
+
+.titulo    { font-size: 42px; margin: 0 0 10px; }
+.titulo--g { font-size: 58px; }
+.titulo--s { font-size: 32px; }
+
+.bajada {
+    font-size: 18.5px;
+    line-height: 1.55;
+    color: var(--tinta-2);
+    max-width: 64ch;
+    margin: 0;
+}
+.lamina--noche .bajada { color: #bacadd; }
+
+.pie-lamina {
+    margin-top: auto;
+    padding-top: 16px;
+    font-size: 13px;
+    color: var(--suave);
+    line-height: 1.5;
+}
+.lamina--noche .pie-lamina { color: #8ba3bf; }
+
+code, .mono { font-family: var(--mono); font-size: .89em; }
+.chip-m {
+    font-family: var(--mono);
+    font-size: .86em;
+    background: var(--azul-l);
+    color: var(--azul);
+    padding: 1px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+.lamina--noche .chip-m { background: rgba(127,196,216,.15); color: #9ed4e6; }
+
+strong { font-weight: 600; }
+
+/* ------------------------------------------------------------- 3. Cuerpo */
+
+.cuerpo { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 20px; }
+.fila { display: flex; gap: 20px; }
+.fila--top { align-items: flex-start; }
+.fila--centro { align-items: center; }
+.col { flex: 1; min-width: 0; }
+.col--estrecha { flex: 0 0 340px; }
+.col--ancha { flex: 1.5; }
+
+.rejilla { display: grid; gap: 14px; }
+.rejilla--2 { grid-template-columns: repeat(2, 1fr); }
+.rejilla--3 { grid-template-columns: repeat(3, 1fr); }
+.rejilla--4 { grid-template-columns: repeat(4, 1fr); }
+
+.tarjeta {
+    background: var(--superficie);
+    border: 1px solid var(--linea);
+    border-radius: var(--r);
+    padding: 16px 18px;
+}
+.lamina--noche .tarjeta {
+    background: rgba(255,255,255,.055);
+    border-color: rgba(159,196,232,.2);
+}
+
+.tarjeta__t {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 17.5px;
+    line-height: 1.2;
+    margin: 0 0 6px;
+}
+.tarjeta__d { font-size: 14px; line-height: 1.5; color: var(--tinta-2); margin: 0; }
+.lamina--noche .tarjeta__d { color: #bacadd; }
+
+/* El filo de color dice de que tipo es la tarjeta. Se gasta por rol: si lo
+   llevan todas, deja de significar algo. */
+.tarjeta--filo { border-left: 3px solid var(--turquesa); }
+.f-escarlata { border-left-color: var(--escarlata); }
+.f-ambar     { border-left-color: var(--ambar-vivo); }
+.f-verde     { border-left-color: var(--verde); }
+.f-azul      { border-left-color: var(--azul); }
+
+.etiqueta {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--suave);
+    margin: 0 0 5px;
+}
+.lamina--noche .etiqueta { color: #8ba3bf; }
+
+/* --------------------------------------------------------------- 4. Cifras */
+
+.cifra {
+    font-family: var(--sans);
+    font-weight: 600;
+    letter-spacing: -.025em;
+    font-variant-numeric: tabular-nums;
+}
+.cifra--xl { font-size: 66px; line-height: 1; }
+.cifra--l  { font-size: 42px; line-height: 1; }
+.cifra--m  { font-size: 28px; line-height: 1; }
+
+.dato { display: flex; flex-direction: column; gap: 8px; }
+.dato__n { color: var(--azul); }
+.dato__d { font-size: 14px; line-height: 1.45; color: var(--tinta-2); }
+.lamina--noche .dato__n { color: #d3e6f8; }
+.lamina--noche .dato__d { color: #bacadd; }
+
+.pista-b { height: 6px; border-radius: 99px; background: var(--linea); overflow: hidden; }
+.pista-b__v {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--turquesa);
+    width: 0;
+    transition: width .9s cubic-bezier(.22,.9,.3,1);
+}
+.es-activa .pista-b__v { width: var(--w, 0%); }
+.pista-b__v--ambar { background: var(--ambar-vivo); }
+.pista-b__v--escarlata { background: var(--escarlata); }
+
+/* ------------------------------------------------------------ 5. Animacion */
+
+html.js [data-paso] { opacity: 0; transform: translateY(9px); }
+html.js [data-paso].visto {
+    opacity: 1;
+    transform: none;
+    transition: opacity .36s ease, transform .36s cubic-bezier(.22,.9,.3,1);
+}
+
+@keyframes subir { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+html.js .lamina.es-activa .anim {
+    animation: subir .48s cubic-bezier(.22,.9,.3,1) both;
+    animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+@keyframes latir { 0%, 100% { opacity: .95; } 50% { opacity: .35; } }
+.latido { animation: latir 1.8s ease-in-out infinite; }
+
+.traza { stroke-dasharray: var(--largo, 1200); stroke-dashoffset: var(--largo, 1200); }
+.es-activa .traza { stroke-dashoffset: 0; transition: stroke-dashoffset .8s cubic-bezier(.3,.8,.4,1); }
+html.js [data-paso] .traza, html.js [data-paso].traza { stroke-dashoffset: var(--largo, 1200); }
+html.js [data-paso].visto .traza, html.js [data-paso].visto.traza { stroke-dashoffset: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+    html.js [data-paso] { transform: none; }
+    html.js [data-paso].visto { transition: opacity .12s linear; }
+    html.js .lamina.es-activa .anim { animation: none; }
+    .pista-b__v, .traza, .lamina { transition: none; }
+    .latido { animation: none; }
+}
+
+/* ------------------------------------------------------------ 6. Capturas */
+
+.captura {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--linea);
+    box-shadow: var(--sh-2);
+    background: #fff;
+}
+.lamina--noche .captura { border-color: rgba(159,196,232,.25); }
+
+.captura-marco {
+    border-radius: var(--r);
+    overflow: hidden;
+    border: 1px solid var(--linea);
+    box-shadow: var(--sh-2);
+    background: var(--superficie);
+}
+.captura-marco__barra {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #eceae6;
+    border-bottom: 1px solid var(--linea);
+}
+.captura-marco__punto { width: 8px; height: 8px; border-radius: 99px; background: #c9c6c0; }
+.captura-marco__url {
+    margin-left: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--suave);
+}
+.captura-marco img { display: block; width: 100%; height: auto; }
+.captura-marco--recorte { position: relative; }
+.captura-marco--recorte .lienzo { position: relative; height: var(--alto, 300px); overflow: hidden; }
+.captura-marco--recorte img { margin-top: var(--desliz, 0); }
+/* El degradado dice que la captura sigue más abajo, en vez de parecer
+   una imagen cortada por accidente. */
+.captura-marco--recorte .lienzo::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 46px;
+    background: linear-gradient(to top, var(--superficie) 12%, rgba(255,255,255,0));
+}
+
+/* ---------------------------------------------------------------- 7. SVG */
+
+.diagrama { width: 100%; height: 100%; display: block; }
+.d-caja { fill: rgba(255,255,255,.06); stroke: rgba(159,196,232,.34); stroke-width: 1.2; rx: 9; }
+.d-caja--claro { fill: var(--superficie); stroke: var(--linea); }
+.d-caja--acento { fill: rgba(23,112,138,.18); stroke: #4fa8c4; }
+.d-caja--peligro { fill: rgba(195,55,44,.16); stroke: #e0685c; }
+.d-caja--ok { fill: rgba(44,122,88,.18); stroke: #5aab84; }
+.d-t { font-family: var(--sans); font-weight: 600; font-size: 14px; fill: #e8eef6; }
+.d-t--claro { fill: var(--tinta); }
+.d-s { font-family: var(--sans); font-weight: 400; font-size: 11.5px; fill: #93aac6; }
+.d-s--claro { fill: var(--suave); }
+.d-m { font-family: var(--mono); font-size: 11px; fill: #9ed4e6; }
+.d-linea { stroke: #5c7ea6; stroke-width: 1.6; fill: none; }
+.d-linea--punteada { stroke-dasharray: 5 4; stroke: #a07a3c; }
+.d-linea--fuerte { stroke: #4fa8c4; stroke-width: 2.2; }
+.d-rotulo { font-family: var(--sans); font-size: 10.5px; font-weight: 500; fill: #7f9ec2; letter-spacing: .04em; }
+
+/* ------------------------------------------------------------------ 8. HUD */
+
+.hud {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 18px;
+    font-size: 12px;
+    color: #8b949e;
+    background: linear-gradient(to top, rgba(12,15,19,.92), rgba(12,15,19,0));
+    pointer-events: none;
+    z-index: 20;
+}
+.hud__barra { flex: 1; height: 3px; background: rgba(255,255,255,.13); border-radius: 99px; overflow: hidden; }
+.hud__v { display: block; height: 100%; background: linear-gradient(90deg, var(--escarlata), var(--ambar-vivo), var(--verde), var(--turquesa)); width: 0; transition: width .3s ease; }
+.hud__n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.hud__ayuda { opacity: .65; }
+
+.panel {
+    position: fixed;
+    inset: auto 0 0 0;
+    max-height: 46vh;
+    overflow: auto;
+    padding: 20px 26px 30px;
+    background: #10141a;
+    color: #d7dee7;
+    border-top: 2px solid var(--turquesa);
+    font-size: 14px;
+    line-height: 1.6;
+    z-index: 30;
+}
+.panel[hidden] { display: none !important; }
+.panel h4 { font-family: var(--display); font-size: 16px; margin: 0 0 8px; color: #fff; }
+.panel kbd {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-right: 4px;
+}
+.panel__lista { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 24px; margin: 0; padding: 0; list-style: none; }
+.notas { display: none; }
+
+:focus-visible { outline: 2px solid var(--turquesa); outline-offset: 3px; }
+</style>

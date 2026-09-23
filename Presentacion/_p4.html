@@ -1,0 +1,542 @@
+
+<style>
+/* Herramientas del asistente */
+.herr {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3px;
+    padding: 11px 14px;
+    background: var(--superficie);
+    border: 1px solid var(--linea);
+    border-left: 3px solid var(--azul);
+    border-radius: var(--r-sm);
+}
+.herr__n { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--azul); }
+.herr__d { font-size: 13px; line-height: 1.4; color: var(--tinta-2); }
+
+/* Permisos: lo concedido y lo denegado */
+.permiso { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; line-height: 1.45; }
+.permiso__s { flex: none; width: 20px; font-weight: 700; font-family: var(--mono); font-size: 13px; }
+.permiso--si .permiso__s { color: var(--verde); }
+.permiso--no .permiso__s { color: var(--escarlata); }
+
+/* Garantías numeradas: la secuencia importa, va de la regla al costo. */
+.garantia { display: grid; grid-template-columns: 34px 1fr; gap: 13px; align-items: start; }
+.garantia__n {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 21px;
+    line-height: 1;
+    color: var(--escarlata);
+    border-top: 2px solid var(--escarlata);
+    padding-top: 7px;
+}
+.garantia__t { font-family: var(--display); font-weight: 700; font-size: 16.5px; line-height: 1.22; margin: 0 0 4px; }
+.garantia__d { font-size: 13.5px; line-height: 1.45; color: var(--tinta-2); margin: 0; }
+
+/* Reglas de encuestas */
+.regla { display: flex; gap: 10px; font-size: 14px; line-height: 1.45; }
+.regla__i { flex: none; width: 7px; height: 7px; margin-top: 7px; border-radius: 99px; background: var(--turquesa); }
+
+/* Cierre */
+.metrica { text-align: left; }
+.metrica__n { font-family: var(--sans); font-weight: 600; font-size: 38px; line-height: 1; letter-spacing: -.025em; color: #fff; font-variant-numeric: tabular-nums; }
+.metrica__d { font-size: 12.5px; line-height: 1.4; color: #93aac6; margin-top: 7px; }
+.cierre-frase { font-family: var(--display); font-weight: 700; font-size: 34px; line-height: 1.28; color: #fff; max-width: 24ch; }
+.cierre-frase em { font-style: normal; color: #f0b552; }
+
+/* Respaldo */
+.lamina--respaldo::after {
+    content: "LÁMINA DE RESPALDO";
+    position: absolute;
+    right: 64px; top: 26px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    color: var(--ambar);
+    background: var(--ambar-l);
+    border: 1px solid #e5c78a;
+    border-radius: 99px;
+    padding: 3px 10px;
+}
+.lista-def { display: flex; flex-direction: column; gap: 11px; margin: 0; }
+.lista-def__t { font-weight: 600; font-size: 14.5px; }
+.lista-def__d { font-size: 13.5px; line-height: 1.45; color: var(--tinta-2); }
+.tabla-simple { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tabla-simple th { text-align: left; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--suave); font-weight: 600; padding: 0 12px 7px 0; border-bottom: 1px solid var(--linea); }
+.tabla-simple td { padding: 7px 12px 7px 0; border-bottom: 1px solid var(--linea-2); line-height: 1.4; vertical-align: top; }
+.tabla-simple td:last-child, .tabla-simple th:last-child { padding-right: 0; }
+</style>
+
+<!-- ═══════════════════════════════════ 13 · El asistente ═════════════════ -->
+<section class="lamina" data-seccion="Asistente de IA">
+    <p class="ceja anim" style="--i:0">Módulo de inteligencia artificial</p>
+    <h2 class="titulo anim" style="--i:1">Preguntar en español, y recibir la respuesta con sus fuentes</h2>
+
+    <div class="cuerpo">
+        <div class="fila fila--top" style="gap:22px">
+            <div class="col col--ancha anim" style="--i:2">
+                <div class="captura-marco captura-marco--recorte">
+                    <div class="captura-marco__barra">
+                        <span class="captura-marco__punto"></span><span class="captura-marco__punto"></span><span class="captura-marco__punto"></span>
+                        <span class="captura-marco__url">cumplehn / Analitica · asistente</span>
+                    </div>
+                    <div class="lienzo" style="--alto:428px"><img src="{{IMG:asistente}}" alt="El asistente de CumpleHN responde con una tabla de propuestas de salud, su estado de cumplimiento y su nivel de verificación, seguida de la lista de fuentes consultadas."></div>
+                </div>
+            </div>
+
+            <div class="col" style="flex:0 0 330px">
+                <div class="rejilla" style="gap:12px">
+                    <div class="tarjeta tarjeta--filo f-verde" data-paso="1">
+                        <h3 class="tarjeta__t">Dijo el nivel de verificación sin que se lo pidieran</h3>
+                        <p class="tarjeta__d">La pregunta era cuáles propuestas de salud hay. Distinguir <em>Verificado</em> de <em>Declarada</em> es una regla del prompt, no del usuario.</p>
+                    </div>
+                    <div class="tarjeta tarjeta--filo f-azul" data-paso="2">
+                        <h3 class="tarjeta__t">Cerró con sus fuentes</h3>
+                        <p class="tarjeta__d">Y las describe por lo que devolvieron —«búsqueda entre las propuestas registradas, 2 resultados»— no por el nombre del procedimiento, que no le sirve a nadie para verificar nada.</p>
+                    </div>
+                    <div class="tarjeta tarjeta--filo f-ambar" data-paso="3">
+                        <h3 class="tarjeta__t">Se identifica como prototipo</h3>
+                        <p class="tarjeta__d">Y el aviso de arriba advierte, antes de la primera pregunta, que puede equivocarse al redactar y que las cifras se contrastan con los gráficos de esa misma página.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p class="pie-lamina">Respuesta real, capturada de la plataforma corriendo contra la base. Tardó 12 segundos.</p>
+    <div class="notas">Si hay tiempo y la red aguanta, acá va la demo en vivo: una pregunta de verdad. Si falla, esta captura ya lo demuestra y no se nota. 50 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 14 · Topología del asistente ══════ -->
+<section class="lamina lamina--noche" data-seccion="Asistente de IA">
+    <p class="ceja anim" style="--i:0">Asistente · Topología</p>
+    <h2 class="titulo anim" style="--i:1">El modelo nunca ve la base. Ve la fila que un procedimiento le devuelve.</h2>
+
+    <div class="cuerpo" style="justify-content:center">
+        <svg class="diagrama" viewBox="0 0 1150 356" role="img" aria-label="La consulta va del navegador a un handler del frontend, de ahí al Web Service, al cliente del modelo y al modelo. El modelo pide herramientas, que son procedimientos almacenados ejecutados con una conexión restringida.">
+            <text x="10" y="24" class="d-rotulo">CAMINO DE LA PREGUNTA</text>
+
+            <g data-paso="1">
+                <rect x="10" y="36" width="200" height="66" class="d-caja"/>
+                <text x="30" y="62" class="d-t" style="font-size:13px">Navegador</text>
+                <text x="30" y="84" class="d-s">POST JSON, sin postback</text>
+            </g>
+            <path class="d-linea d-linea--fuerte traza" data-paso="2" d="M210 69 L236 69" marker-end="url(#f5)"/>
+
+            <g data-paso="2">
+                <rect x="240" y="36" width="200" height="66" class="d-caja d-caja--acento"/>
+                <text x="260" y="62" class="d-m" style="font-size:12.5px">Asistente.ashx</text>
+                <text x="260" y="84" class="d-s">vive en el frontend</text>
+            </g>
+            <path class="d-linea d-linea--fuerte traza" data-paso="3" d="M440 69 L466 69" marker-end="url(#f5)"/>
+
+            <g data-paso="3">
+                <rect x="470" y="36" width="200" height="66" class="d-caja d-caja--acento"/>
+                <text x="490" y="62" class="d-t" style="font-size:13px">Web Service</text>
+                <text x="490" y="84" class="d-s">3 comprobaciones previas</text>
+            </g>
+            <path class="d-linea d-linea--fuerte traza" data-paso="4" d="M670 69 L696 69" marker-end="url(#f5)"/>
+
+            <g data-paso="4">
+                <rect x="700" y="36" width="200" height="66" class="d-caja"/>
+                <text x="720" y="62" class="d-m" style="font-size:12.5px">AsistenteIA.cs</text>
+                <text x="720" y="84" class="d-s">bucle de hasta 6 vueltas</text>
+            </g>
+            <path class="d-linea d-linea--fuerte traza" data-paso="5" d="M900 69 L926 69" marker-end="url(#f5)"/>
+
+            <g data-paso="5">
+                <rect x="930" y="36" width="210" height="66" rx="9" fill="rgba(195,55,44,.15)" stroke="#e0685c" stroke-width="1.3"/>
+                <text x="950" y="62" class="d-t" style="font-size:13px" fill="#f2b3ac">Modelo de lenguaje</text>
+                <text x="950" y="84" class="d-s" fill="#d8a9a3">claude-sonnet-5</text>
+            </g>
+
+            <!-- Bajada al camino de los datos -->
+            <g data-paso="6">
+                <path class="d-linea d-linea--fuerte traza" d="M1035 102 L1035 150 L810 150 L810 186" marker-end="url(#f5)"/>
+                <text x="846" y="142" class="d-rotulo">PIDE UNA HERRAMIENTA</text>
+            </g>
+
+            <text x="10" y="176" class="d-rotulo">CAMINO DE LOS DATOS · SIEMPRE DE DERECHA A IZQUIERDA</text>
+
+            <g data-paso="6">
+                <rect x="710" y="188" width="200" height="66" class="d-caja d-caja--acento"/>
+                <text x="730" y="214" class="d-t" style="font-size:13px">4 herramientas</text>
+                <text x="730" y="236" class="d-s">parámetros tipados, sin SQL</text>
+            </g>
+            <path class="d-linea traza" data-paso="7" d="M710 221 L684 221" marker-end="url(#f5)"/>
+
+            <g data-paso="7">
+                <rect x="448" y="188" width="230" height="66" rx="9" fill="rgba(211,144,31,.16)" stroke="#d3901f" stroke-width="1.4"/>
+                <text x="468" y="214" class="d-m" style="font-size:12.5px" fill="#f0cf90">AsistenteDatos.cs</text>
+                <text x="468" y="236" class="d-s" fill="#d8c49a">el único punto que abre esa conexión</text>
+            </g>
+            <path class="d-linea traza" data-paso="8" d="M448 221 L422 221" marker-end="url(#f5)"/>
+
+            <g data-paso="8">
+                <rect x="220" y="188" width="196" height="66" class="d-caja"/>
+                <text x="240" y="214" class="d-t" style="font-size:13px">13 procedimientos</text>
+                <text x="240" y="236" class="d-s">los únicos con GRANT EXECUTE</text>
+            </g>
+            <path class="d-linea traza" data-paso="8" d="M220 221 L196 221" marker-end="url(#f5)"/>
+
+            <g data-paso="8">
+                <rect x="10" y="188" width="180" height="66" class="d-caja d-caja--ok"/>
+                <text x="30" y="214" class="d-m" style="font-size:12px">BDCUMPLEHN</text>
+                <text x="30" y="236" class="d-s">encadenamiento de propiedad</text>
+            </g>
+
+            <!-- Login restringido -->
+            <g data-paso="9">
+                <path class="d-linea d-linea--punteada" d="M563 254 L563 272 L360 272 L360 286"/>
+                <rect x="10" y="288" width="700" height="56" rx="8" fill="rgba(211,144,31,.1)" stroke="#a07a3c" stroke-width="1.1"/>
+                <text x="30" y="312" class="d-m" style="font-size:12px" fill="#f0cf90">login cumplehn_ia</text>
+                <text x="30" y="332" class="d-s" fill="#d8c49a">sin db_datareader · cero permisos sobre tablas · DENY sobre las que identifican personas</text>
+            </g>
+
+            <!-- Bitácora. Va sin línea a propósito: cualquier trazado desde el
+                 Web Service hasta acá cruzaría el camino de los datos. -->
+            <g data-paso="10">
+                <rect x="730" y="288" width="410" height="56" rx="8" fill="rgba(255,255,255,.05)" stroke="rgba(159,196,232,.24)"/>
+                <text x="750" y="312" class="d-m" style="font-size:12px">ConsultasIA</text>
+                <text x="750" y="332" class="d-s">la escribe el Web Service, con su conexión normal</text>
+            </g>
+
+            <defs>
+                <marker id="f5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4fa8c4"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <p class="pie-lamina">El handler vive en el frontend a propósito: abrir CORS sobre el método que gasta dinero sería dejarlo al alcance de cualquier sitio. La conexión SQL se cierra <strong>antes</strong> de llamar al modelo, para no retener una del pool durante 10 a 20 segundos.</p>
+    <div class="notas">Esta es la lámina técnica central. Ir paso por paso con la barra espaciadora, sin apurar. 75 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 15 · Herramientas y permisos ══════ -->
+<section class="lamina" data-seccion="Asistente de IA">
+    <p class="ceja anim" style="--i:0">Asistente · Superficie de datos</p>
+    <h2 class="titulo anim" style="--i:1">Lo que el asistente puede saber lo deciden las columnas, no los permisos</h2>
+
+    <div class="cuerpo">
+        <div class="fila fila--top" style="gap:26px">
+            <div class="col">
+                <span class="etiqueta" style="margin-bottom:9px">Las cuatro herramientas · cada una es un procedimiento almacenado</span>
+                <div class="rejilla" style="gap:9px">
+                    <div class="herr" data-paso="1">
+                        <span class="herr__n">consultar_tablero</span>
+                        <span class="herr__d">Los diez indicadores del tablero, con los mismos filtros de la página.</span>
+                    </div>
+                    <div class="herr" data-paso="1">
+                        <span class="herr__n">buscar_propuestas</span>
+                        <span class="herr__d">Búsqueda por texto, categoría, estado, candidatura o partido. Máximo 50 filas.</span>
+                    </div>
+                    <div class="herr" data-paso="2">
+                        <span class="herr__n">ficha_candidato</span>
+                        <span class="herr__d">La ficha pública de una candidatura — sin correo ni teléfono.</span>
+                    </div>
+                    <div class="herr" data-paso="2">
+                        <span class="herr__n">catalogos</span>
+                        <span class="herr__d">Campañas, categorías, partidos y departamentos.</span>
+                    </div>
+                </div>
+                <p class="tarjeta__d" style="margin-top:12px" data-paso="3">Agregar una capacidad nueva es agregar un procedimiento con su <span class="chip-m">GRANT</span>, nunca una consulta suelta. <strong>Ninguno proyecta con</strong> <span class="chip-m">SELECT *</span>.</p>
+            </div>
+
+            <div class="col">
+                <div class="tarjeta" style="height:100%" data-paso="4">
+                    <span class="etiqueta">Segunda capa · el login <span class="chip-m">cumplehn_ia</span></span>
+                    <div class="rejilla" style="gap:8px;margin-top:10px">
+                        <div class="permiso permiso--si"><span class="permiso__s">✓</span><span><span class="chip-m">EXECUTE</span> sobre 13 procedimientos, y nada más. Llega a las tablas por <strong>encadenamiento de propiedad</strong>.</span></div>
+                        <div class="permiso permiso--no"><span class="permiso__s">✗</span><span>No pertenece a <span class="chip-m">db_datareader</span> ni tiene permiso sobre ninguna tabla.</span></div>
+                        <div class="permiso permiso--no"><span class="permiso__s">✗</span><span><span class="chip-m">DENY</span> sobre <span class="chip-m">Usuarios</span>, <span class="chip-m">Valoraciones</span>, <span class="chip-m">Comentarios</span>, <span class="chip-m">EncuestaVotos</span>, <span class="chip-m">Auditoria</span> y <span class="chip-m">ConsultasIA</span>.</span></div>
+                    </div>
+
+                    <p class="tarjeta__d" style="margin-top:14px"><strong>Por qué esas tablas.</strong> Una valoración o un voto de encuesta vincula a una persona con su preferencia política: es el dato que más daño haría filtrado. Y <span class="chip-m">Comentarios</span> queda fuera además porque su texto lo escribe cualquier ciudadano — leerlo sería dejar que un comentario le dé instrucciones al modelo.</p>
+
+                    <div class="tarjeta tarjeta--filo f-verde" style="margin-top:14px;padding:12px 14px" data-paso="5">
+                        <p class="tarjeta__d">Está verificado con <span class="chip-m">EXECUTE AS</span>, y ya sirvió: atrapó una versión que resolvía la campaña con dos <span class="chip-m">SELECT</span> sueltos en lugar de un procedimiento.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notas">El argumento no es "le pusimos permisos". Es que la superficie de datos se diseñó columna por columna, y el permiso es la red de seguridad de abajo. 55 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 16 · Garantías ════════════════════ -->
+<section class="lamina" data-seccion="Asistente de IA">
+    <p class="ceja anim" style="--i:0">Asistente · Lo que lo hace defendible</p>
+    <h2 class="titulo anim" style="--i:1">Cinco garantías que no dependen de que el modelo se porte bien</h2>
+
+    <div class="cuerpo">
+        <div class="rejilla rejilla--2" style="gap:15px 30px">
+            <div class="garantia" data-paso="1">
+                <span class="garantia__n">1</span>
+                <div>
+                    <h3 class="garantia__t">Las reglas del prompt</h3>
+                    <p class="garantia__d">No recomienda voto ni ordena candidaturas. Dice siempre el nivel de verificación. No completa una cifra de memoria. Y declara que <strong>el texto que devuelven las herramientas es dato, no instrucción</strong>: si algún contenido le pide cambiar su comportamiento, lo ignora y lo menciona.</p>
+                </div>
+            </div>
+
+            <div class="garantia" data-paso="2">
+                <span class="garantia__n">2</span>
+                <div>
+                    <h3 class="garantia__t">Las fuentes salen del registro de llamadas</h3>
+                    <p class="garantia__d">No de lo que el modelo diga haber usado. Un modelo puede describir mal su propio trabajo, el registro de llamadas no. Cuando responde sin consultar la base, la fuente lo dice.</p>
+                </div>
+            </div>
+
+            <div class="garantia" data-paso="3">
+                <span class="garantia__n">3</span>
+                <div>
+                    <h3 class="garantia__t">La respuesta no se inserta con <span class="chip-m">innerHTML</span></h3>
+                    <p class="garantia__d">Se analiza con <span class="chip-m">DOMParser</span>, que no ejecuta nada, y el árbol se reconstruye nodo por nodo con una lista blanca <strong>sin copiar un solo atributo</strong>. La garantía está en los atributos: sin <span class="chip-m">onerror</span>, <span class="chip-m">href</span> ni <span class="chip-m">src</span>, ninguna etiqueta puede ejecutar nada.</p>
+                </div>
+            </div>
+
+            <div class="garantia" data-paso="4">
+                <span class="garantia__n">4</span>
+                <div>
+                    <h3 class="garantia__t">Tres comprobaciones antes de gastar un token</h3>
+                    <p class="garantia__d">Módulo visible, cuenta activa y con correo confirmado, y cuota diaria disponible. Las tres en el Web Service, no en la página: el frontend decide qué muestra, nunca qué se permite.</p>
+                </div>
+            </div>
+
+            <div class="garantia" data-paso="5">
+                <span class="garantia__n">5</span>
+                <div>
+                    <h3 class="garantia__t">El costo está medido, no estimado</h3>
+                    <p class="garantia__d">Unos 11 000 tokens de entrada y 470 de salida por consulta: <strong>0.027 dólares</strong> con Sonnet 5, frente a 0.077 con Opus 5. Con la cuota de 20 consultas por persona y día, el techo es conocido de antemano.</p>
+                </div>
+            </div>
+
+            <div class="garantia" data-paso="6">
+                <span class="garantia__n" style="color:var(--turquesa);border-top-color:var(--turquesa)">+</span>
+                <div>
+                    <h3 class="garantia__t">Y una bitácora que también guarda los fracasos</h3>
+                    <p class="garantia__d"><span class="chip-m">ConsultasIA</span> registra cada pregunta con su respuesta, herramientas, tokens, tiempo y error. Una bitácora que solo guarda los casos buenos no sirve para revisar los malos — y es sobre esos registros que se decide el modelo definitivo.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notas">Cerrar con: lo que se evalúa no es si la respuesta suena bien, sino si sostiene las tres reglas — negarse a rankear, decir el nivel de verificación, y responder que no sabe en vez de completar. 60 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 17 · Encuestas ════════════════════ -->
+<section class="lamina" data-seccion="Participación">
+    <p class="ceja anim" style="--i:0">Participación ciudadana · Encuestas de percepción</p>
+    <h2 class="titulo anim" style="--i:1">Una encuesta que dice de qué no es evidencia</h2>
+
+    <div class="cuerpo">
+        <div class="anim" style="--i:2">
+            <img class="captura" src="{{IMG:encuesta-card}}" alt="Tarjeta de encuesta de la plataforma: la pregunta, las opciones con su conteo y porcentaje, y el aviso al pie de que el resultado describe a quienes respondieron.">
+        </div>
+
+        <div class="rejilla rejilla--3" style="gap:14px">
+            <div class="tarjeta tarjeta--filo" data-paso="1">
+                <h3 class="tarjeta__t">Las reglas viven en la base</h3>
+                <div class="rejilla" style="gap:7px;margin-top:8px">
+                    <div class="regla"><span class="regla__i"></span><span>Un voto por persona y encuesta, garantizado por un índice único y no solo por el código.</span></div>
+                    <div class="regla"><span class="regla__i"></span><span>Los conteos <strong>no se guardan</strong>: se derivan con <span class="chip-m">COUNT</span>.</span></div>
+                    <div class="regla"><span class="regla__i"></span><span>El estado se deriva de las fechas. Una columna que dijera «abierta» sobre una encuesta ya vencida es una mentira esperando a ocurrir.</span></div>
+                </div>
+            </div>
+
+            <div class="tarjeta tarjeta--filo f-escarlata" data-paso="2">
+                <h3 class="tarjeta__t">Solo la administración las crea</h3>
+                <p class="tarjeta__d">El candidato no. Quien redacta las opciones controla el marco, y una encuesta escrita por una parte interesada dentro de una plataforma que se declara neutral sería un instrumento de campaña. El ciudadano tampoco, porque no hay moderación previa.</p>
+            </div>
+
+            <div class="tarjeta tarjeta--filo f-ambar" data-paso="3">
+                <h3 class="tarjeta__t">Conteo y porcentaje, los dos</h3>
+                <p class="tarjeta__d">El porcentaje solo esconde de cuánta gente sale: el sesenta por ciento de cinco respuestas no es el sesenta por ciento de quinientas. El conteo solo obliga a dividir de cabeza para comparar.</p>
+            </div>
+        </div>
+    </div>
+
+    <p class="pie-lamina">El resultado de estas encuestas <strong>nunca sobrescribe</strong> el interés medido en la encuesta metodológica del proyecto: aquella tiene n = 150 con muestreo definido, y esta es una muestra autoseleccionada. Juntarlas mezclaría dos cosas con validez distinta.</p>
+    <div class="notas">Es la tercera pata del módulo de participación que el FO-GR-013 ya contemplaba: «comentarios, valoraciones o votaciones de percepción». No es alcance nuevo. 45 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 18 · Cierre ═══════════════════════ -->
+<section class="lamina lamina--noche" data-seccion="Cierre">
+    <p class="ceja anim" style="--i:0">Estado del proyecto</p>
+
+    <div class="cuerpo" style="justify-content:center;gap:30px">
+        <div class="rejilla rejilla--4" style="gap:26px" data-paso="1">
+            <div class="metrica"><div class="metrica__n" data-cifra="34046" data-ent="1">0</div><div class="metrica__d">líneas de código propio<br>C#, T-SQL, marcado, CSS y JS</div></div>
+            <div class="metrica"><div class="metrica__n" data-cifra="23" data-ent="1">0</div><div class="metrica__d">tablas, con 7 vistas, 3 funciones<br>y 35 llaves foráneas</div></div>
+            <div class="metrica"><div class="metrica__n" data-cifra="44" data-ent="1">0</div><div class="metrica__d">procedimientos almacenados<br>y 51 métodos de servicio</div></div>
+            <div class="metrica"><div class="metrica__n">6 / 6</div><div class="metrica__d">módulos comprometidos<br>en el FO-GR-013, entregados</div></div>
+        </div>
+
+        <div class="fila fila--top" style="gap:40px" data-paso="2">
+            <div class="col">
+                <span class="etiqueta" style="color:#e0a05c">Lo que queda pendiente, dicho antes de que lo pregunten</span>
+                <p class="bajada" style="font-size:15px;margin-top:8px">El guardado del perfil y de los proyectos desde el panel del candidato valida del lado del servidor pero todavía no persiste. El código de usuario de valoraciones y comentarios lo envía el frontend, así que el servicio confía en él: se resuelve validando un token de sesión. Las contraseñas siguen sin <em>salt</em>.</p>
+            </div>
+            <div class="col">
+                <span class="etiqueta" style="color:#7fc4d8">Trabajo futuro con argumento, no con lista de deseos</span>
+                <p class="bajada" style="font-size:15px;margin-top:8px">Verificación por SMS: evaluada y descartada por costo, no por debilidad — 0.33 dólares por mensaje, unos 50 para la muestra de 150. Desde marzo de 2025 CONATEL exige registro biométrico para una línea, así que controlar un número se acerca mucho más a la identidad que controlar un correo.</p>
+            </div>
+        </div>
+
+        <div data-paso="3" style="border-top:1px solid rgba(159,196,232,.22);padding-top:26px;margin-top:6px">
+            <p class="cierre-frase">CumpleHN no dice quién cumple mejor.<br>Ordena la evidencia para que <em>cada quien lo juzgue</em>.</p>
+        </div>
+    </div>
+
+    <div class="notas">Última lámina. Después de la frase, callar y esperar las preguntas. Las láminas de respaldo se abren con la tecla B. 40 s.</div>
+</section>
+
+<!-- ══════════════════════════ Láminas de respaldo ════════════════════════ -->
+
+<section class="lamina lamina--respaldo" data-respaldo="1" data-seccion="Respaldo · Antecedentes">
+    <p class="ceja">Respaldo · Antecedentes</p>
+    <h2 class="titulo titulo--s">Rastreadores de promesas en el mundo</h2>
+    <div class="cuerpo">
+        <table class="tabla-simple">
+            <thead><tr><th style="width:20%">Iniciativa</th><th style="width:16%">País y año</th><th>Qué hace</th><th style="width:30%">Qué no cubre</th></tr></thead>
+            <tbody>
+                <tr><td><strong>PolitiFact</strong></td><td>Estados Unidos, desde 2007 · Poynter Institute</td><td>Verificación de declaraciones públicas y rastreador de promesas con seis categorías ordenadas, incluidos estados intermedios.</td><td>De ahí se toma el esquema de estados de cumplimiento de CumpleHN.</td></tr>
+                <tr><td><strong>Chequeado</strong></td><td>Argentina, desde 2010</td><td>Verificación del discurso público. Su modelo se replicó por aliados en la región.</td><td>No cubre Honduras ni el seguimiento longitudinal por candidatura.</td></tr>
+                <tr><td><strong>Del Dicho al Hecho</strong></td><td>Chile · Fundación Ciudadano Inteligente</td><td>Monitoreo del cumplimiento de promesas presidenciales y legislativas.</td><td>Es el antecedente más cercano en propósito. No opera en Honduras.</td></tr>
+                <tr><td><strong>IAIP · Portal Único de Transparencia</strong></td><td>Honduras · Decreto 170-2006</td><td>Acceso a información pública mediante solicitud, con 10 días hábiles prorrogables y recurso de revisión.</td><td>Es acceso a documentos, no un seguimiento comparable de promesas por candidatura.</td></tr>
+            </tbody>
+        </table>
+        <p class="tarjeta__d" style="margin-top:6px">Honduras participa en la <strong>Open Government Partnership</strong> desde 2011, con cinco planes de acción, el más reciente 2023-2025. En el Índice de Percepción de la Corrupción 2024 obtuvo 22 puntos sobre 100, en la posición 154 de 180.</p>
+    </div>
+</section>
+
+<section class="lamina lamina--respaldo" data-respaldo="1" data-seccion="Respaldo · Metodología">
+    <p class="ceja">Respaldo · Metodología</p>
+    <h2 class="titulo titulo--s">Enfoque, muestra e instrumento</h2>
+    <div class="cuerpo">
+        <div class="fila fila--top" style="gap:34px">
+            <div class="col">
+                <div class="lista-def">
+                    <div><span class="lista-def__t">Enfoque cuantitativo, tipo descriptivo</span><span class="lista-def__d">Hernández-Sampieri, Fernández-Collado y Baptista-Lucio (2014): recolección de datos para probar hipótesis con base en la medición numérica y el análisis estadístico. Secuencial y probatorio.</span></div>
+                    <div><span class="lista-def__t">Población objetivo</span><span class="lista-def__d">La ciudadanía hondureña habilitada para votar.</span></div>
+                    <div><span class="lista-def__t">Población accesible</span><span class="lista-def__d">Estudiantes universitarios hondureños mayores de 18 años: votantes habilitados, accesibles para aplicar el instrumento y alfabetizados digitalmente, que es el perfil del usuario potencial de una solución web.</span></div>
+                    <div><span class="lista-def__t">Técnica e instrumento</span><span class="lista-def__d">Encuesta única, cuestionario estructurado de 18 ítems cerrados con escalas Likert de 1 a 5, aplicado en línea del 12 al 21 de junio de 2026. Es la única fuente primaria: no se realizaron entrevistas.</span></div>
+                </div>
+            </div>
+            <div class="col" style="flex:0 0 400px">
+                <div class="tarjeta tarjeta--filo f-azul">
+                    <span class="etiqueta">Tamaño de muestra</span>
+                    <p class="cifra cifra--m" style="color:var(--azul);margin:6px 0 12px;font-family:var(--mono);font-size:22px">n = Z²&middot;p&middot;q / e²</p>
+                    <table class="tabla-simple">
+                        <tbody>
+                            <tr><td style="width:38%">Nivel de confianza</td><td>95 % · Z = 1.96</td></tr>
+                            <tr><td>Probabilidades</td><td>p = q = 0.5, que maximiza la varianza</td></tr>
+                            <tr><td>Margen de error</td><td>8 %</td></tr>
+                            <tr><td><strong>Resultado</strong></td><td><strong>150 encuestados</strong>, alcanzados</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="tarjeta__d" style="margin-top:12px">Muestreo <strong>no probabilístico por conveniencia</strong>. Los resultados se circunscriben al grupo estudiado y no se generalizan estadísticamente a la población hondureña.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="lamina lamina--respaldo" data-respaldo="1" data-seccion="Respaldo · Limitaciones">
+    <p class="ceja" style="color:var(--escarlata)">Respaldo · Limitaciones declaradas</p>
+    <h2 class="titulo titulo--s">Lo que este trabajo no logra demostrar</h2>
+    <div class="cuerpo">
+        <div class="rejilla rejilla--2" style="gap:13px">
+            <div class="tarjeta tarjeta--filo f-escarlata"><h3 class="tarjeta__t">La hipótesis no se validó empíricamente</h3><p class="tarjeta__d">H1 afirma que la plataforma permitirá decidir el voto con fundamentos cuantitativos. Confirmarlo requeriría medir el uso de la herramienta una vez implementada, y esta fase midió la necesidad, no el efecto.</p></div>
+            <div class="tarjeta tarjeta--filo f-escarlata"><h3 class="tarjeta__t">La precisión del componente de IA no se midió</h3><p class="tarjeta__d">La pregunta específica 5 pide evaluar efectividad y precisión. El instrumento midió <strong>interés y confianza declarada</strong>, que es otra cosa. Medir precisión exige un conjunto de preguntas con respuesta conocida contrastado contra las respuestas del asistente — y los registros de <span class="chip-m">ConsultasIA</span> ya están guardando el material para hacerlo.</p></div>
+            <div class="tarjeta tarjeta--filo f-escarlata"><h3 class="tarjeta__t">Las promesas más recurrentes no se analizaron en el discurso</h3><p class="tarjeta__d">La pregunta específica 3 se responde con el <strong>interés declarado</strong> de los encuestados, no con un análisis de contenido de discursos y planes de gobierno.</p></div>
+            <div class="tarjeta tarjeta--filo f-escarlata"><h3 class="tarjeta__t">Los datos de la plataforma son de demostración</h3><p class="tarjeta__d">Las candidaturas y propuestas cargadas son ficticias a propósito: usar partidos reales con candidatos inventados insinuaría afiliaciones que nadie declaró. Las cifras del tablero ilustran los indicadores, no diagnostican a la política hondureña.</p></div>
+        </div>
+        <p class="tarjeta__d">Declarar estas limitaciones es la misma política que sostiene la plataforma: cada cifra dice de qué no es evidencia.</p>
+    </div>
+</section>
+
+<section class="lamina lamina--respaldo" data-respaldo="1" data-seccion="Respaldo · Seguridad">
+    <p class="ceja">Respaldo · Seguridad y OWASP</p>
+    <h2 class="titulo titulo--s">Resuelto, y deuda conocida</h2>
+    <div class="cuerpo">
+        <div class="fila fila--top" style="gap:30px">
+            <div class="col">
+                <span class="etiqueta" style="color:var(--verde)">Resuelto</span>
+                <div class="rejilla" style="gap:9px;margin-top:8px">
+                    <div class="tarjeta" style="padding:12px 15px"><p class="tarjeta__d"><strong>A01 · Control de acceso roto.</strong> La comprobación vive en la clase base <span class="chip-m">PaginaSegura</span> y se repite dentro de cada procedimiento de escritura. Verificado llamando al ASMX directamente.</p></div>
+                    <div class="tarjeta" style="padding:12px 15px"><p class="tarjeta__d"><strong>A03 · Inyección.</strong> Todo el acceso a datos usa <span class="chip-m">SqlCommand</span> con parámetros. Nunca se concatena entrada del usuario dentro del SQL.</p></div>
+                    <div class="tarjeta" style="padding:12px 15px"><p class="tarjeta__d"><strong>Cross-site scripting.</strong> El texto de usuario se rinde con <span class="chip-m">&lt;%#: %&gt;</span>, que escapa. La respuesta del modelo se reconstruye con lista blanca y sin atributos.</p></div>
+                    <div class="tarjeta" style="padding:12px 15px"><p class="tarjeta__d"><strong>Redirección abierta.</strong> <span class="chip-m">Sesion.EsDestinoSeguro</span> solo acepta rutas locales en el parámetro de regreso, y vive en un solo lugar.</p></div>
+                </div>
+            </div>
+            <div class="col">
+                <span class="etiqueta" style="color:var(--escarlata)">Deuda conocida, anotada para el anexo</span>
+                <div class="rejilla" style="gap:9px;margin-top:8px">
+                    <div class="tarjeta tarjeta--filo f-escarlata" style="padding:12px 15px"><p class="tarjeta__d"><strong>El servicio confía en el código de usuario que recibe.</strong> Quien llame al ASMX directamente puede valorar o comentar en nombre de otro. Se resuelve validando un token de sesión en lugar de confiar en el código enviado.</p></div>
+                    <div class="tarjeta tarjeta--filo f-escarlata" style="padding:12px 15px"><p class="tarjeta__d"><strong>Contraseñas sin <em>salt</em>.</strong> SHA-256 en hexadecimal. Dos personas con la misma contraseña producen el mismo hash.</p></div>
+                    <div class="tarjeta tarjeta--filo f-escarlata" style="padding:12px 15px"><p class="tarjeta__d"><strong>Enumeración de correos en el registro.</strong> Decir «ese correo ya está registrado» revela que la cuenta existe. Callarlo dejaría a quien ya tiene cuenta sin saber por qué falla.</p></div>
+                    <div class="tarjeta tarjeta--filo f-escarlata" style="padding:12px 15px"><p class="tarjeta__d"><strong>Hash con tildes al crear cuentas de candidatura.</strong> El procedimiento cifra con la página de códigos de la base y el backend con UTF-8: una contraseña con tilde crea la cuenta y el acceso la rechaza siempre.</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="lamina lamina--respaldo" data-respaldo="1" data-seccion="Respaldo · Tablero">
+    <p class="ceja">Respaldo · Los doce indicadores</p>
+    <h2 class="titulo titulo--s">Qué calcula cada gráfico, y con qué procedimiento</h2>
+    <div class="cuerpo">
+        <div class="fila" style="gap:26px">
+            <div class="col">
+                <table class="tabla-simple">
+                    <thead><tr><th style="width:42%">Indicador</th><th>Procedimiento</th></tr></thead>
+                    <tbody>
+                        <tr><td>Seis tarjetas KPI, cada una con su denominador</td><td class="mono">spAnaliticaResumen</td></tr>
+                        <tr><td>Principales hallazgos, calculados sobre la selección</td><td>Modelos/Analitica.cs</td></tr>
+                        <tr><td>Demanda ciudadana contra oferta programática</td><td class="mono">spAnaliticaCategorias</td></tr>
+                        <tr><td>Estado de cumplimiento, barra apilada al 100 %</td><td class="mono">spAnaliticaEstados</td></tr>
+                        <tr><td>Propuestas por partido, conteo bruto</td><td class="mono">spAnaliticaPartidos</td></tr>
+                        <tr><td>Densidad programática, propuestas por candidatura</td><td class="mono">spAnaliticaPartidos</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col">
+                <table class="tabla-simple">
+                    <thead><tr><th style="width:42%">Indicador</th><th>Procedimiento</th></tr></thead>
+                    <tbody>
+                        <tr><td>Signo de la participación, dona SVG</td><td class="mono">spAnaliticaParticipacion</td></tr>
+                        <tr><td>Participación por tipo de contenido</td><td class="mono">spAnaliticaParticipacion</td></tr>
+                        <tr><td>Ranking de candidaturas por saldo, barra divergente</td><td class="mono">spAnaliticaCandidatos</td></tr>
+                        <tr><td>Actividad diaria, área SVG de dos series</td><td class="mono">spAnaliticaActividad</td></tr>
+                        <tr><td>Cobertura territorial, 18 departamentos</td><td class="mono">spAnaliticaTerritorio</td></tr>
+                        <tr><td>Verificación por tipo de contenido</td><td class="mono">spAnaliticaVerificacion</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="tarjeta tarjeta--filo f-ambar">
+            <p class="tarjeta__d"><strong>Lo que el tablero deliberadamente no muestra:</strong> la comparación contra el período anterior con su flecha y su porcentaje de variación. Los registros de participación abarcan pocos días — esa variación sería una cifra inventada con apariencia de dato. En su lugar cada KPI se compara contra su propio denominador: «1 de 11 verificadas», «3 de 18 departamentos».</p>
+        </div>
+    </div>
+</section>
+
+<section class="lamina lamina--respaldo" data-respaldo="1" data-seccion="Respaldo · Administración">
+    <p class="ceja">Respaldo · Área de administración</p>
+    <h2 class="titulo titulo--s">Cuatro etapas, todas con bitácora</h2>
+    <div class="cuerpo">
+        <div class="fila fila--top" style="gap:24px">
+            <div class="col col--ancha">
+                <img class="captura" src="{{IMG:admin-verificacion}}" alt="Bandeja de verificación del área de administración: una sola cola con candidaturas, propuestas y publicaciones ordenadas por antigüedad.">
+            </div>
+            <div class="col">
+                <div class="rejilla" style="gap:10px">
+                    <div class="tarjeta tarjeta--filo" style="padding:12px 15px"><h3 class="tarjeta__t" style="font-size:15px">Verificación</h3><p class="tarjeta__d">Una sola cola con candidaturas, propuestas y publicaciones juntas, ordenada por lo más antiguo sin verificar. Quien revisa trabaja por antigüedad, no por tipo.</p></div>
+                    <div class="tarjeta tarjeta--filo f-escarlata" style="padding:12px 15px"><h3 class="tarjeta__t" style="font-size:15px">Moderación</h3><p class="tarjeta__d">Baja lógica con motivo obligatorio. El filtro <span class="chip-m">activo = 1</span> vive en dos lugares y solo dos, para que una consulta nueva no pueda olvidarlo.</p></div>
+                    <div class="tarjeta tarjeta--filo f-ambar" style="padding:12px 15px"><h3 class="tarjeta__t" style="font-size:15px">Catálogos</h3><p class="tarjeta__d">Alta y edición de partidos, campañas y candidaturas. Nada se borra: se desactiva. Los slugs se generan solo en el alta, porque regenerarlos rompería todo enlace ya compartido.</p></div>
+                    <div class="tarjeta tarjeta--filo f-verde" style="padding:12px 15px"><h3 class="tarjeta__t" style="font-size:15px">Interruptores de módulos</h3><p class="tarjeta__d">Ocultar no es dar de baja: el contenido sigue en la base y quien administra lo sigue viendo, marcado como oculto al público. La comprobación también está en el Web Service.</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

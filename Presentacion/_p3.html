@@ -1,0 +1,456 @@
+
+<style>
+/* Chips de tabla para el modelo de datos */
+.grupo-t { display: flex; flex-direction: column; gap: 7px; }
+.grupo-t__h { font-size: 11px; font-weight: 600; letter-spacing: .11em; text-transform: uppercase; color: #7fc4d8; margin: 0 0 2px; }
+.grupo-t__h span { color: #6d86a5; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.tabla-chip {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    padding: 5px 9px;
+    border-radius: 5px;
+    background: rgba(255,255,255,.055);
+    border: 1px solid rgba(159,196,232,.2);
+    color: #d5e3f2;
+}
+.tabla-chip--clave { border-color: #d3901f; background: rgba(211,144,31,.16); color: #f0cf90; }
+
+/* Reparto de responsabilidades por capas */
+.capas { display: flex; flex-direction: column; gap: 8px; }
+.capa {
+    display: grid;
+    grid-template-columns: 168px 108px 1fr;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 15px;
+    background: var(--superficie);
+    border: 1px solid var(--linea);
+    border-left: 3px solid var(--turquesa);
+    border-radius: var(--r-sm);
+}
+.capa__q { font-family: var(--mono); font-size: 12.5px; color: var(--azul); }
+.capa__v { font-family: var(--display); font-weight: 700; font-size: 17px; }
+.capa__d { font-size: 13.5px; line-height: 1.4; color: var(--tinta-2); }
+
+/* Barras pareadas de la brecha */
+.brecha { display: flex; flex-direction: column; gap: 4px; }
+.brecha__f { display: grid; grid-template-columns: 178px 1fr 84px; align-items: center; gap: 16px; padding: 5px 0; }
+.brecha__e { font-size: 14.5px; line-height: 1.25; }
+.brecha__e small { display: block; font-size: 11.5px; color: var(--suave); }
+.brecha__p { display: flex; flex-direction: column; gap: 4px; }
+.brecha__b { height: 11px; border-radius: 3px; width: 0; transition: width .85s cubic-bezier(.22,.9,.3,1); }
+.es-activa .brecha__b { width: var(--w, 0%); }
+.brecha__b--i { background: var(--ambar-vivo); }
+.brecha__b--o { background: var(--turquesa); }
+.brecha__v { text-align: right; font-variant-numeric: tabular-nums; line-height: 1.25; }
+.brecha__v b { font-size: 15px; font-weight: 600; color: var(--ambar); }
+.brecha__v small { display: block; font-size: 12.5px; color: var(--turquesa); }
+.leyenda { display: flex; gap: 20px; font-size: 13px; color: var(--tinta-2); }
+.leyenda i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+
+/* Ejes independientes */
+.ejes { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: center; font-size: 13px; }
+.eje-fila { display: flex; gap: 6px; }
+.eje-p { flex: 1; text-align: center; padding: 5px 4px; border-radius: 4px; font-size: 11.5px; font-weight: 500; background: var(--linea-2); color: var(--suave); }
+.eje-p--on { background: var(--verde-l); color: var(--verde); border: 1px solid #a9d3c0; font-weight: 600; }
+.eje-p--on2 { background: var(--ambar-l); color: var(--ambar); border: 1px solid #e5c78a; font-weight: 600; }
+.eje-t { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); white-space: nowrap; }
+</style>
+
+<!-- ═══════════════════════════════════ 7 · Topología ═════════════════════ -->
+<section class="lamina lamina--noche" data-seccion="Arquitectura">
+    <p class="ceja anim" style="--i:0">Arquitectura · Topología</p>
+    <h2 class="titulo anim" style="--i:1">Tres capas, y una sola habla con la base</h2>
+
+    <div class="cuerpo" style="justify-content:center">
+        <svg class="diagrama" viewBox="0 0 1150 400" role="img" aria-label="Topología en tres capas: el navegador habla con el frontend Web Forms, el frontend con el Web Service ASMX por SOAP sobre HTTPS, y solo el Web Service abre conexiones ADO.NET contra SQL Server Express.">
+            <!-- Capa 1 · Navegador -->
+            <g data-paso="1">
+                <text x="10" y="34" class="d-rotulo">CLIENTE</text>
+                <rect x="10" y="46" width="228" height="150" class="d-caja"/>
+                <text x="30" y="82" class="d-t">Navegador</text>
+                <text x="30" y="108" class="d-s">HTML renderizado en el servidor</text>
+                <text x="30" y="128" class="d-s">Bootstrap solo para la grilla</text>
+                <text x="30" y="148" class="d-s">Sin dependencias externas</text>
+                <text x="30" y="176" class="d-m">jQuery · 387 líneas propias de JS</text>
+            </g>
+
+            <path class="d-linea d-linea--fuerte traza" data-paso="2" d="M238 121 L302 121" marker-end="url(#flecha)"/>
+            <text x="243" y="110" class="d-rotulo" data-paso="2">HTTPS</text>
+
+            <!-- Capa 2 · Frontend -->
+            <g data-paso="2">
+                <text x="308" y="34" class="d-rotulo">PRESENTACIÓN</text>
+                <rect x="308" y="46" width="228" height="150" class="d-caja d-caja--acento"/>
+                <text x="328" y="82" class="d-t">Frontend</text>
+                <text x="328" y="108" class="d-s">ASP.NET Web Forms · C#</text>
+                <text x="328" y="128" class="d-s">29 páginas · 8 controles</text>
+                <text x="328" y="148" class="d-s">IIS Express · puerto 5080</text>
+                <text x="328" y="176" class="d-m">IContenidoServicio</text>
+            </g>
+
+            <path class="d-linea d-linea--fuerte traza" data-paso="3" d="M536 121 L600 121" marker-end="url(#flecha)"/>
+            <text x="529" y="110" class="d-rotulo" data-paso="3">SOAP · HTTPS</text>
+
+            <!-- Capa 3 · Web Service -->
+            <g data-paso="3">
+                <text x="606" y="34" class="d-rotulo">LÓGICA Y ACCESO A DATOS</text>
+                <rect x="606" y="46" width="228" height="150" class="d-caja d-caja--acento"/>
+                <text x="626" y="82" class="d-t">Web Service ASMX</text>
+                <text x="626" y="108" class="d-s">51 métodos · SOAP y JSON</text>
+                <text x="626" y="128" class="d-s">ADO.NET siempre con parámetros</text>
+                <text x="626" y="148" class="d-s">IIS Express · puerto 44359</text>
+                <text x="626" y="176" class="d-m">WebServiceGlobal.asmx</text>
+            </g>
+
+            <path class="d-linea d-linea--fuerte traza" data-paso="4" d="M834 121 L898 121" marker-end="url(#flecha)"/>
+            <text x="836" y="110" class="d-rotulo" data-paso="4">ADO.NET</text>
+
+            <!-- Capa 4 · Base -->
+            <g data-paso="4">
+                <text x="904" y="34" class="d-rotulo">PERSISTENCIA</text>
+                <rect x="904" y="46" width="236" height="150" class="d-caja d-caja--ok"/>
+                <text x="924" y="82" class="d-t">SQL Server Express</text>
+                <text x="924" y="108" class="d-s">23 tablas · 7 vistas · 3 funciones</text>
+                <text x="924" y="128" class="d-s">44 procedimientos almacenados</text>
+                <text x="924" y="148" class="d-s">35 llaves foráneas</text>
+                <text x="924" y="176" class="d-m">BDCUMPLEHN</text>
+            </g>
+
+            <!-- La regla que sostiene el reparto -->
+            <g data-paso="5">
+                <path class="d-linea d-linea--punteada" d="M422 210 L422 262 L1022 262 L1022 210"/>
+                <rect x="404" y="272" width="636" height="66" rx="8" fill="rgba(211,144,31,.12)" stroke="#a07a3c" stroke-width="1.1"/>
+                <text x="424" y="300" class="d-t" style="font-size:13.5px" fill="#f0cf90">La cadena de conexión vive solo en el Web Service.</text>
+                <text x="424" y="322" class="d-s" fill="#d8c49a">El frontend no la tiene, no referencia System.Data y no puede consultar la base ni por error.</text>
+            </g>
+
+            <defs>
+                <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M0 0 L10 5 L0 10 z" fill="#4fa8c4"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <p class="pie-lamina">Dos soluciones de Visual Studio independientes más una capa de base de datos por scripts numerados, que se ejecutan en orden con <span class="chip-m">sqlcmd</span>.</p>
+    <div class="notas">Insistir en la separación: es lo que permite que el frontend se pruebe con datos en memoria y que el ASMX sea el único punto de escritura. 55 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 8 · Modelo de datos ═══════════════ -->
+<section class="lamina lamina--noche" data-seccion="Arquitectura">
+    <p class="ceja anim" style="--i:0">Arquitectura · Modelo de datos</p>
+    <h2 class="titulo anim" style="--i:1">23 tablas, y una relación que no lleva llave foránea</h2>
+
+    <div class="cuerpo">
+        <div class="fila fila--top" style="gap:26px">
+            <div class="col col--ancha">
+                <div class="rejilla rejilla--4" style="gap:14px">
+                    <div class="grupo-t" data-paso="1">
+                        <p class="grupo-t__h">Catálogos <span>· 6</span></p>
+                        <span class="tabla-chip">Roles</span>
+                        <span class="tabla-chip">Cargos</span>
+                        <span class="tabla-chip">Departamentos</span>
+                        <span class="tabla-chip">Categorias</span>
+                        <span class="tabla-chip">EstadosPropuesta</span>
+                        <span class="tabla-chip">NivelesVerificacion</span>
+                    </div>
+                    <div class="grupo-t" data-paso="2">
+                        <p class="grupo-t__h">Entidades <span>· 6</span></p>
+                        <span class="tabla-chip">Campanas</span>
+                        <span class="tabla-chip">Partidos</span>
+                        <span class="tabla-chip">Candidatos</span>
+                        <span class="tabla-chip">Propuestas</span>
+                        <span class="tabla-chip">Publicaciones</span>
+                        <span class="tabla-chip">Usuarios</span>
+                    </div>
+                    <div class="grupo-t" data-paso="3">
+                        <p class="grupo-t__h">Participación <span>· 6</span></p>
+                        <span class="tabla-chip tabla-chip--clave">TiposObjeto</span>
+                        <span class="tabla-chip">Valoraciones</span>
+                        <span class="tabla-chip">Comentarios</span>
+                        <span class="tabla-chip">Encuestas</span>
+                        <span class="tabla-chip">EncuestaOpciones</span>
+                        <span class="tabla-chip">EncuestaVotos</span>
+                    </div>
+                    <div class="grupo-t" data-paso="4">
+                        <p class="grupo-t__h">Gobierno <span>· 5</span></p>
+                        <span class="tabla-chip">Auditoria</span>
+                        <span class="tabla-chip">Modulos</span>
+                        <span class="tabla-chip">ConsultasIA</span>
+                        <span class="tabla-chip">DominiosCorreo</span>
+                        <span class="tabla-chip">ConfirmacionesCorreo</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col" style="flex:0 0 418px" data-paso="5">
+                <svg class="diagrama" viewBox="0 0 418 356" style="height:auto" role="img" aria-label="Valoraciones, Comentarios y Auditoría apuntan a cualquier objeto mediante el par código de tipo y código de objeto, resuelto por el catálogo TiposObjeto hacia cinco destinos posibles.">
+                    <rect x="60" y="6" width="298" height="52" class="d-caja"/>
+                    <text x="76" y="30" class="d-t" style="font-size:12.5px">Valoraciones · Comentarios · Auditoria</text>
+                    <text x="76" y="48" class="d-s">apuntan a cualquier objeto de la plataforma</text>
+
+                    <path class="d-linea traza" d="M209 58 L209 92" marker-end="url(#flecha2)"/>
+                    <rect x="76" y="94" width="266" height="34" rx="6" fill="rgba(211,144,31,.14)" stroke="#a07a3c" stroke-width="1.1"/>
+                    <text x="209" y="116" class="d-m" text-anchor="middle" fill="#f0cf90">(codigoTipoObjeto, codigoObjeto)</text>
+
+                    <path class="d-linea traza" d="M209 128 L209 158" marker-end="url(#flecha2)"/>
+                    <rect x="118" y="160" width="182" height="38" class="d-caja d-caja--acento"/>
+                    <text x="209" y="184" class="d-m" text-anchor="middle" style="font-size:12px">TiposObjeto</text>
+
+                    <path class="d-linea d-linea--punteada traza" d="M209 198 L209 216 L44 216 L44 244"/>
+                    <path class="d-linea d-linea--punteada traza" d="M209 198 L209 216 L126 216 L126 244"/>
+                    <path class="d-linea d-linea--punteada traza" d="M209 198 L209 244"/>
+                    <path class="d-linea d-linea--punteada traza" d="M209 198 L209 216 L292 216 L292 244"/>
+                    <path class="d-linea d-linea--punteada traza" d="M209 198 L209 216 L374 216 L374 244"/>
+
+                    <g class="d-m" text-anchor="middle" style="font-size:10px" fill="#c6d6e8">
+                        <rect x="8"   y="246" width="72" height="26" rx="5" class="d-caja"/><text x="44"  y="263">Candidatos</text>
+                        <rect x="90"  y="246" width="72" height="26" rx="5" class="d-caja"/><text x="126" y="263">Propuestas</text>
+                        <rect x="172" y="246" width="74" height="26" rx="5" class="d-caja"/><text x="209" y="263">Publicaciones</text>
+                        <rect x="256" y="246" width="72" height="26" rx="5" class="d-caja"/><text x="292" y="263">Partidos</text>
+                        <rect x="338" y="246" width="72" height="26" rx="5" class="d-caja"/><text x="374" y="263">Encuestas</text>
+                    </g>
+
+                    <text x="209" y="300" class="d-s" text-anchor="middle" style="font-size:11.5px">Sin llave foránea: el destino cambia según el tipo.</text>
+                    <text x="209" y="320" class="d-s" text-anchor="middle" style="font-size:11.5px">La existencia la valida el Web Service, y la alternativa</text>
+                    <text x="209" y="338" class="d-s" text-anchor="middle" style="font-size:11.5px">era repetir ocho tablas iguales.</text>
+
+                    <defs>
+                        <marker id="flecha2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M0 0 L10 5 L0 10 z" fill="#5c7ea6"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <p class="pie-lamina">Los contadores de «me gusta» y de comentarios <strong>no se guardan</strong>: se derivan con subconsultas, para que el número mostrado no pueda contradecir a las filas reales.</p>
+    <div class="notas">Si preguntan por qué no hay FK: porque el destino depende del tipo. Es la decisión de diseño más discutible y hay que defenderla, no esconderla. 55 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 9 · Neutralidad ═══════════════════ -->
+<section class="lamina" data-seccion="Neutralidad">
+    <p class="ceja anim" style="--i:0">Neutralidad</p>
+    <h2 class="titulo anim" style="--i:1">La neutralidad no se declara: se construye</h2>
+    <p class="bajada anim" style="--i:2">Cuatro mecanismos del modelo de datos hacen que la plataforma no pueda favorecer a nadie, aunque quien la administre quisiera.</p>
+
+    <div class="cuerpo">
+        <div class="rejilla rejilla--2" style="gap:14px">
+            <div class="tarjeta tarjeta--filo f-azul" data-paso="1">
+                <h3 class="tarjeta__t">Verificación y cumplimiento son dos ejes distintos</h3>
+                <p class="tarjeta__d" style="margin-bottom:11px">Se llaman parecido y no son lo mismo. Una propuesta puede estar <strong>Verificada</strong> y seguir <strong>Declarada</strong>, y eso no es una contradicción.</p>
+                <div class="ejes">
+                    <span class="eje-t">Verificación</span>
+                    <span class="eje-fila"><span class="eje-p">Declarado</span><span class="eje-p">En revisión</span><span class="eje-p eje-p--on">Verificado</span></span>
+                    <span class="eje-t">Cumplimiento</span>
+                    <span class="eje-fila"><span class="eje-p eje-p--on2">Declarada</span><span class="eje-p">En proceso</span><span class="eje-p">Cumplida</span><span class="eje-p">Incumplida</span></span>
+                </div>
+            </div>
+
+            <div class="tarjeta tarjeta--filo f-escarlata" data-paso="2">
+                <h3 class="tarjeta__t">La candidatura no se califica a sí misma</h3>
+                <p class="tarjeta__d">El candidato solo declara su propuesta o la marca <em>en proceso</em>. Los estados de cumplimiento —esquema de PolitiFact, siete niveles con su ponderación— los asigna la plataforma con evidencia. Como el candidato es autor de su propio contenido, todo se muestra identificado como <strong>declarado</strong> hasta que exista fuente verificable.</p>
+            </div>
+
+            <div class="tarjeta tarjeta--filo f-ambar" data-paso="3">
+                <h3 class="tarjeta__t">Nada se borra, y todo queda anotado</h3>
+                <p class="tarjeta__d">Retirar una publicación es baja lógica con motivo obligatorio, nunca <span class="chip-m">DELETE</span>. Cada acción de administración escribe en <span class="chip-m">Auditoria</span>, que conserva la fila aunque el objeto desaparezca. No hay pantalla ni método para editar esa bitácora, y no debe haberlos.</p>
+            </div>
+
+            <div class="tarjeta tarjeta--filo f-verde" data-paso="4">
+                <h3 class="tarjeta__t">Cada cifra declara de qué no es evidencia</h3>
+                <p class="tarjeta__d">La cuadrícula de departamentos dice que no es un mapa. La tarjeta de encuesta dice que describe a quienes respondieron y no a la población hondureña. El tablero omite la comparación contra el período anterior porque tres días de registro no la sostienen.</p>
+            </div>
+        </div>
+
+        <div class="cita" style="border-left-color:var(--turquesa);font-size:17px" data-paso="5">«Esta sí está <em>Verificada</em>, lo que significa que hay una fuente registrada que respalda que la propuesta existe, aunque su estado de cumplimiento sigue siendo Declarada.»
+            <span class="cita__f">Respuesta real del asistente de CumpleHN, sin que se le preguntara por la diferencia entre los dos ejes.</span>
+        </div>
+    </div>
+
+    <div class="notas">La cita del final es la prueba de que la regla se cumple de punta a punta: del modelo de datos al prompt. 60 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 10 · Control de acceso ════════════ -->
+<section class="lamina lamina--noche" data-seccion="Seguridad">
+    <p class="ceja anim" style="--i:0">Seguridad · Control de acceso</p>
+    <h2 class="titulo anim" style="--i:1">Lo que el frontend sabe decide qué botones muestra, nunca qué se permite</h2>
+
+    <div class="cuerpo" style="justify-content:center">
+        <svg class="diagrama" viewBox="0 0 1150 386" role="img" aria-label="Dos caminos: el navegador pasa por la clase base PaginaSegura, y una llamada directa al Web Service choca con dos comprobaciones de rol, una en el servicio y otra dentro del procedimiento almacenado.">
+            <!-- Camino legítimo -->
+            <text x="10" y="26" class="d-rotulo">CAMINO NORMAL</text>
+            <g data-paso="1">
+                <rect x="10" y="38" width="176" height="66" class="d-caja"/>
+                <text x="30" y="66" class="d-t" style="font-size:13px">Navegador</text>
+                <text x="30" y="88" class="d-s">sesión en Session</text>
+
+                <path class="d-linea traza" d="M186 71 L246 71" marker-end="url(#f3)"/>
+
+                <rect x="250" y="38" width="238" height="66" class="d-caja d-caja--acento"/>
+                <text x="270" y="64" class="d-m" style="font-size:12.5px">PaginaSegura.OnPreInit</text>
+                <text x="270" y="88" class="d-s">antes de que exista un solo control</text>
+
+                <path class="d-linea traza" d="M488 71 L548 71" marker-end="url(#f3)"/>
+                <rect x="552" y="38" width="200" height="66" class="d-caja d-caja--ok"/>
+                <text x="572" y="64" class="d-t" style="font-size:13px">Su propia área</text>
+                <text x="572" y="88" class="d-s">Admin · Panel · portada</text>
+            </g>
+
+            <g data-paso="2">
+                <text x="790" y="34" class="d-rotulo">TRES ROLES</text>
+                <rect x="790" y="44" width="350" height="60" rx="8" fill="rgba(255,255,255,.05)" stroke="rgba(159,196,232,.2)"/>
+                <text x="812" y="70" class="d-s" style="font-size:12.5px" fill="#d5e3f2">Administrador · Candidato · Ciudadano</text>
+                <text x="812" y="90" class="d-s">La correspondencia rol → área vive solo en un lugar.</text>
+            </g>
+
+            <!-- Camino del atacante -->
+            <text x="10" y="168" class="d-rotulo" style="fill:#e0685c">LLAMADA DIRECTA AL SERVICIO, SALTÁNDOSE LAS PÁGINAS</text>
+            <g data-paso="3">
+                <rect x="10" y="180" width="238" height="70" class="d-caja d-caja--peligro"/>
+                <text x="30" y="208" class="d-t" style="font-size:13px" fill="#f2b3ac">Cliente SOAP propio</text>
+                <text x="30" y="230" class="d-s" fill="#d8a9a3">envía el código de usuario que quiera</text>
+                <path class="d-linea traza" style="stroke:#e0685c" d="M248 215 L318 215" marker-end="url(#f4)"/>
+            </g>
+
+            <g data-paso="4">
+                <rect x="322" y="180" width="252" height="70" class="d-caja d-caja--acento"/>
+                <text x="342" y="206" class="d-rotulo">BARRERA 1 · WEB SERVICE</text>
+                <text x="342" y="230" class="d-m" style="font-size:12.5px">EsAdministrador(conn, codigo)</text>
+                <path class="d-linea traza" style="stroke:#e0685c" d="M574 215 L644 215" marker-end="url(#f4)"/>
+            </g>
+
+            <g data-paso="5">
+                <rect x="648" y="180" width="252" height="70" class="d-caja d-caja--acento"/>
+                <text x="668" y="206" class="d-rotulo">BARRERA 2 · DENTRO DE LA BASE</text>
+                <text x="668" y="230" class="d-m" style="font-size:12.5px">fnEsAdministrador(@codigo)</text>
+                <path class="d-linea traza" style="stroke:#e0685c" d="M900 215 L960 215" marker-end="url(#f4)"/>
+                <text x="966" y="212" class="d-t" style="font-size:13px" fill="#f2b3ac">Rechazado</text>
+                <text x="966" y="234" class="d-s" fill="#d8a9a3">con motivo, en las dos capas</text>
+            </g>
+
+            <g data-paso="6">
+                <rect x="10" y="290" width="1130" height="76" rx="8" fill="rgba(44,122,88,.13)" stroke="#5aab84" stroke-width="1.1"/>
+                <text x="34" y="318" class="d-t" style="font-size:13.5px" fill="#9ed9bd">La protección va en la clase base, no repetida en cada página.</text>
+                <text x="34" y="340" class="d-s" fill="#a9cbba">Antes cada página del panel repetía el mismo bloque, así que una página nueva que olvidara copiarlo quedaba abierta — el fallo A01 de OWASP. Con la clase base,</text>
+                <text x="34" y="358" class="d-s" fill="#a9cbba">olvidarse significa no compilar. Y las plantillas maestras no protegen nada: se aplican cuando la página ya empezó su ciclo de vida.</text>
+            </g>
+
+            <defs>
+                <marker id="f3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#5c7ea6"/></marker>
+                <marker id="f4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#e0685c"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <p class="pie-lamina">Está verificado llamando al ASMX directamente con el código de un ciudadano y con el de un candidato: ninguno de los dos consigue verificar ni moderar.</p>
+    <div class="notas">Si preguntan por qué no se usa el elemento authorization del Web.config: porque ese mecanismo se apoya en la autenticación de formularios, y acá la sesión se valida contra el Web Service. 50 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 11 · Tablero ══════════════════════ -->
+<section class="lamina" data-seccion="Analítica">
+    <p class="ceja anim" style="--i:0">Módulo de analítica</p>
+    <h2 class="titulo anim" style="--i:1">Doce indicadores en una sola llamada</h2>
+
+    <div class="cuerpo">
+        <div class="fila fila--top" style="gap:24px">
+            <div class="col col--ancha anim" style="--i:2">
+                <div class="captura-marco captura-marco--recorte">
+                    <div class="captura-marco__barra">
+                        <span class="captura-marco__punto"></span><span class="captura-marco__punto"></span><span class="captura-marco__punto"></span>
+                        <span class="captura-marco__url">cumplehn / Analitica</span>
+                    </div>
+                    <div class="lienzo" style="--alto:392px"><img src="{{IMG:analitica}}" alt="Tablero analítico de CumpleHN con seis indicadores clave y la pestaña de principales hallazgos."></div>
+                </div>
+            </div>
+
+            <div class="col" style="flex:0 0 388px">
+                <div class="capas">
+                    <div class="capa" data-paso="1">
+                        <span class="capa__q">base de datos</span>
+                        <span class="capa__v">calcula</span>
+                        <span class="capa__d">5 vistas de detalle y 10 procedimientos</span>
+                    </div>
+                    <div class="capa" data-paso="2">
+                        <span class="capa__q">Web Service</span>
+                        <span class="capa__v">transporta</span>
+                        <span class="capa__d">sin una línea de SQL escrita a mano</span>
+                    </div>
+                    <div class="capa" data-paso="3">
+                        <span class="capa__q">Modelos/</span>
+                        <span class="capa__v">interpreta</span>
+                        <span class="capa__d">KPI, hallazgos y proporciones</span>
+                    </div>
+                    <div class="capa" data-paso="4">
+                        <span class="capa__q">Analitica.aspx</span>
+                        <span class="capa__v">dibuja</span>
+                        <span class="capa__d">anchos de barra, clases y SVG en el servidor</span>
+                    </div>
+                </div>
+
+                <div class="tarjeta tarjeta--filo f-ambar" style="margin-top:14px" data-paso="5">
+                    <p class="tarjeta__d">Un indicador nuevo se agrega <strong>creando primero su procedimiento almacenado</strong>, para que el cálculo quede documentado en la base y no escondido en el servicio.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p class="pie-lamina">Todo el tablero viaja en una sola llamada. No es solo por costo: garantiza que los doce gráficos correspondan al mismo instante de los datos.</p>
+    <div class="notas">Mencionar que no hay librería de gráficos: todo son repetidores, CSS y SVG generado en el servidor. Los tooltips son elementos title nativos, que lee el lector de pantalla. 50 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 12 · La brecha ════════════════════ -->
+<section class="lamina" data-seccion="Analítica">
+    <p class="ceja anim" style="--i:0">El indicador central</p>
+    <h2 class="titulo anim" style="--i:1">Lo que la ciudadanía prioriza contra lo que las candidaturas proponen</h2>
+
+    <div class="cuerpo">
+        <div class="leyenda anim" style="--i:2">
+            <span><i style="background:var(--ambar-vivo)"></i>Interés ciudadano — encuesta del proyecto, n = 150</span>
+            <span><i style="background:var(--turquesa)"></i>Propuestas registradas en la plataforma</span>
+            <span style="color:var(--suave)">Las dos medidas en porcentaje sobre su propio total, para que quepan en una sola escala.</span>
+        </div>
+
+        <div class="brecha">
+            <div class="brecha__f" data-paso="1">
+                <span class="brecha__e">Seguridad y orden público<small>1 propuesta</small></span>
+                <span class="brecha__p"><span class="brecha__b brecha__b--i" style="--w:92.7%"></span><span class="brecha__b brecha__b--o" style="--w:33.3%"></span></span>
+                <span class="brecha__v"><b>25.3 %</b><small>9.1 %</small></span>
+            </div>
+            <div class="brecha__f" data-paso="2">
+                <span class="brecha__e">Salud<small>2 propuestas</small></span>
+                <span class="brecha__p"><span class="brecha__b brecha__b--i" style="--w:85.3%"></span><span class="brecha__b brecha__b--o" style="--w:66.7%"></span></span>
+                <span class="brecha__v"><b>23.3 %</b><small>18.2 %</small></span>
+            </div>
+            <div class="brecha__f" data-paso="2">
+                <span class="brecha__e">Educación<small>1 propuesta</small></span>
+                <span class="brecha__p"><span class="brecha__b brecha__b--i" style="--w:65.9%"></span><span class="brecha__b brecha__b--o" style="--w:33.3%"></span></span>
+                <span class="brecha__v"><b>18.0 %</b><small>9.1 %</small></span>
+            </div>
+            <div class="brecha__f" data-paso="3">
+                <span class="brecha__e">Economía y empleo<small>2 propuestas</small></span>
+                <span class="brecha__p"><span class="brecha__b brecha__b--i" style="--w:53.8%"></span><span class="brecha__b brecha__b--o" style="--w:66.7%"></span></span>
+                <span class="brecha__v"><b>14.7 %</b><small>18.2 %</small></span>
+            </div>
+            <div class="brecha__f" data-paso="3">
+                <span class="brecha__e">Infraestructura<small>2 propuestas</small></span>
+                <span class="brecha__p"><span class="brecha__b brecha__b--i" style="--w:51.3%"></span><span class="brecha__b brecha__b--o" style="--w:66.7%"></span></span>
+                <span class="brecha__v"><b>14.0 %</b><small>18.2 %</small></span>
+            </div>
+            <div class="brecha__f" data-paso="4">
+                <span class="brecha__e">Transparencia y gobernanza<small>3 propuestas</small></span>
+                <span class="brecha__p"><span class="brecha__b brecha__b--i" style="--w:17.2%"></span><span class="brecha__b brecha__b--o" style="--w:100%"></span></span>
+                <span class="brecha__v"><b>4.7 %</b><small>27.3 %</small></span>
+            </div>
+        </div>
+
+        <div class="cita" data-paso="5" style="font-size:19px">«La brecha más grande está en seguridad y orden público: concentra 25.3 % del interés ciudadano y solo 9.1 % de las propuestas registradas, 16.2 puntos porcentuales de diferencia.»
+            <span class="cita__f">Hallazgo redactado por la propia plataforma. No está escrito a mano: se calcula sobre la selección activa y cambia con los filtros.</span>
+        </div>
+    </div>
+
+    <p class="pie-lamina">La columna <span class="chip-m">Categorias.interesEncuesta</span> guarda el interés medido en la encuesta, de modo que el contraste sea data-driven y no un texto fijo. La oferta corresponde a los datos de demostración.</p>
+    <div class="notas">Aclarar sin que lo pregunten: la oferta son datos demo, así que la brecha ilustra el indicador, no diagnostica a la política hondureña. 55 s.</div>
+</section>

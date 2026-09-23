@@ -1,0 +1,1085 @@
+<title>CumpleHN en cinco minutos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+
+<style>
+/* ==========================================================================
+   Defensa CumpleHN — deck de 1280x720 escalado por transform.
+   Los tokens vienen de Content/cumplehn.css de la plataforma: la
+   presentacion y el sitio tienen que verse de la misma familia.
+   ========================================================================== */
+
+:root {
+    /* Neutros. El papel tira apenas a calido para leerse como documento
+       y no como interfaz. */
+    --tinta:      #14171c;
+    --tinta-2:    #39404a;
+    --suave:      #6a7078;
+    --tenue:      #9aa0a8;
+    --linea:      #e3e1dd;
+    --linea-2:    #eeece8;
+    --papel:      #f7f7f5;
+    --superficie: #ffffff;
+
+    /* Guacamaya roja (Ara macao), ave nacional. Acentos, nunca fondo. */
+    --escarlata:   #c3372c;
+    --escarlata-l: #fdf2f1;
+    --ambar:       #b8791a;
+    --ambar-vivo:  #d3901f;
+    --ambar-l:     #fdf6e9;
+    --verde:       #2c7a58;
+    --verde-l:     #eef7f2;
+    --turquesa:    #17708a;
+    --turquesa-l:  #eef6f8;
+
+    /* Azul de la bandera. Identidad, no dato. */
+    --azul:   #1b4f9c;
+    --azul-l: #eff3fa;
+    --noche:  #0e2340;
+
+    --display: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --sans:    "IBM Plex Sans", "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    --mono:    "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+
+    --r:    10px;
+    --r-sm: 6px;
+    --sh:   0 1px 2px rgba(14,35,64,.05), 0 8px 24px rgba(14,35,64,.07);
+    --sh-2: 0 2px 6px rgba(14,35,64,.08), 0 18px 48px rgba(14,35,64,.12);
+}
+
+/* El deck es un objeto proyectado: se compromete a un solo mundo visual y no
+   invierte con el tema del visor. Por eso pinta fondo y color explicitamente
+   en vez de heredar el del anfitrion. */
+:root { color-scheme: light; }
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: #1c2127;
+    color: var(--tinta);
+    font-family: var(--sans);
+    overflow: hidden;
+}
+
+/* ------------------------------------------------------------ 1. Escenario */
+
+.marco {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding-bottom: 34px;
+    background: radial-gradient(120% 90% at 50% 0%, #2c333b 0%, #1c2127 60%, #171b20 100%);
+}
+
+.pista {
+    position: relative;
+    width: 1280px;
+    height: 720px;
+    flex: none;
+    transform: scale(var(--esc, 1));
+    transform-origin: center center;
+    box-shadow: 0 30px 90px rgba(0,0,0,.45);
+}
+
+.lamina {
+    position: absolute;
+    inset: 0;
+    padding: 52px 64px 56px;
+    background: var(--papel);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .3s ease;
+}
+
+/* Sin JS se ve la portada igual: nada queda esperando a un script. */
+.lamina:first-of-type { opacity: 1; visibility: visible; }
+html.js .lamina { opacity: 0; visibility: hidden; }
+html.js .lamina.es-activa { opacity: 1; visibility: visible; }
+
+/* Filo guacamaya: el mismo remate que llevan las tarjetas de la plataforma. */
+.lamina::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 5px;
+    z-index: 3;
+    background: linear-gradient(90deg,
+        var(--escarlata) 0 25%, var(--ambar-vivo) 25% 50%,
+        var(--verde) 50% 75%, var(--turquesa) 75% 100%);
+}
+
+.lamina--noche {
+    background: linear-gradient(158deg, #123054 0%, #0d2140 52%, #0a1728 100%);
+    color: #e8eef6;
+}
+
+.lamina--centro { justify-content: center; }
+
+/* ---------------------------------------------------------- 2. Tipografia */
+
+.ceja {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--turquesa);
+    margin: 0 0 9px;
+}
+.lamina--noche .ceja { color: #7fc4d8; }
+
+h1, h2, h3 {
+    font-family: var(--display);
+    font-weight: 700;
+    letter-spacing: -.015em;
+    line-height: 1.12;
+    text-wrap: balance;
+    margin: 0;
+}
+
+.titulo    { font-size: 42px; margin: 0 0 10px; }
+.titulo--g { font-size: 58px; }
+.titulo--s { font-size: 32px; }
+
+.bajada {
+    font-size: 18.5px;
+    line-height: 1.55;
+    color: var(--tinta-2);
+    max-width: 64ch;
+    margin: 0;
+}
+.lamina--noche .bajada { color: #bacadd; }
+
+.pie-lamina {
+    margin-top: auto;
+    padding-top: 16px;
+    font-size: 13px;
+    color: var(--suave);
+    line-height: 1.5;
+}
+.lamina--noche .pie-lamina { color: #8ba3bf; }
+
+code, .mono { font-family: var(--mono); font-size: .89em; }
+.chip-m {
+    font-family: var(--mono);
+    font-size: .86em;
+    background: var(--azul-l);
+    color: var(--azul);
+    padding: 1px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+.lamina--noche .chip-m { background: rgba(127,196,216,.15); color: #9ed4e6; }
+
+strong { font-weight: 600; }
+
+/* ------------------------------------------------------------- 3. Cuerpo */
+
+.cuerpo { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 20px; }
+.fila { display: flex; gap: 20px; }
+.fila--top { align-items: flex-start; }
+.fila--centro { align-items: center; }
+.col { flex: 1; min-width: 0; }
+.col--estrecha { flex: 0 0 340px; }
+.col--ancha { flex: 1.5; }
+
+.rejilla { display: grid; gap: 14px; }
+.rejilla--2 { grid-template-columns: repeat(2, 1fr); }
+.rejilla--3 { grid-template-columns: repeat(3, 1fr); }
+.rejilla--4 { grid-template-columns: repeat(4, 1fr); }
+
+.tarjeta {
+    background: var(--superficie);
+    border: 1px solid var(--linea);
+    border-radius: var(--r);
+    padding: 16px 18px;
+}
+.lamina--noche .tarjeta {
+    background: rgba(255,255,255,.055);
+    border-color: rgba(159,196,232,.2);
+}
+
+.tarjeta__t {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 17.5px;
+    line-height: 1.2;
+    margin: 0 0 6px;
+}
+.tarjeta__d { font-size: 14px; line-height: 1.5; color: var(--tinta-2); margin: 0; }
+.lamina--noche .tarjeta__d { color: #bacadd; }
+
+/* El filo de color dice de que tipo es la tarjeta. Se gasta por rol: si lo
+   llevan todas, deja de significar algo. */
+.tarjeta--filo { border-left: 3px solid var(--turquesa); }
+.f-escarlata { border-left-color: var(--escarlata); }
+.f-ambar     { border-left-color: var(--ambar-vivo); }
+.f-verde     { border-left-color: var(--verde); }
+.f-azul      { border-left-color: var(--azul); }
+
+.etiqueta {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--suave);
+    margin: 0 0 5px;
+}
+.lamina--noche .etiqueta { color: #8ba3bf; }
+
+/* --------------------------------------------------------------- 4. Cifras */
+
+.cifra {
+    font-family: var(--sans);
+    font-weight: 600;
+    letter-spacing: -.025em;
+    font-variant-numeric: tabular-nums;
+}
+.cifra--xl { font-size: 66px; line-height: 1; }
+.cifra--l  { font-size: 42px; line-height: 1; }
+.cifra--m  { font-size: 28px; line-height: 1; }
+
+.dato { display: flex; flex-direction: column; gap: 8px; }
+.dato__n { color: var(--azul); }
+.dato__d { font-size: 14px; line-height: 1.45; color: var(--tinta-2); }
+.lamina--noche .dato__n { color: #d3e6f8; }
+.lamina--noche .dato__d { color: #bacadd; }
+
+.pista-b { height: 6px; border-radius: 99px; background: var(--linea); overflow: hidden; }
+.pista-b__v {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--turquesa);
+    width: 0;
+    transition: width .9s cubic-bezier(.22,.9,.3,1);
+}
+.es-activa .pista-b__v { width: var(--w, 0%); }
+.pista-b__v--ambar { background: var(--ambar-vivo); }
+.pista-b__v--escarlata { background: var(--escarlata); }
+
+/* ------------------------------------------------------------ 5. Animacion */
+
+html.js [data-paso] { opacity: 0; transform: translateY(9px); }
+html.js [data-paso].visto {
+    opacity: 1;
+    transform: none;
+    transition: opacity .36s ease, transform .36s cubic-bezier(.22,.9,.3,1);
+}
+
+@keyframes subir { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+html.js .lamina.es-activa .anim {
+    animation: subir .48s cubic-bezier(.22,.9,.3,1) both;
+    animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+@keyframes latir { 0%, 100% { opacity: .95; } 50% { opacity: .35; } }
+.latido { animation: latir 1.8s ease-in-out infinite; }
+
+.traza { stroke-dasharray: var(--largo, 1200); stroke-dashoffset: var(--largo, 1200); }
+.es-activa .traza { stroke-dashoffset: 0; transition: stroke-dashoffset .8s cubic-bezier(.3,.8,.4,1); }
+html.js [data-paso] .traza, html.js [data-paso].traza { stroke-dashoffset: var(--largo, 1200); }
+html.js [data-paso].visto .traza, html.js [data-paso].visto.traza { stroke-dashoffset: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+    html.js [data-paso] { transform: none; }
+    html.js [data-paso].visto { transition: opacity .12s linear; }
+    html.js .lamina.es-activa .anim { animation: none; }
+    .pista-b__v, .traza, .lamina { transition: none; }
+    .latido { animation: none; }
+}
+
+/* ------------------------------------------------------------ 6. Capturas */
+
+.captura {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--linea);
+    box-shadow: var(--sh-2);
+    background: #fff;
+}
+.lamina--noche .captura { border-color: rgba(159,196,232,.25); }
+
+.captura-marco {
+    border-radius: var(--r);
+    overflow: hidden;
+    border: 1px solid var(--linea);
+    box-shadow: var(--sh-2);
+    background: var(--superficie);
+}
+.captura-marco__barra {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #eceae6;
+    border-bottom: 1px solid var(--linea);
+}
+.captura-marco__punto { width: 8px; height: 8px; border-radius: 99px; background: #c9c6c0; }
+.captura-marco__url {
+    margin-left: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--suave);
+}
+.captura-marco img { display: block; width: 100%; height: auto; }
+.captura-marco--recorte { position: relative; }
+.captura-marco--recorte .lienzo { position: relative; height: var(--alto, 300px); overflow: hidden; }
+.captura-marco--recorte img { margin-top: var(--desliz, 0); }
+/* El degradado dice que la captura sigue más abajo, en vez de parecer
+   una imagen cortada por accidente. */
+.captura-marco--recorte .lienzo::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 46px;
+    background: linear-gradient(to top, var(--superficie) 12%, rgba(255,255,255,0));
+}
+
+/* ---------------------------------------------------------------- 7. SVG */
+
+.diagrama { width: 100%; height: 100%; display: block; }
+.d-caja { fill: rgba(255,255,255,.06); stroke: rgba(159,196,232,.34); stroke-width: 1.2; rx: 9; }
+.d-caja--claro { fill: var(--superficie); stroke: var(--linea); }
+.d-caja--acento { fill: rgba(23,112,138,.18); stroke: #4fa8c4; }
+.d-caja--peligro { fill: rgba(195,55,44,.16); stroke: #e0685c; }
+.d-caja--ok { fill: rgba(44,122,88,.18); stroke: #5aab84; }
+.d-t { font-family: var(--sans); font-weight: 600; font-size: 14px; fill: #e8eef6; }
+.d-t--claro { fill: var(--tinta); }
+.d-s { font-family: var(--sans); font-weight: 400; font-size: 11.5px; fill: #93aac6; }
+.d-s--claro { fill: var(--suave); }
+.d-m { font-family: var(--mono); font-size: 11px; fill: #9ed4e6; }
+.d-linea { stroke: #5c7ea6; stroke-width: 1.6; fill: none; }
+.d-linea--punteada { stroke-dasharray: 5 4; stroke: #a07a3c; }
+.d-linea--fuerte { stroke: #4fa8c4; stroke-width: 2.2; }
+.d-rotulo { font-family: var(--sans); font-size: 10.5px; font-weight: 500; fill: #7f9ec2; letter-spacing: .04em; }
+
+/* ------------------------------------------------------------------ 8. HUD */
+
+.hud {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 18px;
+    font-size: 12px;
+    color: #8b949e;
+    background: linear-gradient(to top, rgba(12,15,19,.92), rgba(12,15,19,0));
+    pointer-events: none;
+    z-index: 20;
+}
+.hud__barra { flex: 1; height: 3px; background: rgba(255,255,255,.13); border-radius: 99px; overflow: hidden; }
+.hud__v { display: block; height: 100%; background: linear-gradient(90deg, var(--escarlata), var(--ambar-vivo), var(--verde), var(--turquesa)); width: 0; transition: width .3s ease; }
+.hud__n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.hud__ayuda { opacity: .65; }
+
+.panel {
+    position: fixed;
+    inset: auto 0 0 0;
+    max-height: 46vh;
+    overflow: auto;
+    padding: 20px 26px 30px;
+    background: #10141a;
+    color: #d7dee7;
+    border-top: 2px solid var(--turquesa);
+    font-size: 14px;
+    line-height: 1.6;
+    z-index: 30;
+}
+.panel[hidden] { display: none !important; }
+.panel h4 { font-family: var(--display); font-size: 16px; margin: 0 0 8px; color: #fff; }
+.panel kbd {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-right: 4px;
+}
+.panel__lista { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 24px; margin: 0; padding: 0; list-style: none; }
+.notas { display: none; }
+
+:focus-visible { outline: 2px solid var(--turquesa); outline-offset: 3px; }
+</style>
+<style>
+/* ------------------------------------------------- Piezas de lamina propia */
+
+/* Portada */
+.portada { display: flex; flex-direction: column; justify-content: center; height: 100%; }
+.marca { font-family: var(--display); font-weight: 700; font-size: 74px; letter-spacing: -.03em; line-height: 1; margin: 0 0 18px; }
+.marca em { font-style: normal; color: var(--escarlata); }
+.portada__sub { font-family: var(--display); font-size: 27px; font-weight: 600; line-height: 1.24; color: var(--tinta-2); max-width: 21ch; margin: 0 0 34px; }
+.portada__meta { display: flex; gap: 46px; font-size: 14px; line-height: 1.6; color: var(--suave); border-top: 1px solid var(--linea); padding-top: 18px; }
+.portada__meta b { display: block; font-weight: 600; color: var(--tinta); font-size: 14.5px; }
+.portada__sello {
+    position: absolute;
+    right: 64px; top: 96px;
+    width: 236px; height: 236px;
+    opacity: .96;
+}
+
+/* Fuentes dispersas de la lamina del problema */
+.dispersion { position: relative; height: 246px; }
+.fuente {
+    position: absolute;
+    background: var(--superficie);
+    border: 1px solid var(--linea);
+    border-radius: var(--r-sm);
+    box-shadow: var(--sh);
+    padding: 9px 14px;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--tinta-2);
+    white-space: nowrap;
+}
+.fuente::before {
+    content: "";
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 99px;
+    background: var(--tenue);
+    margin-right: 9px;
+    vertical-align: middle;
+}
+@keyframes flotar { from { transform: translateY(0) rotate(var(--g)); } to { transform: translateY(-7px) rotate(var(--g)); } }
+html.js .es-activa .fuente { animation: flotar var(--dur, 4s) ease-in-out infinite alternate; animation-delay: var(--esp, 0s); }
+@media (prefers-reduced-motion: reduce) { html.js .es-activa .fuente { animation: none; } }
+
+/* Cita destacada */
+.cita {
+    border-left: 3px solid var(--ambar-vivo);
+    padding: 4px 0 4px 20px;
+    font-family: var(--display);
+    font-size: 25px;
+    line-height: 1.35;
+    color: var(--tinta);
+}
+.cita--noche { color: #eaf1f9; border-left-color: var(--ambar-vivo); }
+.cita__f { display: block; font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--suave); margin-top: 10px; letter-spacing: .01em; }
+.lamina--noche .cita__f { color: #8ba3bf; }
+
+/* Lista de negaciones */
+.no-hace { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 11px; }
+.no-hace li { position: relative; padding-left: 30px; font-size: 16.5px; line-height: 1.4; color: var(--tinta-2); }
+.no-hace li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 7px;
+    width: 15px; height: 2px;
+    background: var(--escarlata);
+}
+
+/* Fichas de modulo */
+.modulo {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    padding: 9px 12px;
+    background: var(--superficie);
+    border: 1px solid var(--linea);
+    border-left: 3px solid var(--turquesa);
+    border-radius: var(--r-sm);
+    font-size: 13.5px;
+    line-height: 1.35;
+}
+.modulo b { font-weight: 600; }
+.modulo__n { font-family: var(--mono); font-size: 11px; color: var(--tenue); }
+</style>
+<style>
+/* Chips de tabla para el modelo de datos */
+.grupo-t { display: flex; flex-direction: column; gap: 7px; }
+.grupo-t__h { font-size: 11px; font-weight: 600; letter-spacing: .11em; text-transform: uppercase; color: #7fc4d8; margin: 0 0 2px; }
+.grupo-t__h span { color: #6d86a5; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.tabla-chip {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    padding: 5px 9px;
+    border-radius: 5px;
+    background: rgba(255,255,255,.055);
+    border: 1px solid rgba(159,196,232,.2);
+    color: #d5e3f2;
+}
+.tabla-chip--clave { border-color: #d3901f; background: rgba(211,144,31,.16); color: #f0cf90; }
+
+/* Reparto de responsabilidades por capas */
+.capas { display: flex; flex-direction: column; gap: 8px; }
+.capa {
+    display: grid;
+    grid-template-columns: 168px 108px 1fr;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 15px;
+    background: var(--superficie);
+    border: 1px solid var(--linea);
+    border-left: 3px solid var(--turquesa);
+    border-radius: var(--r-sm);
+}
+.capa__q { font-family: var(--mono); font-size: 12.5px; color: var(--azul); }
+.capa__v { font-family: var(--display); font-weight: 700; font-size: 17px; }
+.capa__d { font-size: 13.5px; line-height: 1.4; color: var(--tinta-2); }
+
+/* Barras pareadas de la brecha */
+.brecha { display: flex; flex-direction: column; gap: 4px; }
+.brecha__f { display: grid; grid-template-columns: 178px 1fr 84px; align-items: center; gap: 16px; padding: 5px 0; }
+.brecha__e { font-size: 14.5px; line-height: 1.25; }
+.brecha__e small { display: block; font-size: 11.5px; color: var(--suave); }
+.brecha__p { display: flex; flex-direction: column; gap: 4px; }
+.brecha__b { height: 11px; border-radius: 3px; width: 0; transition: width .85s cubic-bezier(.22,.9,.3,1); }
+.es-activa .brecha__b { width: var(--w, 0%); }
+.brecha__b--i { background: var(--ambar-vivo); }
+.brecha__b--o { background: var(--turquesa); }
+.brecha__v { text-align: right; font-variant-numeric: tabular-nums; line-height: 1.25; }
+.brecha__v b { font-size: 15px; font-weight: 600; color: var(--ambar); }
+.brecha__v small { display: block; font-size: 12.5px; color: var(--turquesa); }
+.leyenda { display: flex; gap: 20px; font-size: 13px; color: var(--tinta-2); }
+.leyenda i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+
+/* Ejes independientes */
+.ejes { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: center; font-size: 13px; }
+.eje-fila { display: flex; gap: 6px; }
+.eje-p { flex: 1; text-align: center; padding: 5px 4px; border-radius: 4px; font-size: 11.5px; font-weight: 500; background: var(--linea-2); color: var(--suave); }
+.eje-p--on { background: var(--verde-l); color: var(--verde); border: 1px solid #a9d3c0; font-weight: 600; }
+.eje-p--on2 { background: var(--ambar-l); color: var(--ambar); border: 1px solid #e5c78a; font-weight: 600; }
+.eje-t { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); white-space: nowrap; }
+</style>
+<style>
+/* Herramientas del asistente */
+.herr {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3px;
+    padding: 11px 14px;
+    background: var(--superficie);
+    border: 1px solid var(--linea);
+    border-left: 3px solid var(--azul);
+    border-radius: var(--r-sm);
+}
+.herr__n { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--azul); }
+.herr__d { font-size: 13px; line-height: 1.4; color: var(--tinta-2); }
+
+/* Permisos: lo concedido y lo denegado */
+.permiso { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; line-height: 1.45; }
+.permiso__s { flex: none; width: 20px; font-weight: 700; font-family: var(--mono); font-size: 13px; }
+.permiso--si .permiso__s { color: var(--verde); }
+.permiso--no .permiso__s { color: var(--escarlata); }
+
+/* Garantías numeradas: la secuencia importa, va de la regla al costo. */
+.garantia { display: grid; grid-template-columns: 34px 1fr; gap: 13px; align-items: start; }
+.garantia__n {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 21px;
+    line-height: 1;
+    color: var(--escarlata);
+    border-top: 2px solid var(--escarlata);
+    padding-top: 7px;
+}
+.garantia__t { font-family: var(--display); font-weight: 700; font-size: 16.5px; line-height: 1.22; margin: 0 0 4px; }
+.garantia__d { font-size: 13.5px; line-height: 1.45; color: var(--tinta-2); margin: 0; }
+
+/* Reglas de encuestas */
+.regla { display: flex; gap: 10px; font-size: 14px; line-height: 1.45; }
+.regla__i { flex: none; width: 7px; height: 7px; margin-top: 7px; border-radius: 99px; background: var(--turquesa); }
+
+/* Cierre */
+.metrica { text-align: left; }
+.metrica__n { font-family: var(--sans); font-weight: 600; font-size: 38px; line-height: 1; letter-spacing: -.025em; color: #fff; font-variant-numeric: tabular-nums; }
+.metrica__d { font-size: 12.5px; line-height: 1.4; color: #93aac6; margin-top: 7px; }
+.cierre-frase { font-family: var(--display); font-weight: 700; font-size: 34px; line-height: 1.28; color: #fff; max-width: 24ch; }
+.cierre-frase em { font-style: normal; color: #f0b552; }
+
+/* Respaldo */
+.lamina--respaldo::after {
+    content: "LÁMINA DE RESPALDO";
+    position: absolute;
+    right: 64px; top: 26px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    color: var(--ambar);
+    background: var(--ambar-l);
+    border: 1px solid #e5c78a;
+    border-radius: 99px;
+    padding: 3px 10px;
+}
+.lista-def { display: flex; flex-direction: column; gap: 11px; margin: 0; }
+.lista-def__t { font-weight: 600; font-size: 14.5px; }
+.lista-def__d { font-size: 13.5px; line-height: 1.45; color: var(--tinta-2); }
+.tabla-simple { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tabla-simple th { text-align: left; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--suave); font-weight: 600; padding: 0 12px 7px 0; border-bottom: 1px solid var(--linea); }
+.tabla-simple td { padding: 7px 12px 7px 0; border-bottom: 1px solid var(--linea-2); line-height: 1.4; vertical-align: top; }
+.tabla-simple td:last-child, .tabla-simple th:last-child { padding-right: 0; }
+</style>
+
+<style>
+/* Tecnologías por capa */
+.tec { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.tec__col { background: var(--superficie); border: 1px solid var(--linea); border-radius: var(--r); padding: 16px 18px; }
+.tec__h { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--turquesa); margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--linea-2); }
+.tec__i { display: flex; flex-direction: column; gap: 2px; padding: 7px 0; }
+.tec__i + .tec__i { border-top: 1px solid var(--linea-2); }
+.tec__n { font-weight: 600; font-size: 14.5px; }
+.tec__d { font-size: 12.5px; color: var(--suave); line-height: 1.35; }
+
+/* Logro: número grande de sección + tarjeta */
+.logro { display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start; }
+.logro__n { font-family: var(--display); font-weight: 700; font-size: 26px; line-height: 1; color: var(--escarlata); border-top: 2px solid var(--escarlata); padding-top: 8px; }
+.logro__t { font-family: var(--display); font-weight: 700; font-size: 17px; line-height: 1.2; margin: 0 0 5px; }
+.logro__d { font-size: 13.5px; line-height: 1.45; color: var(--tinta-2); margin: 0; }
+.lamina--noche .logro__n { color: #f0b552; border-top-color: #f0b552; }
+.lamina--noche .logro__t { color: #fff; }
+.lamina--noche .logro__d { color: #bacadd; }
+
+/* Lámina con pocas tarjetas: más grandes y centradas, para que no floten arriba */
+.lamina--amplia .cuerpo { justify-content: center; }
+.lamina--amplia .tarjeta { padding: 26px 28px; }
+.lamina--amplia .tarjeta__t { font-size: 22px; margin-bottom: 12px; }
+.lamina--amplia .tarjeta__d { font-size: 16.5px; line-height: 1.55; }
+</style>
+
+<div class="marco">
+<div class="pista" id="pista">
+
+<!-- ═══════════════════════════════════ 1 · Portada ═══════════════════════ -->
+<section class="lamina" data-seccion="Portada">
+    <svg class="portada__sello" viewBox="0 0 200 200" aria-hidden="true">
+        <defs>
+            <linearGradient id="gPluma" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#c3372c"/><stop offset="38%" stop-color="#d3901f"/>
+                <stop offset="70%" stop-color="#2c7a58"/><stop offset="100%" stop-color="#17708a"/>
+            </linearGradient>
+        </defs>
+        <circle cx="100" cy="100" r="86" fill="none" stroke="#e3e1dd" stroke-width="1.5"/>
+        <circle cx="100" cy="100" r="74" fill="none" stroke="url(#gPluma)" stroke-width="2.5" stroke-dasharray="349 116" stroke-linecap="round" transform="rotate(-90 100 100)"/>
+        <g transform="translate(66 74)">
+            <rect x="0" y="0"  width="26" height="9" rx="4.5" fill="#c3372c"/>
+            <rect x="0" y="17" width="44" height="9" rx="4.5" fill="#d3901f"/>
+            <rect x="0" y="34" width="62" height="9" rx="4.5" fill="#2c7a58"/>
+            <rect x="0" y="51" width="36" height="9" rx="4.5" fill="#17708a"/>
+        </g>
+    </svg>
+    <div class="portada">
+        <p class="ceja anim" style="--i:0">Centro Universitario Tecnológico · CEUTEC · Facultad de Ingeniería</p>
+        <h1 class="marca anim" style="--i:1">Cumple<em>HN</em></h1>
+        <p class="portada__sub anim" style="--i:2">Plataforma web para el seguimiento ciudadano de promesas políticas en Honduras</p>
+        <div class="portada__meta anim" style="--i:3">
+            <div><b>Roy Guillermo Chávez Espinal</b>Cuenta 31521560<br>Ingeniería en Informática</div>
+            <div><b>Proyecto de graduación</b>Tegucigalpa, M.D.C. · 2026</div>
+        </div>
+    </div>
+    <div class="notas">Una frase: la información sobre promesas políticas existe pero está dispersa, y CumpleHN la ordena para que cada persona decida con evidencia. 30 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 2 · Objetivo ══════════════════════ -->
+<section class="lamina" data-seccion="Objetivo">
+    <p class="ceja anim" style="--i:0">Objetivo general</p>
+    <h2 class="titulo anim" style="--i:1">Decidir con fundamentos, no con percepciones.</h2>
+
+    <div class="cuerpo">
+        <div class="fila fila--top" style="gap:34px">
+            <div class="col col--ancha" data-paso="1">
+                <div class="cita" style="border-left-color:var(--azul);font-size:20px;line-height:1.45">Facilitar el seguimiento ciudadano del cumplimiento de promesas y de la trayectoria de gestión de los candidatos y funcionarios políticos en Honduras, mediante el desarrollo de una plataforma web que centralice y visualice estadísticamente esta información, con el fin de apoyar a la ciudadanía en la toma de decisiones fundamentadas en evidencia cuantitativa al momento de votar.
+                </div>
+            </div>
+            <div class="col" data-paso="2">
+                <span class="etiqueta" style="color:var(--escarlata)">Lo que CumpleHN no hace</span>
+                <ul class="no-hace">
+                    <li>No rankea candidaturas por calidad.</li>
+                    <li>No recomienda por quién votar.</li>
+                    <li>No emite un veredicto sobre quién cumple mejor.</li>
+                    <li>No presenta como hecho comprobado lo que solo está declarado.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="cita" style="border-left-color:var(--verde)" data-paso="3">Entrega la evidencia organizada para que cada persona la pondere según el criterio que considere de mayor peso. Seguridad, salud, educación, economía, infraestructura o transparencia y decida por su cuenta.</div>
+    </div>
+    <p class="pie-lamina">El problema que responde está medido: en la encuesta del proyecto (n = 150), 84.7 % percibe la información dispersa y 84.7 % usaría una plataforma como esta antes de votar.</p>
+    <div class="notas">La columna de la derecha es la neutralidad declarada. Si solo se llevan una idea, que sea esa. 50 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 3 · Tecnologías ═══════════════════ -->
+<section class="lamina" data-seccion="Tecnologías">
+    <p class="ceja anim" style="--i:0">Tecnologías utilizadas</p>
+    <h2 class="titulo anim" style="--i:1">Tres capas separadas, y una sola habla con la base</h2>
+
+    <div class="cuerpo">
+        <div class="tec">
+            <div class="tec__col" data-paso="1">
+                <p class="tec__h">Presentación</p>
+                <div class="tec__i"><span class="tec__n">ASP.NET Web Forms</span><span class="tec__d">.NET Framework 4.7.2 · C#</span></div>
+                <div class="tec__i"><span class="tec__n">Bootstrap 5 + jQuery</span><span class="tec__d">Solo la grilla. Sin dependencias externas en tiempo de ejecución.</span></div>
+                <div class="tec__i"><span class="tec__n">CSS</span><span class="tec__d">Sistema de diseño con tokens, SVG generado en el servidor.</span></div>
+                <div class="tec__i"><span class="tec__n">IIS Express</span><span class="tec__d">Puerto 5080</span></div>
+            </div>
+            <div class="tec__col" data-paso="2">
+                <p class="tec__h">Servicio</p>
+                <div class="tec__i"><span class="tec__n">Web Service ASMX</span><span class="tec__d">SOAP y JSON desde el mismo servicio. 51 métodos.</span></div>
+                <div class="tec__i"><span class="tec__n">ADO.NET</span><span class="tec__d">Siempre con parámetros y procedimientos almacenados.</span></div>
+                <div class="tec__i"><span class="tec__n">SHA-256 criptográfico</span><span class="tec__d">Contraseñas y tokens de confirmación nunca en claro.</span></div>
+                <div class="tec__i"><span class="tec__n">SMTP</span><span class="tec__d">Confirmación de correo con contraseña de aplicación.</span></div>
+            </div>
+            <div class="tec__col" data-paso="3">
+                <p class="tec__h">Datos</p>
+                <div class="tec__i"><span class="tec__n">SQL Server Express</span><span class="tec__d">Base <code>BDCUMPLEHN</code>, 23 tablas y 35 llaves foráneas.</span></div>
+                <div class="tec__i"><span class="tec__n">Índices únicos y bajas lógicas</span><span class="tec__d">Un voto por persona, nada se borra, se usa bitácora</span></div>
+                <div class="tec__i"><span class="tec__n">Login restringido</span><span class="tec__d"><code>cumplehn_ia</code>: solo EXECUTE, cero permisos de tabla.</span></div>
+            </div>
+            <div class="tec__col" data-paso="4" style="border-left:3px solid var(--escarlata)">
+                <p class="tec__h" style="color:var(--escarlata)">Inteligencia artificial</p>
+                <div class="tec__i"><span class="tec__n">Claude Sonnet 5</span><span class="tec__d">SDK oficial de Anthropic para .NET.</span></div>
+                <div class="tec__i"><span class="tec__n">Uso de herramientas</span><span class="tec__d">4 herramientas, cada una un procedimiento almacenado tipado.</span></div>
+            </div>
+        </div>
+    </div>
+    <p class="pie-lamina">La cadena de conexión vive solo en el Web Service. El frontend no la tiene y no puede consultar la base. El modelo tampoco: recibe la fila que un procedimiento le devuelve.</p>
+    <div class="notas">No leer la lista. Decir el principio: tres capas, cada una con una responsabilidad, y la base como única fuente de verdad. 50 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 4 · Logros · módulos ══════════════ -->
+<section class="lamina" data-seccion="Logros">
+    <p class="ceja anim" style="--i:0">Logros · Lo que se construyó</p>
+    <h2 class="titulo anim" style="--i:1">Siete módulos en la plataforma</h2>
+
+    <div class="cuerpo">
+        <div class="rejilla rejilla--3" style="gap:14px">
+            <div class="tarjeta tarjeta--filo" data-paso="1">
+                <h3 class="tarjeta__t">Perfiles y catálogos</h3>
+                <p class="tarjeta__d">Candidaturas, partidos y campañas con ficha pública y nivel de verificación. La administración da de alta, verifica y modera con motivo obligatorio y bitácora.</p>
+            </div>
+            <div class="tarjeta tarjeta--filo" data-paso="1">
+                <h3 class="tarjeta__t">Propuestas con seguimiento</h3>
+                <p class="tarjeta__d">Cada promesa lleva categoría, evidencia y estado de cumplimiento. La candidatura declara, la plataforma califica.</p>
+            </div>
+            <div class="tarjeta tarjeta--filo" data-paso="2">
+                <h3 class="tarjeta__t">Consulta ciudadana</h3>
+                <p class="tarjeta__d">Búsqueda y filtros por campaña, categoría, partido y departamento en todo el sitio público. Consultar es libre, participar requiere cuenta confirmada.</p>
+            </div>
+            <div class="tarjeta tarjeta--filo f-azul" data-paso="2">
+                <h3 class="tarjeta__t">Tablero de doce indicadores</h3>
+                <p class="tarjeta__d">La base calcula, el servicio transporta, la página dibuja. Una sola llamada para que los doce gráficos correspondan al mismo instante.</p>
+            </div>
+            <div class="tarjeta tarjeta--filo f-verde" data-paso="3">
+                <h3 class="tarjeta__t">Participación ciudadana</h3>
+                <p class="tarjeta__d">Valoraciones, comentarios, encuestas de percepción e iniciativas propuestas por la ciudadanía. Registro público con confirmación de correo.</p>
+            </div>
+            <div class="tarjeta tarjeta--filo f-escarlata" data-paso="3">
+                <h3 class="tarjeta__t">Asistente de IA</h3>
+                <p class="tarjeta__d">Preguntas en español, respuestas con fuentes reales. Conectado a un modelo de lenguaje con cuota diaria y bitácora de cada consulta.</p>
+            </div>
+        </div>
+        <div class="tarjeta tarjeta--filo f-ambar" data-paso="4" style="display:grid;grid-template-columns:auto 1fr;gap:6px 22px;align-items:baseline">
+            <span class="etiqueta" style="color:var(--ambar);margin:0;grid-column:1/-1">Modelo de sostenibilidad</span>
+            <h3 class="tarjeta__t" style="margin:0;white-space:nowrap">Espacios para organizaciones</h3>
+            <p class="tarjeta__d">El mismo motor al servicio de un colegio profesional, una cooperativa o un sindicato para su propia elección: sitio propio, planillas, padrón de miembros y tablero. Aislamiento por espacio en la base, planes con vigencia y solicitud desde una página pública. CumpleHN sigue gratuito y neutral, y es un espacio más.</p>
+        </div>
+    </div>
+    <div class="notas">Pasada rápida, uno por uno. El detalle de IA viene en la siguiente. 45 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 5 · Logros · IA ═══════════════════ -->
+<section class="lamina lamina--noche" data-seccion="Logros">
+    <p class="ceja anim" style="--i:0">Logros · El módulo de inteligencia artificial</p>
+    <h2 class="titulo anim" style="--i:1">El modelo nunca ve la base. Ve la fila que un procedimiento le devuelve.</h2>
+
+    <div class="cuerpo">
+        <div class="rejilla rejilla--2" style="gap:16px 34px">
+            <div class="logro" data-paso="1">
+                <span class="logro__n">1</span>
+                <div><h3 class="logro__t">Responde con sus fuentes, y las fuentes son reales</h3>
+                <p class="logro__d">Se arman con las consultas que de verdad se ejecutaron, no con lo que el modelo dice haber usado.</p></div>
+            </div>
+            <div class="logro" data-paso="2">
+                <span class="logro__n">2</span>
+                <div><h3 class="logro__t">Nunca escribe SQL</h3>
+                <p class="logro__d">Recibe cuatro herramientas y cada una es un procedimiento almacenado con parámetros tipados. Lo único que conoce de la plataforma es lo que ese procedimiento le devuelve.</p></div>
+            </div>
+            <div class="logro" data-paso="3">
+                <span class="logro__n">3</span>
+                <div><h3 class="logro__t">Un login que no puede leer tablas</h3>
+                <p class="logro__d"><span class="chip-m">cumplehn_ia</span> solo tiene <span class="chip-m">EXECUTE</span> sobre 13 procedimientos y <span class="chip-m">DENY</span> sobre todo lo que vincula a una persona con su preferencia política. Verificado con <span class="chip-m">EXECUTE AS</span>.</p></div>
+            </div>
+            <div class="logro" data-paso="4">
+                <span class="logro__n">4</span>
+                <div><h3 class="logro__t">Neutral por regla, no por suerte</h3>
+                <p class="logro__d">No rankea candidaturas, dice siempre el nivel de verificación y responde que no sabe en vez de completar. El texto que devuelven las herramientas es dato, nunca instrucción.</p></div>
+            </div>
+            <div class="logro" data-paso="5">
+                <span class="logro__n">5</span>
+                <div><h3 class="logro__t">La respuesta no puede ejecutar nada</h3>
+                <p class="logro__d">Se reconstruye en el navegador con <span class="chip-m">DOMParser</span> y lista blanca, sin copiar un solo atributo. Sin <span class="chip-m">onerror</span>, <span class="chip-m">href</span> ni <span class="chip-m">src</span>, ninguna etiqueta puede hacer daño.</p></div>
+            </div>
+            <div class="logro" data-paso="6">
+                <span class="logro__n">6</span>
+                <div><h3 class="logro__t">Límite de uso diario</h3>
+                <p class="logro__d">Cuota de 20 consultas por persona y día, y bitácora de cada pregunta, responda o falle.</p></div>
+            </div>
+        </div>
+    </div>
+    <div class="notas">La lámina con más peso. Ir punto por punto. Si hay tiempo, demo en vivo de una pregunta. 75 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 6 · Logros · neutralidad y seguridad ═ -->
+<section class="lamina lamina--amplia" data-seccion="Logros">
+    <p class="ceja anim" style="--i:0">Logros · Neutralidad y seguridad</p>
+    <h2 class="titulo anim" style="--i:1">La neutralidad no se declara: se construye</h2>
+
+    <div class="cuerpo">
+        <div class="rejilla rejilla--2" style="gap:14px">
+            <div class="tarjeta tarjeta--filo f-azul" data-paso="1">
+                <h3 class="tarjeta__t">Verificación y cumplimiento son dos ejes distintos</h3>
+                <p class="tarjeta__d">Una propuesta puede estar <strong>Verificada</strong> y seguir <strong>Declarada</strong>. La candidatura no se califica a sí misma: los estados de cumplimiento los asigna la plataforma con evidencia, y todo se muestra como declarado hasta que exista fuente verificable.</p>
+            </div>
+            <div class="tarjeta tarjeta--filo f-ambar" data-paso="2">
+                <h3 class="tarjeta__t">Nada se borra, y todo queda anotado</h3>
+                <p class="tarjeta__d">Retirar es baja lógica con motivo obligatorio, nunca <span class="chip-m">DELETE</span>. Cada acción de administración escribe en <span class="chip-m">Auditoria</span>, que no tiene pantalla ni método para editarse.</p>
+            </div>
+        </div>
+    </div>
+    <div class="notas">Terminar con el pie: declarar lo pendiente antes de que lo pregunten es la misma política que sostiene la plataforma. 50 s.</div>
+</section>
+
+<!-- ═══════════════════════════════════ 7 · Cifras y cierre ═══════════════ -->
+<section class="lamina lamina--noche" data-seccion="Cierre">
+    <div class="cuerpo" style="justify-content:center">
+        <div class="anim" style="--i:0">
+            <p class="cierre-frase" style="font-size:44px;max-width:22ch">CumpleHN no dice quién cumple mejor.<br>Ordena la evidencia para que <em>cada quien lo juzgue</em>.</p>
+        </div>
+    </div>
+    <div class="notas">Leer la frase, callar, esperar preguntas. 30 s.</div>
+</section>
+
+</div><!-- /.pista -->
+</div><!-- /.marco -->
+
+<div class="hud">
+    <span class="hud__n" id="hudN">1 / 18</span>
+    <span class="hud__barra"><span class="hud__v" id="hudV"></span></span>
+    <span id="hudS">Portada</span>
+    <span class="hud__ayuda">? ayuda</span>
+</div>
+
+<div class="panel" id="panelNotas" hidden>
+    <h4>Guion de esta lámina</h4>
+    <p id="notasTexto" style="margin:0"></p>
+</div>
+
+<div class="panel" id="panelAyuda" hidden>
+    <h4>Cómo se maneja</h4>
+    <ul class="panel__lista">
+        <li><kbd>→</kbd><kbd>Espacio</kbd><kbd>AvPág</kbd> avanzar un paso o una lámina</li>
+        <li><kbd>←</kbd><kbd>RePág</kbd> retroceder</li>
+        <li><kbd>F</kbd> pantalla completa</li>
+        <li><kbd>N</kbd> guion del presentador</li>
+        <li><kbd>B</kbd> láminas de respaldo, para responder preguntas</li>
+        <li><kbd>Inicio</kbd><kbd>Fin</kbd> primera y última lámina</li>
+        <li><kbd>1</kbd>…<kbd>9</kbd> saltar a una lámina</li>
+        <li><kbd>Esc</kbd> cerrar este panel</li>
+    </ul>
+    <p style="margin:14px 0 0;color:#8b949e;font-size:13px">Los clickers de presentación mandan AvPág y RePág, así que funcionan sin configurar nada.</p>
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    document.documentElement.classList.add("js");
+
+    var pista      = document.getElementById("pista"),
+        laminas    = Array.prototype.slice.call(document.querySelectorAll(".lamina")),
+        principales = laminas.filter(function (l) { return !l.hasAttribute("data-respaldo"); }),
+        respaldo    = laminas.filter(function (l) { return l.hasAttribute("data-respaldo"); }),
+        hudN       = document.getElementById("hudN"),
+        hudV       = document.getElementById("hudV"),
+        hudS       = document.getElementById("hudS"),
+        panelNotas = document.getElementById("panelNotas"),
+        notasTexto = document.getElementById("notasTexto"),
+        panelAyuda = document.getElementById("panelAyuda");
+
+    var quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    var conjunto = principales,   // el que se esta recorriendo
+        i        = 0,             // lamina actual dentro del conjunto
+        paso     = 0,             // paso de construccion dentro de la lamina
+        maxPaso  = 0,
+        vueltaA  = null;          // desde donde se salto al respaldo
+
+    /* ------------------------------------------------------------ Escalado */
+    /* El deck se diseña en 1280x720 y se escala entero. Asi se ve idéntico
+       en 1920x1080 y en un proyector de 1366x768, sin recalcular nada. */
+    function escalar() {
+        var e = Math.min(window.innerWidth / 1280, (window.innerHeight - 34) / 720);
+        pista.style.setProperty("--esc", e);
+    }
+
+    /* --------------------------------------------------------- Trazos SVG */
+    /* Cada trazo necesita su propio largo para que el dibujado empiece
+       oculto y termine completo, sin importar cuanto mida la linea. */
+    function medirTrazos() {
+        Array.prototype.forEach.call(document.querySelectorAll(".traza"), function (t) {
+            try { t.style.setProperty("--largo", Math.ceil(t.getTotalLength()) + "px"); }
+            catch (e) { t.style.setProperty("--largo", "1200px"); }
+        });
+    }
+
+    /* ------------------------------------------------------------- Cifras */
+    function contar(el) {
+        var fin = parseFloat(el.getAttribute("data-cifra")),
+            suf = el.getAttribute("data-suf") || "",
+            ent = el.hasAttribute("data-ent"),
+            dur = 850,
+            t0  = null;
+
+        function pintar(v) {
+            el.textContent = (ent ? Math.round(v).toLocaleString("es-HN")
+                                  : v.toFixed(1)) + suf;
+        }
+        if (quieto) { pintar(fin); return; }
+
+        function marco(t) {
+            if (t0 === null) { t0 = t; }
+            var p = Math.min((t - t0) / dur, 1);
+            pintar(fin * (1 - Math.pow(1 - p, 3)));   // se frena al final
+            if (p < 1) { requestAnimationFrame(marco); }
+        }
+        requestAnimationFrame(marco);
+    }
+
+    /* ------------------------------------------------------------ Láminas */
+    function pasosDe(lamina) {
+        var n = 0;
+        Array.prototype.forEach.call(lamina.querySelectorAll("[data-paso]"), function (e) {
+            n = Math.max(n, parseInt(e.getAttribute("data-paso"), 10) || 0);
+        });
+        return n;
+    }
+
+    function aplicarPaso(lamina) {
+        Array.prototype.forEach.call(lamina.querySelectorAll("[data-paso]"), function (e) {
+            var p = parseInt(e.getAttribute("data-paso"), 10) || 0;
+            e.classList.toggle("visto", p <= paso);
+        });
+    }
+
+    function mostrar(n, pasoInicial) {
+        i = Math.max(0, Math.min(n, conjunto.length - 1));
+
+        laminas.forEach(function (l) { l.classList.remove("es-activa"); });
+
+        var lamina = conjunto[i];
+        maxPaso = pasosDe(lamina);
+        paso = pasoInicial === "fin" ? maxPaso : 0;
+        aplicarPaso(lamina);
+        lamina.classList.add("es-activa");
+
+        // Las cifras vuelven a cero para que cuenten cada vez que se entra.
+        Array.prototype.forEach.call(lamina.querySelectorAll("[data-cifra]"), function (e) {
+            contar(e);
+        });
+
+        var nota = lamina.querySelector(".notas");
+        notasTexto.textContent = nota ? nota.textContent
+                                      : "Sin guion para esta lámina.";
+
+        var esResp = conjunto === respaldo;
+        hudN.textContent = (i + 1) + " / " + conjunto.length;
+        hudS.textContent = lamina.getAttribute("data-seccion") || "";
+        hudV.style.width = ((i + 1) / conjunto.length * 100) + "%";
+        hudV.style.opacity = esResp ? ".45" : "1";
+    }
+
+    /* ----------------------------------------------------------- Recorrido */
+    function avanzar() {
+        if (paso < maxPaso) {
+            paso++;
+            aplicarPaso(conjunto[i]);
+        } else if (i < conjunto.length - 1) {
+            mostrar(i + 1);
+        }
+    }
+
+    function retroceder() {
+        if (paso > 0) {
+            paso--;
+            aplicarPaso(conjunto[i]);
+        } else if (i > 0) {
+            mostrar(i - 1, "fin");
+        }
+    }
+
+    function alternarRespaldo() {
+        if (conjunto === principales) {
+            vueltaA = i;
+            conjunto = respaldo;
+            mostrar(0);
+        } else {
+            conjunto = principales;
+            mostrar(vueltaA === null ? 0 : vueltaA, "fin");
+        }
+    }
+
+    function cerrarPaneles() {
+        panelNotas.hidden = true;
+        panelAyuda.hidden = true;
+    }
+
+    /* -------------------------------------------------------------- Teclas */
+    document.addEventListener("keydown", function (ev) {
+        if (ev.ctrlKey || ev.altKey || ev.metaKey) { return; }
+        var k = ev.key;
+
+        if (k === "ArrowRight" || k === " " || k === "Spacebar" || k === "PageDown") {
+            ev.preventDefault(); avanzar();
+        } else if (k === "ArrowLeft" || k === "PageUp") {
+            ev.preventDefault(); retroceder();
+        } else if (k === "ArrowDown") {
+            ev.preventDefault(); if (i < conjunto.length - 1) { mostrar(i + 1); }
+        } else if (k === "ArrowUp") {
+            ev.preventDefault(); if (i > 0) { mostrar(i - 1); }
+        } else if (k === "Home") {
+            ev.preventDefault(); mostrar(0);
+        } else if (k === "End") {
+            ev.preventDefault(); mostrar(conjunto.length - 1);
+        } else if (k === "f" || k === "F") {
+            if (document.fullscreenElement) { document.exitFullscreen(); }
+            else if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        } else if (k === "n" || k === "N") {
+            panelAyuda.hidden = true;
+            panelNotas.hidden = !panelNotas.hidden;
+        } else if (k === "b" || k === "B") {
+            cerrarPaneles(); alternarRespaldo();
+        } else if (k === "?" || k === "h" || k === "H") {
+            panelNotas.hidden = true;
+            panelAyuda.hidden = !panelAyuda.hidden;
+        } else if (k === "Escape") {
+            cerrarPaneles();
+        } else if (k >= "1" && k <= "9") {
+            var d = parseInt(k, 10) - 1;
+            if (d < conjunto.length) { mostrar(d); }
+        }
+    });
+
+    /* Un clic en la lámina avanza, como en cualquier presentación. Los
+       paneles se excluyen para poder leerlos sin pasar de diapositiva. */
+    document.addEventListener("click", function (ev) {
+        if (ev.target.closest(".panel")) { return; }
+        avanzar();
+    });
+
+    window.addEventListener("resize", escalar);
+    escalar();
+    medirTrazos();
+    mostrar(0);
+}());
+</script>
