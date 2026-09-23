@@ -98,6 +98,44 @@ namespace backend.Modelos
     }
 
     /// <summary>
+    /// Iniciativas ciudadanas como las ve el asistente (script 27).
+    ///
+    /// Sin descripción y sin autora, a propósito: la descripción es texto
+    /// libre largo escrito por cualquier cuenta, y la autoría vincula a una
+    /// persona con lo que propuso. Los conteos cubren todo lo que coincide
+    /// con los filtros aunque el listado venga recortado.
+    /// </summary>
+    public class IniciativasIA
+    {
+        public int iniciativas { get; set; }
+        public int apoyos { get; set; }
+        public int enContra { get; set; }
+        public GrupoIniciativasIA[] porCategoria { get; set; }
+        public GrupoIniciativasIA[] porDepartamento { get; set; }
+        public IniciativaIA[] listado { get; set; }
+    }
+
+    public class GrupoIniciativasIA
+    {
+        public string nombre { get; set; }
+        public int iniciativas { get; set; }
+        public int apoyos { get; set; }
+        public int enContra { get; set; }
+    }
+
+    public class IniciativaIA
+    {
+        public int codigoIniciativa { get; set; }
+        public string titulo { get; set; }
+        public string categoria { get; set; }
+        public string departamento { get; set; }
+        public int meGusta { get; set; }
+        public int noMeGusta { get; set; }
+        public int comentarios { get; set; }
+        public string fecha { get; set; }
+    }
+
+    /// <summary>
     /// Lo que el asistente le devuelve al frontend.
     ///
     /// Cuando ok es falso, mensaje explica por qué en palabras que se

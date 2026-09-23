@@ -1158,7 +1158,8 @@ namespace frontend
             "¿Qué categoría le interesa más a la ciudadanía y cuántas propuestas tiene?",
             "¿Cuántas candidaturas tienen su información verificada?",
             "¿Cuál es el estado de cumplimiento de las propuestas registradas?",
-            "¿En qué departamentos hay candidaturas registradas?"
+            "¿En qué departamentos hay candidaturas registradas?",
+            "¿Qué iniciativas ciudadanas tienen más apoyo?"
         };
 
         protected string InicialesUsuario

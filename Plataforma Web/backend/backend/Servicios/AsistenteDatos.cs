@@ -269,6 +269,81 @@ namespace backend.Servicios
         }
 
         /// <summary>
+        /// Iniciativas ciudadanas: resumen, reparto por categoría y por
+        /// departamento, y el listado. Cuatro resultados en una sola ida.
+        /// </summary>
+        public static IniciativasIA Iniciativas(string texto, int codigoCategoria,
+                                                int codigoDepartamento, int limite)
+        {
+            IniciativasIA r = new IniciativasIA();
+
+            using (SqlConnection conn = Abrir())
+            {
+                SqlCommand cmd = new SqlCommand("dbo.spIAIniciativas", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                Opcional(cmd, "@texto",              texto);
+                Opcional(cmd, "@codigoCategoria",    codigoCategoria);
+                Opcional(cmd, "@codigoDepartamento", codigoDepartamento);
+                cmd.Parameters.AddWithValue("@limite", limite <= 0 ? 20 : limite);
+
+                using (SqlDataReader d = cmd.ExecuteReader())
+                {
+                    if (d.Read())
+                    {
+                        r.iniciativas = Entero(d, "iniciativas");
+                        r.apoyos      = Entero(d, "apoyos");
+                        r.enContra    = Entero(d, "enContra");
+                    }
+
+                    d.NextResult();
+                    r.porCategoria = LeerGrupos(d, "categoria");
+
+                    d.NextResult();
+                    r.porDepartamento = LeerGrupos(d, "departamento");
+
+                    d.NextResult();
+                    List<IniciativaIA> lista = new List<IniciativaIA>();
+                    while (d.Read())
+                    {
+                        lista.Add(new IniciativaIA
+                        {
+                            codigoIniciativa = Entero(d, "codigoIniciativa"),
+                            titulo           = Texto(d, "titulo"),
+                            categoria        = Texto(d, "categoria"),
+                            departamento     = Texto(d, "departamento"),
+                            meGusta          = Entero(d, "meGusta"),
+                            noMeGusta        = Entero(d, "noMeGusta"),
+                            comentarios      = Entero(d, "comentarios"),
+                            fecha            = Texto(d, "fecha")
+                        });
+                    }
+                    r.listado = lista.ToArray();
+                }
+            }
+
+            return r;
+        }
+
+        private static GrupoIniciativasIA[] LeerGrupos(SqlDataReader d, string columna)
+        {
+            List<GrupoIniciativasIA> grupos = new List<GrupoIniciativasIA>();
+
+            while (d.Read())
+            {
+                grupos.Add(new GrupoIniciativasIA
+                {
+                    nombre      = Texto(d, columna),
+                    iniciativas = Entero(d, "iniciativas"),
+                    apoyos      = Entero(d, "apoyos"),
+                    enContra    = Entero(d, "enContra")
+                });
+            }
+
+            return grupos.ToArray();
+        }
+
+        /// <summary>
         /// Una fila de propuesta. La usan la búsqueda y la ficha, que
         /// devuelven columnas distintas — de ahí que cada lectura
         /// compruebe si la columna vino en este resultado.
