@@ -1189,7 +1189,7 @@ namespace frontend
         /// <summary>Dirección a la que vuelve el acceso si entra desde acá.</summary>
         protected string UrlAcceso
         {
-            get { return Sesion.UrlAccesoDeVuelta(); }
+            get { return ResolveUrl(Sesion.UrlAccesoDeVuelta()); }
         }
 
         /// <summary>
